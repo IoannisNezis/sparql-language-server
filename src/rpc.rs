@@ -1,3 +1,6 @@
+use core::panic;
+
+use log::error;
 use nom::{
     bytes::complete::{tag, take_while},
     IResult,
@@ -52,8 +55,17 @@ impl Header {
     }
 }
 
-pub fn encode() -> String {
-    todo!();
+pub fn encode<T: Serialize>(object: &T) -> String {
+    match serde_json::to_string(object) {
+        Ok(string) => string,
+        Err(error) => {
+            error!(
+                "An unexpected Error occured during the message encoding: {}",
+                error
+            );
+            panic!("Error during serialization");
+        }
+    }
 }
 
 pub fn decode_message(msg: &Vec<u8>) -> Result<BaseMessage, String> {

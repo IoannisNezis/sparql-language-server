@@ -1,44 +1,59 @@
 mod lsp;
 mod rpc;
+mod state;
 
 use std::{
     io::{self, BufReader, Read},
-    process,
+    process::exit,
 };
 
 use log::{error, info, warn};
+use serde::Serialize;
+use state::ServerState;
 
-use crate::{lsp::InitializeResonse, rpc::Header};
+use crate::{
+    lsp::InitializeResonse,
+    rpc::{Header, ResponseMessage},
+};
 
-fn handle_message(bytes: &Vec<u8>) {
+fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
     // info!("{}", String::from_utf8(bytes.to_vec()).unwrap());
     if let Ok(message) = rpc::decode_message(bytes) {
         match message.method.as_str() {
             "initialize" => {
-                let init_request = serde_json::from_slice::<lsp::InitializeRequest>(bytes).unwrap();
+                let initialize_request =
+                    serde_json::from_slice::<lsp::InitializeRequest>(bytes).unwrap();
                 info!(
                     "Connected to: {} {}",
-                    init_request.params.client_info.name,
-                    init_request
+                    initialize_request.params.client_info.name,
+                    initialize_request
                         .params
                         .client_info
                         .version
                         .unwrap_or("no version specified".to_string())
                 );
-                let init_response = InitializeResonse::new(init_request.base.id);
-
-                // NOTE: This could be done in rpc, maybe with traits (serialize)?
-                // TODO: remove unwrap
-                let response_string = serde_json::to_string(&init_response).unwrap();
-                println!(
-                    "Content-Length: {}\r\n\r\n{}",
-                    response_string.len(),
-                    response_string
-                );
+                let initialize_response = InitializeResonse::new(initialize_request.base.id);
+                send_message(&initialize_response);
+            }
+            "initialized" => {
+                info!("initialization completed");
+                state.status = state::ServerStatus::Running;
             }
             "shutdown" => {
-                info!("recieved shutdown notification, shutting down");
-                process::exit(0);
+                let shutdown_request =
+                    serde_json::from_slice::<rpc::RequestMessage>(bytes).unwrap();
+                info!("recieved shutdown request, preparing to shut down");
+                info!("{:?}", String::from_utf8(bytes.to_vec()));
+                let response = ResponseMessage {
+                    jsonrpc: "2.0".to_string(),
+                    id: shutdown_request.id,
+                };
+                send_message(&response);
+                state.status = state::ServerStatus::ShuttingDown;
+            }
+            "exit" => {
+                info!("recieved exit notification, shutting down!");
+                exit(0);
             }
             method => {
                 warn!(
@@ -52,9 +67,23 @@ fn handle_message(bytes: &Vec<u8>) {
     }
 }
 
+// TODO: This trait should be narrowed down, Serialize is not enougth to be jsonrpc message.
+fn send_message<T: Serialize>(message_body: &T) {
+    let message_body_string = rpc::encode(&message_body);
+    println!(
+        "Content-Length: {}\r\n\r\n{}",
+        message_body_string.len(),
+        message_body_string
+    );
+}
+
 fn main() {
     log4rs::init_file("log4rs.yml", Default::default()).unwrap();
     info!("Started LSP Server!");
+
+    let mut server_state = state::ServerState {
+        status: state::ServerStatus::Initializing,
+    };
 
     let stdin = io::stdin();
     let reader = BufReader::new(stdin);
@@ -71,16 +100,13 @@ fn main() {
                 panic!("{}", error);
             }
             None => {
-                // TODO: Handle more gracefully
                 error!("Stream ended unexpected while waiting for header, shutting down");
-                break;
-                continue;
+                exit(1);
             }
         }
         if buffer.ends_with(b"\r\n\r\n") {
-            // TODO: Handle error better
             let header = match Header::from_string(
-                String::from_utf8(buffer.clone()).expect("valid utf9 bytes"),
+                String::from_utf8(buffer.clone()).expect("valid utf8 bytes"),
             ) {
                 Ok(header) => header,
                 Err(err) => {
@@ -113,9 +139,8 @@ fn main() {
                     }
                 }
             }
-            handle_message(&buffer);
+            handle_message(&buffer, &mut server_state);
             buffer.clear();
         }
     }
-    info!("Shutting down server");
 }
