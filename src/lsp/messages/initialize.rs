@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::rpc::{RequestMessage, ResponseMessage};
-
-use super::capabilities::{ServerCapabilities, TextDocumentSyncKind};
+use crate::{
+    lsp::capabilities::{ServerCapabilities, TextDocumentSyncKind},
+    rpc::{RequestMessage, ResponseMessage},
+};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct ClientInfo {

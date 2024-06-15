@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::rpc::BaseMessage;
-
-use super::textdocument::TextDoucmentItem;
+use crate::{lsp::textdocument::TextDoucmentItem, rpc::BaseMessage};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct DidOpenTextDocumentNotification {
