@@ -12,7 +12,7 @@ use serde::Serialize;
 use state::ServerState;
 
 use crate::{
-    lsp::InitializeResonse,
+    lsp::{DidOpenTextDocumentNotification, InitializeResonse},
     rpc::{Header, ResponseMessage},
 };
 
@@ -43,7 +43,6 @@ fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
                 let shutdown_request =
                     serde_json::from_slice::<rpc::RequestMessage>(bytes).unwrap();
                 info!("recieved shutdown request, preparing to shut down");
-                info!("{:?}", String::from_utf8(bytes.to_vec()));
                 let response = ResponseMessage {
                     jsonrpc: "2.0".to_string(),
                     id: shutdown_request.id,
@@ -55,10 +54,19 @@ fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
                 info!("recieved exit notification, shutting down!");
                 exit(0);
             }
+            "textDocument/didOpen" => {
+                let did_open_notification: DidOpenTextDocumentNotification =
+                    serde_json::from_slice(bytes).unwrap();
+                info!(
+                    "opened text document: \"{}\"\n{}",
+                    did_open_notification.params.text_document.uri,
+                    did_open_notification.params.text_document.text
+                );
+            }
             method => {
                 warn!(
                     "Received message with unknown method \"{method}\": {:?}",
-                    serde_json::to_string(&message).unwrap()
+                    String::from_utf8(bytes.to_vec()).unwrap()
                 );
             }
         };
@@ -70,6 +78,7 @@ fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
 // TODO: This trait should be narrowed down, Serialize is not enougth to be jsonrpc message.
 fn send_message<T: Serialize>(message_body: &T) {
     let message_body_string = rpc::encode(&message_body);
+    // info!("sending: {}", message_body_string);
     println!(
         "Content-Length: {}\r\n\r\n{}",
         message_body_string.len(),

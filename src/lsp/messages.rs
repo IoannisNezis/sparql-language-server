@@ -1,7 +1,8 @@
-use log4rs::filter::Response;
 use serde::{Deserialize, Serialize};
 
 use crate::rpc::{RequestMessage, ResponseMessage};
+
+use super::capabilities::{ServerCapabilities, TextDocumentSyncKind};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct ClientInfo {
@@ -22,9 +23,6 @@ pub struct InitializeRequest {
     pub base: RequestMessage,
     pub params: InitializeParams,
 }
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct ServerCapabilities {}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct ServerInfo {
@@ -54,7 +52,9 @@ impl InitializeResonse {
                 id,
             },
             result: InitializeResult {
-                capabilities: ServerCapabilities {},
+                capabilities: ServerCapabilities {
+                    text_document_sync: Some(TextDocumentSyncKind::Full),
+                },
                 server_info: Some(ServerInfo {
                     name: "lsping".to_string(),
                     version: Some("0.0.0.1".to_string()),

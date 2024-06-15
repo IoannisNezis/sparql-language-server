@@ -60,7 +60,7 @@ pub fn encode<T: Serialize>(object: &T) -> String {
         Ok(string) => string,
         Err(error) => {
             error!(
-                "An unexpected Error occured during the message encoding: {}",
+                "An unexpected Error occured during the message encoding: {}, shutting down",
                 error
             );
             panic!("Error during serialization");
