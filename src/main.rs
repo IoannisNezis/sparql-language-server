@@ -12,7 +12,7 @@ use serde::Serialize;
 use state::ServerState;
 
 use crate::{
-    lsp::{DidOpenTextDocumentNotification, InitializeResonse},
+    lsp::{analysis::AnalysisState, DidOpenTextDocumentNotification, InitializeResonse},
     rpc::{Header, ResponseMessage},
 };
 
@@ -62,6 +62,7 @@ fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
                     did_open_notification.params.text_document.uri,
                     did_open_notification.params.text_document.text
                 );
+                state.add_document(did_open_notification.params);
             }
             method => {
                 warn!(
@@ -90,10 +91,7 @@ fn main() {
     log4rs::init_file("log4rs.yml", Default::default()).unwrap();
     info!("Started LSP Server!");
 
-    let mut server_state = state::ServerState {
-        status: state::ServerStatus::Initializing,
-    };
-
+    let mut server_state = state::ServerState::new();
     let stdin = io::stdin();
     let reader = BufReader::new(stdin);
     let mut bytes = reader.bytes();
