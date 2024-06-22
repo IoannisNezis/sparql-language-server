@@ -17,6 +17,75 @@ use crate::{
     rpc::{Header, RequestMessage, ResponseMessage},
 };
 
+fn main() {
+    // Initialize logging
+    log4rs::init_file("log4rs.yml", Default::default()).unwrap();
+    info!("Started LSP Server!");
+
+    // Initialize input stream
+    let stdin = io::stdin();
+    let reader = BufReader::new(stdin);
+    let mut bytes = reader.bytes();
+    let mut buffer = vec![];
+
+    // Initialize the server state
+    let mut server_state = state::ServerState::new();
+
+    loop {
+        match bytes.next() {
+            Some(Ok(byte)) => {
+                buffer.push(byte);
+            }
+            Some(Err(error)) => {
+                error!("Error while reading byte: {}", error);
+                panic!("{}", error);
+            }
+            None => {
+                error!("Stream ended unexpected while waiting for header, shutting down");
+                exit(1);
+            }
+        }
+        if buffer.ends_with(b"\r\n\r\n") {
+            let header = match Header::from_string(
+                String::from_utf8(buffer.clone()).expect("valid utf8 bytes"),
+            ) {
+                Ok(header) => header,
+                Err(err) => {
+                    error!("Received error while parsing header: {err}, clearing buffer");
+                    buffer.clear();
+                    continue;
+                }
+            };
+            buffer.clear();
+            for ele in 0..header.content_length {
+                match bytes.next() {
+                    Some(Ok(byte)) => {
+                        buffer.push(byte);
+                    }
+                    Some(Err(err)) => {
+                        error!(
+                            "Error {} occured while reading byte {} of {}, clearing buffer",
+                            err, ele, header.content_length
+                        );
+                        buffer.clear();
+                        break;
+                    }
+                    None => {
+                        error!(
+                            "Byte stream endet after {} of {} bytes, clearing message buffer",
+                            ele, header.content_length
+                        );
+                        buffer.clear();
+                        break;
+                    }
+                }
+            }
+            handle_message(&buffer, &mut server_state);
+            buffer.clear();
+        }
+    }
+}
+
 fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
     if let Ok(message) = rpc::decode_message(bytes) {
         match message.method.as_str() {
@@ -122,69 +191,4 @@ fn send_message<T: Serialize>(message_body: &T) {
         message_body_string.len(),
         message_body_string
     );
-}
-
-fn main() {
-    log4rs::init_file("log4rs.yml", Default::default()).unwrap();
-    info!("Started LSP Server!");
-
-    let mut server_state = state::ServerState::new();
-    let stdin = io::stdin();
-    let reader = BufReader::new(stdin);
-    let mut bytes = reader.bytes();
-
-    let mut buffer = vec![];
-    loop {
-        match bytes.next() {
-            Some(Ok(byte)) => {
-                buffer.push(byte);
-            }
-            Some(Err(error)) => {
-                error!("Error while reading byte: {}", error);
-                panic!("{}", error);
-            }
-            None => {
-                error!("Stream ended unexpected while waiting for header, shutting down");
-                exit(1);
-            }
-        }
-        if buffer.ends_with(b"\r\n\r\n") {
-            let header = match Header::from_string(
-                String::from_utf8(buffer.clone()).expect("valid utf8 bytes"),
-            ) {
-                Ok(header) => header,
-                Err(err) => {
-                    error!("Received error while parsing header: {err}, clearing buffer");
-                    buffer.clear();
-                    continue;
-                }
-            };
-            buffer.clear();
-            for ele in 0..header.content_length {
-                match bytes.next() {
-                    Some(Ok(byte)) => {
-                        buffer.push(byte);
-                    }
-                    Some(Err(err)) => {
-                        error!(
-                            "Error {} occured while reading byte {} of {}, clearing buffer",
-                            err, ele, header.content_length
-                        );
-                        buffer.clear();
-                        break;
-                    }
-                    None => {
-                        error!(
-                            "Byte stream endet after {} of {} bytes, clearing message buffer",
-                            ele, header.content_length
-                        );
-                        buffer.clear();
-                        break;
-                    }
-                }
-            }
-            handle_message(&buffer, &mut server_state);
-            buffer.clear();
-        }
-    }
 }
