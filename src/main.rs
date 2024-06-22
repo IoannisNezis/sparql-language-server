@@ -8,75 +8,102 @@ use std::{
 };
 
 use log::{error, info, warn};
-use lsp::DidChangeTextDocumentNotification;
+use lsp::{DidChangeTextDocumentNotification, HoverRequest};
 use serde::Serialize;
 use state::ServerState;
 
 use crate::{
-    lsp::{DidOpenTextDocumentNotification, InitializeResonse},
-    rpc::{Header, ResponseMessage},
+    lsp::{DidOpenTextDocumentNotification, HoverResponse, InitializeRequest, InitializeResonse},
+    rpc::{Header, RequestMessage, ResponseMessage},
 };
 
 fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
-    // info!("{}", String::from_utf8(bytes.to_vec()).unwrap());
     if let Ok(message) = rpc::decode_message(bytes) {
         match message.method.as_str() {
-            "initialize" => {
-                let initialize_request =
-                    serde_json::from_slice::<lsp::InitializeRequest>(bytes).unwrap();
-                info!(
-                    "Connected to: {} {}",
-                    initialize_request.params.client_info.name,
-                    initialize_request
-                        .params
-                        .client_info
-                        .version
-                        .unwrap_or("no version specified".to_string())
-                );
-                let initialize_response = InitializeResonse::new(initialize_request.base.id);
-                send_message(&initialize_response);
-            }
+            "initialize" => match serde_json::from_slice::<InitializeRequest>(bytes) {
+                Ok(initialize_request) => {
+                    info!(
+                        "Connected to: {} {}",
+                        initialize_request.params.client_info.name,
+                        initialize_request
+                            .params
+                            .client_info
+                            .version
+                            .unwrap_or("no version specified".to_string())
+                    );
+                    let initialize_response = InitializeResonse::new(initialize_request.base.id);
+                    send_message(&initialize_response);
+                }
+                Err(error) => error!("Could not parse initialize request: {:?}", error),
+            },
             "initialized" => {
                 info!("initialization completed");
                 state.status = state::ServerStatus::Running;
             }
-            "shutdown" => {
-                let shutdown_request =
-                    serde_json::from_slice::<rpc::RequestMessage>(bytes).unwrap();
-                info!("recieved shutdown request, preparing to shut down");
-                let response = ResponseMessage {
-                    jsonrpc: "2.0".to_string(),
-                    id: shutdown_request.id,
-                };
-                send_message(&response);
-                state.status = state::ServerStatus::ShuttingDown;
-            }
+            "shutdown" => match serde_json::from_slice::<RequestMessage>(bytes) {
+                Ok(shutdown_request) => {
+                    info!("recieved shutdown request, preparing to shut down");
+                    let response = ResponseMessage {
+                        jsonrpc: "2.0".to_string(),
+                        id: shutdown_request.id,
+                    };
+                    send_message(&response);
+                    state.status = state::ServerStatus::ShuttingDown;
+                }
+                Err(error) => error!("Could not parse shutdown request: {:?}", error),
+            },
             "exit" => {
                 info!("recieved exit notification, shutting down!");
                 exit(0);
             }
             "textDocument/didOpen" => {
-                let did_open_notification: DidOpenTextDocumentNotification =
-                    serde_json::from_slice(bytes).unwrap();
-                info!(
-                    "opened text document: \"{}\"\n{}",
-                    did_open_notification.params.text_document.uri,
-                    did_open_notification.params.text_document.text
-                );
-                state.handle_did_open(did_open_notification);
+                match serde_json::from_slice::<DidOpenTextDocumentNotification>(bytes) {
+                    Ok(did_open_notification) => {
+                        info!(
+                            "opened text document: \"{}\"\n{}",
+                            did_open_notification.params.text_document.uri,
+                            did_open_notification.params.text_document.text
+                        );
+                        state.handle_did_open(did_open_notification);
+                    }
+                    Err(error) => {
+                        error!("Could not parse textDocument/didOpen request: {:?}", error)
+                    }
+                }
             }
             "textDocument/didChange" => {
-                let did_change_notification: DidChangeTextDocumentNotification =
-                    serde_json::from_slice(bytes).unwrap();
-                info!(
-                    "text document changed: {}",
-                    did_change_notification.params.text_document.base.uri
-                );
-                state.handle_did_change(did_change_notification);
+                match serde_json::from_slice::<DidChangeTextDocumentNotification>(bytes) {
+                    Ok(did_change_notification) => {
+                        info!(
+                            "text document changed: {}",
+                            did_change_notification.params.text_document.base.uri
+                        );
+                        state.handle_did_change(did_change_notification);
+                    }
+                    Err(error) => {
+                        error!(
+                            "Could not parse textDocument/didChange notification: {:?}",
+                            error
+                        )
+                    }
+                }
             }
-            method => {
+            "textDocument/hover" => match serde_json::from_slice::<HoverRequest>(bytes) {
+                Ok(hover_request) => {
+                    info!(
+                        "recieved hover request for {} {}",
+                        hover_request.get_document_uri(),
+                        hover_request.get_position()
+                    );
+                    let hover_response = HoverResponse::new(hover_request.get_id());
+                    send_message(&hover_response);
+                }
+                Err(error) => error!("Could not parse textDocument/hover request: {:?}", error),
+            },
+            unknown_method => {
                 warn!(
-                    "Received message with unknown method \"{method}\": {:?}",
+                    "Received message with unknown method \"{}\": {:?}",
+                    unknown_method,
                     String::from_utf8(bytes.to_vec()).unwrap()
                 );
             }
@@ -89,7 +116,7 @@ fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
 // TODO: This trait should be narrowed down, Serialize is not enougth to be jsonrpc message.
 fn send_message<T: Serialize>(message_body: &T) {
     let message_body_string = rpc::encode(&message_body);
-    // info!("sending: {}", message_body_string);
+    info!("sending: {}", message_body_string);
     println!(
         "Content-Length: {}\r\n\r\n{}",
         message_body_string.len(),

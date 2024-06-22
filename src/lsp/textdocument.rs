@@ -1,3 +1,5 @@
+use std::fmt;
+
 use log::error;
 use serde::{Deserialize, Serialize};
 
@@ -43,6 +45,39 @@ pub struct TextDocumentIdentifier {
 }
 
 type Uri = String;
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct Position {
+    line: u32,
+    character: u32,
+}
+
+impl Position {
+    pub fn new(line: u32, character: u32) -> Self {
+        Self { line, character }
+    }
+}
+
+impl fmt::Display for Position {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}:{}", self.line, self.character)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct Range {
+    start: Position,
+    end: Position,
+}
+
+impl Range {
+    pub fn new(start_line: u32, start_character: u32, end_line: u32, end_character: u32) -> Self {
+        Self {
+            start: Position::new(start_line, start_character),
+            end: Position::new(end_line, end_character),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

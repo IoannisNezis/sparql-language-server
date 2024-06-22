@@ -55,6 +55,7 @@ impl InitializeResonse {
             result: InitializeResult {
                 capabilities: ServerCapabilities {
                     text_document_sync: Some(TextDocumentSyncKind::Full),
+                    hover_provider: Some(true),
                 },
                 server_info: Some(ServerInfo {
                     name: "lsping".to_string(),
