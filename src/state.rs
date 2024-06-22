@@ -1,4 +1,4 @@
-use crate::lsp::{analysis::AnalysisState, DidOpenTextDocumentPrams};
+use crate::lsp::{analysis::AnalysisState, DidOpenTextDocumentNotification};
 
 #[derive(Debug)]
 pub enum ServerStatus {
@@ -20,7 +20,18 @@ impl ServerState {
         }
     }
 
-    pub fn add_document(&mut self, params: DidOpenTextDocumentPrams) {
-        self.analysis_state.add_document(params.text_document);
+    pub fn handle_did_open(&mut self, message: DidOpenTextDocumentNotification) {
+        self.analysis_state
+            .add_document(message.params.text_document);
+    }
+
+    pub(crate) fn handle_did_change(
+        &mut self,
+        did_change_notification: crate::lsp::DidChangeTextDocumentNotification,
+    ) {
+        self.analysis_state.change_document(
+            did_change_notification.params.text_document.base.uri,
+            did_change_notification.params.content_changes,
+        )
     }
 }

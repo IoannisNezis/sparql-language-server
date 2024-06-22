@@ -8,11 +8,12 @@ use std::{
 };
 
 use log::{error, info, warn};
+use lsp::DidChangeTextDocumentNotification;
 use serde::Serialize;
 use state::ServerState;
 
 use crate::{
-    lsp::{analysis::AnalysisState, DidOpenTextDocumentNotification, InitializeResonse},
+    lsp::{DidOpenTextDocumentNotification, InitializeResonse},
     rpc::{Header, ResponseMessage},
 };
 
@@ -62,7 +63,16 @@ fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
                     did_open_notification.params.text_document.uri,
                     did_open_notification.params.text_document.text
                 );
-                state.add_document(did_open_notification.params);
+                state.handle_did_open(did_open_notification);
+            }
+            "textDocument/didChange" => {
+                let did_change_notification: DidChangeTextDocumentNotification =
+                    serde_json::from_slice(bytes).unwrap();
+                info!(
+                    "text document changed: {}",
+                    did_change_notification.params.text_document.base.uri
+                );
+                state.handle_did_change(did_change_notification);
             }
             method => {
                 warn!(
