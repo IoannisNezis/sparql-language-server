@@ -14,9 +14,7 @@ impl ServerCapabilities {
         Self {
             text_document_sync: TextDocumentSyncKind::Full,
             hover_provider: true,
-            completion_provider: CompletionOptions {
-                trigger_characters: vec!["?".to_string()],
-            },
+            completion_provider: CompletionOptions {},
         }
     }
 }
@@ -33,7 +31,6 @@ pub enum TextDocumentSyncKind {
 struct CompletionOptions {
     // WARNING: This is not to spec, there are multiple optional options:
     // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionOptions
-    trigger_characters: Vec<String>,
 }
 
 #[cfg(test)]
