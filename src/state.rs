@@ -1,7 +1,5 @@
 use crate::lsp::{
-    analysis::{get_token, AnalysisState},
-    textdocument::TextDocumentItem,
-    HoverResponse, TextDocumentContentChangeEvent,
+    analysis::AnalysisState, textdocument::TextDocumentItem, TextDocumentContentChangeEvent,
 };
 
 #[derive(Debug)]
