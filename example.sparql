@@ -1,3 +1,0 @@
-Select ?subject ?object2  Where {
-  ?subject <predicate2> ?object.
-}
