@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    lsp::textdocument::{Position, Range, TextDocumentIdentifier},
+    lsp::textdocument::Position,
     rpc::{RequestMessage, ResponseMessage},
 };
+
+use super::utils::TextDocumentPositionParams;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct HoverRequest {
@@ -33,13 +35,6 @@ struct HoverParams {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-struct TextDocumentPositionParams {
-    text_document: TextDocumentIdentifier,
-    position: Position,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct HoverResponse {
     #[serde(flatten)]
     base: ResponseMessage,
@@ -47,23 +42,14 @@ pub struct HoverResponse {
 }
 
 impl HoverResponse {
-    pub fn new(id: u32) -> Self {
+    pub fn new(id: u32, content: String) -> Self {
         HoverResponse {
-            base: ResponseMessage {
-                jsonrpc: "2.0".to_string(),
-                id,
-            },
+            base: ResponseMessage::new(id),
             result: HoverResult {
-                contents: HoverResultContents::MultipleMarkedString(vec![
-                    MarkedString::Dings {
-                        language: "language".to_string(),
-                        value: "hover content 1".to_string(),
-                    },
-                    MarkedString::Dings {
-                        language: "language".to_string(),
-                        value: "hover content 2".to_string(),
-                    },
-                ]),
+                contents: HoverResultContents::MultipleMarkedString(vec![MarkedString::Content {
+                    language: "sparql".to_string(),
+                    value: content,
+                }]),
             },
         }
     }
@@ -86,7 +72,7 @@ enum HoverResultContents {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 enum MarkedString {
-    Dings { language: String, value: String },
+    Content { language: String, value: String },
 }
 
 #[cfg(test)]
@@ -103,7 +89,7 @@ mod tests {
 
     #[test]
     fn decode_hover_request() {
-        let message= b"{\"params\":{\"textDocument\":{\"uri\":\"file:\\/\\/\\/dings\"},\"position\":{\"character\":42,\"line\":3}},\"method\":\"textDocument\\/hover\",\"id\":2,\"jsonrpc\":\"2.0\"}";
+        let message = br#"{"params":{"textDocument":{"uri":"file:///dings"},"position":{"character":42,"line":3}},"method":"textDocument/hover","id":2,"jsonrpc":"2.0"}"#;
         let hover_request: HoverRequest = serde_json::from_slice(message).unwrap();
 
         assert_eq!(
@@ -130,8 +116,8 @@ mod tests {
 
     #[test]
     fn encode_hover_response() {
-        let hover_response = HoverResponse::new(42);
-        let expected_message = "{\"jsonrpc\":\"2.0\",\"id\":42,\"result\":{\"contents\":[{\"language\":\"language\",\"value\":\"hover content 1\"},{\"language\":\"language\",\"value\":\"hover content 2\"}]}}";
+        let hover_response = HoverResponse::new(42, "hover content".to_string());
+        let expected_message = r#"{"jsonrpc":"2.0","id":42,"result":{"contents":[{"language":"sparql","value":"hover content"}]}}"#;
         assert_eq!(
             serde_json::to_string(&hover_response).unwrap(),
             expected_message

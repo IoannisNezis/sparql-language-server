@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    lsp::capabilities::{ServerCapabilities, TextDocumentSyncKind},
+    lsp::capabilities::ServerCapabilities,
     rpc::{RequestMessage, ResponseMessage},
 };
 
@@ -53,10 +53,7 @@ impl InitializeResonse {
                 id,
             },
             result: InitializeResult {
-                capabilities: ServerCapabilities {
-                    text_document_sync: Some(TextDocumentSyncKind::Full),
-                    hover_provider: Some(true),
-                },
+                capabilities: ServerCapabilities::new(),
                 server_info: Some(ServerInfo {
                     name: "lsping".to_string(),
                     version: Some("0.0.0.1".to_string()),

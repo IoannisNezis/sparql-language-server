@@ -28,6 +28,15 @@ pub struct ResponseMessage {
     pub id: u32,
 }
 
+impl ResponseMessage {
+    pub fn new(id: u32) -> Self {
+        Self {
+            jsonrpc: "2.0".to_string(),
+            id,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 struct ResponseError {
     code: u32,

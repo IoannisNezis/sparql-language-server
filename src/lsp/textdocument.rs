@@ -2,19 +2,20 @@ use std::fmt;
 
 use log::error;
 use serde::{Deserialize, Serialize};
+use tree_sitter::Point;
 
 use super::TextDocumentContentChangeEvent;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
-pub struct TextDoucmentItem {
+pub struct TextDocumentItem {
     pub uri: String,
     language_id: String,
     version: u32,
     pub text: String,
 }
 
-impl TextDoucmentItem {
+impl TextDocumentItem {
     pub(crate) fn apply_changes(
         &mut self,
         mut content_canges: Vec<TextDocumentContentChangeEvent>,
@@ -56,6 +57,13 @@ impl Position {
     pub fn new(line: u32, character: u32) -> Self {
         Self { line, character }
     }
+
+    pub(crate) fn to_point(&self) -> Point {
+        Point {
+            row: self.line as usize,
+            column: self.character as usize,
+        }
+    }
 }
 
 impl fmt::Display for Position {
@@ -70,27 +78,18 @@ pub struct Range {
     end: Position,
 }
 
-impl Range {
-    pub fn new(start_line: u32, start_character: u32, end_line: u32, end_character: u32) -> Self {
-        Self {
-            start: Position::new(start_line, start_character),
-            end: Position::new(end_line, end_character),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::lsp::TextDocumentContentChangeEvent;
 
-    use super::TextDoucmentItem;
+    use super::TextDocumentItem;
 
     #[test]
     fn full_changes() {
         let changes: Vec<TextDocumentContentChangeEvent> = vec![TextDocumentContentChangeEvent {
             text: "goodbye world".to_string(),
         }];
-        let mut document: TextDoucmentItem = TextDoucmentItem {
+        let mut document: TextDocumentItem = TextDocumentItem {
             uri: "file:///dings".to_string(),
             language_id: "foo".to_string(),
             version: 1,
@@ -104,7 +103,7 @@ mod tests {
     #[test]
     fn no_changes() {
         let changes: Vec<TextDocumentContentChangeEvent> = vec![];
-        let mut document: TextDoucmentItem = TextDoucmentItem {
+        let mut document: TextDocumentItem = TextDocumentItem {
             uri: "file:///dings".to_string(),
             language_id: "foo".to_string(),
             version: 1,

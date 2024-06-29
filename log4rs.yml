@@ -1,7 +1,7 @@
 appenders:
   file:
     kind: file
-    path: "log/output.log"
+    path: "/home/ianni/.local/share/mylsp/log"
     encoder:
       pattern: "{d} - {l} - {m}{n}"
 
