@@ -653,7 +653,9 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-sparql"
-version = "0.0.1"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35d569d587f35b6ea93d64d3d1e87599324c75a14b858ac2dfdc9fff9b05a566"
 dependencies = [
  "cc",
  "tree-sitter",
