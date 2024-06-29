@@ -1,4 +1,8 @@
-use crate::lsp::{analysis::AnalysisState, DidOpenTextDocumentNotification};
+use crate::lsp::{
+    analysis::{get_token, AnalysisState},
+    textdocument::TextDocumentItem,
+    HoverResponse, TextDocumentContentChangeEvent,
+};
 
 #[derive(Debug)]
 pub enum ServerStatus {
@@ -9,7 +13,7 @@ pub enum ServerStatus {
 
 pub struct ServerState {
     pub status: ServerStatus,
-    analysis_state: AnalysisState,
+    pub analysis_state: AnalysisState,
 }
 
 impl ServerState {
@@ -20,18 +24,16 @@ impl ServerState {
         }
     }
 
-    pub fn handle_did_open(&mut self, message: DidOpenTextDocumentNotification) {
-        self.analysis_state
-            .add_document(message.params.text_document);
+    pub fn add_document(&mut self, document: TextDocumentItem) {
+        self.analysis_state.add_document(document);
     }
 
-    pub(crate) fn handle_did_change(
+    pub(crate) fn change_document(
         &mut self,
-        did_change_notification: crate::lsp::DidChangeTextDocumentNotification,
+        document_uri: String,
+        content_changes: Vec<TextDocumentContentChangeEvent>,
     ) {
-        self.analysis_state.change_document(
-            did_change_notification.params.text_document.base.uri,
-            did_change_notification.params.content_changes,
-        )
+        self.analysis_state
+            .change_document(document_uri, content_changes)
     }
 }

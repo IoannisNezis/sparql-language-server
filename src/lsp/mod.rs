@@ -1,6 +1,6 @@
 pub mod analysis;
 mod capabilities;
 pub mod messages;
-mod textdocument;
+pub mod textdocument;
 
 pub use messages::*;
