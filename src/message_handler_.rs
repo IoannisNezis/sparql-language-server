@@ -2,12 +2,15 @@ use std::process::exit;
 
 use log::{error, info, warn};
 use serde::Serialize;
+use tree_sitter::{Tree, TreeCursor};
 
 use crate::{
     lsp::{
-        analysis::get_token, textdocument::TextDocumentItem, CompletionRequest, CompletionResponse,
-        DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, HoverRequest,
-        HoverResponse, InitializeRequest, InitializeResonse,
+        analysis::get_token,
+        textdocument::{Range, TextDocumentItem, TextEdit},
+        CompletionRequest, CompletionResponse, DidChangeTextDocumentNotification,
+        DidOpenTextDocumentNotification, FormattingOptions, FormattingRequest, FormattingResponse,
+        HoverRequest, HoverResponse, InitializeRequest, InitializeResonse,
     },
     rpc::{self, RequestMessage, ResponseMessage},
     state::{ServerState, ServerStatus},
@@ -109,7 +112,6 @@ pub fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
             },
             "textDocument/completion" => match serde_json::from_slice::<CompletionRequest>(bytes) {
                 Ok(completion_request) => {
-                    info!("{}", String::from_utf8(bytes.to_vec()).unwrap());
                     info!(
                         "Received completion request for {} {}",
                         completion_request.get_document_uri(),
@@ -120,6 +122,27 @@ pub fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
                 }
                 Err(error) => error!(
                     "Could not parse textDocument/completion request: {:?}",
+                    error
+                ),
+            },
+            "textDocument/formatting" => match serde_json::from_slice::<FormattingRequest>(bytes) {
+                Ok(formatting_request) => {
+                    let uri = formatting_request.get_document_uri();
+                    info!("Received formatting request for: {}", uri);
+                    match state.analysis_state.get_document(uri) {
+                        Some((document, Some(tree))) => {
+                            let options = formatting_request.get_options();
+
+                            let text_edits = format_query(document, tree, options);
+                            let response =
+                                FormattingResponse::new(formatting_request.get_id(), text_edits);
+                            send_message(&response);
+                        }
+                        _ => error!("Requested formatting for unknown document: {}", uri),
+                    }
+                }
+                Err(error) => error!(
+                    "Could not parse textDocument/formatting request: {:?}",
                     error
                 ),
             },
@@ -134,6 +157,69 @@ pub fn handle_message(bytes: &Vec<u8>, state: &mut ServerState) {
     } else {
         error!("An error occured while parsing the request content");
     }
+}
+
+fn format_query(
+    document: &TextDocumentItem,
+    tree: &Tree,
+    options: &FormattingOptions,
+) -> Vec<TextEdit> {
+    let range = document.get_full_range();
+    let text = format_helper(document, &mut tree.walk(), 0, options);
+    vec![TextEdit::new(range, text)]
+}
+
+fn format_helper(
+    document: &TextDocumentItem,
+    cursor: &mut TreeCursor,
+    indentation_level: u8,
+    options: &FormattingOptions,
+) -> String {
+    let mut result = String::new();
+    if cursor.goto_first_child() {
+        loop {
+            match cursor.node().kind() {
+                "unit" => {
+                    result.push_str(&format_helper(document, cursor, indentation_level, options));
+                }
+                "prologue" => {
+                    result.push_str(&format_helper(
+                        document,
+                        cursor,
+                        indentation_level + 1,
+                        options,
+                    ));
+                    result.push_str("\n");
+                }
+                "prefix_declaration" => {
+                    // TODO: Fix trailing whitespace
+                    result.push_str(&format_helper(document, cursor, indentation_level, options));
+                    result.push_str("\n");
+                }
+                "PREFIX" => {
+                    result.push_str("PREFIX ");
+                }
+                other => {
+                    info!("hit unknown node kind: {}", other);
+                    result.push_str(document.extract_node(cursor.node()).unwrap());
+                    result.push(' ');
+                }
+            };
+
+            if !cursor.goto_next_sibling() {
+                cursor.goto_parent();
+                break;
+            }
+        }
+    }
+    return result;
+    // if cursor.goto_first_child() {
+    //     format_helper(document, cursor, indentation_level + 1, options);
+    //     while cursor.goto_next_sibling() {
+    //         format_helper(document, cursor, indentation_level + 1, options);
+    //     }
+    //     cursor.goto_parent();
+    // }
 }
 
 // TODO: This trait should be narrowed down, Serialize is not enougth to be jsonrpc message.

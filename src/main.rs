@@ -10,11 +10,11 @@ use std::{
 
 use log::{error, info};
 
-use crate::{message_handler::handle_message, rpc::Header};
+use crate::{message_handler::dispatch, rpc::Header};
 
 fn main() {
     // Initialize logging
-    log4rs::init_file("/home/ianni/code/lspexample/log4rs.yml", Default::default()).unwrap();
+    log4rs::init_file("/home/ianni/code/sparql-lsp/log4rs.yml", Default::default()).unwrap();
     info!("Started LSP Server!");
 
     // Initialize input stream
@@ -75,7 +75,7 @@ fn main() {
                     }
                 }
             }
-            handle_message(&buffer, &mut server_state);
+            dispatch(&buffer, &mut server_state);
             buffer.clear();
         }
     }

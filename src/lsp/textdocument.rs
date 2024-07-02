@@ -2,7 +2,7 @@ use std::fmt;
 
 use log::error;
 use serde::{Deserialize, Serialize};
-use tree_sitter::Point;
+use tree_sitter::{Node, Point};
 
 use super::TextDocumentContentChangeEvent;
 
@@ -29,6 +29,20 @@ impl TextDocumentItem {
                 );
             }
         };
+    }
+
+    pub(crate) fn extract_node(&self, node: Node) -> Option<&str> {
+        self.text.get(node.start_byte()..node.end_byte())
+    }
+
+    pub fn get_full_range(&self) -> Range {
+        let lines = self.text.lines().collect::<Vec<&str>>();
+        return Range::new(
+            0,
+            0,
+            lines.len() as u32,
+            lines.last().unwrap_or(&"").len() as u32,
+        );
     }
 }
 
@@ -64,6 +78,13 @@ impl Position {
             column: self.character as usize,
         }
     }
+
+    fn from_point(point: Point) -> Position {
+        Position {
+            line: point.row as u32,
+            character: point.column as u32,
+        }
+    }
 }
 
 impl fmt::Display for Position {
@@ -76,6 +97,45 @@ impl fmt::Display for Position {
 pub struct Range {
     start: Position,
     end: Position,
+}
+
+impl Range {
+    pub fn from_tsrange(range: tree_sitter::Range) -> Self {
+        Self {
+            start: Position::from_point(range.start_point),
+            end: Position::from_point(range.end_point),
+        }
+    }
+
+    fn new(start_line: u32, start_character: u32, end_line: u32, end_character: u32) -> Self {
+        Self {
+            start: Position::new(start_line, start_character),
+            end: Position::new(end_line, end_character),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct TextEdit {
+    range: Range,
+    new_text: String,
+}
+
+impl TextEdit {
+    pub fn new(range: Range, new_text: String) -> Self {
+        Self { range, new_text }
+    }
+
+    pub(crate) fn foo() -> Vec<TextEdit> {
+        vec![TextEdit {
+            range: Range {
+                start: Position::new(0, 0),
+                end: Position::new(0, 1),
+            },
+            new_text: "hello from lsp".to_string(),
+        }]
+    }
 }
 
 #[cfg(test)]

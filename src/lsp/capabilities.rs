@@ -7,6 +7,7 @@ pub struct ServerCapabilities {
     text_document_sync: TextDocumentSyncKind,
     hover_provider: bool,
     completion_provider: CompletionOptions,
+    document_formatting_provider: DocumentFormattingOptions,
 }
 
 impl ServerCapabilities {
@@ -15,6 +16,7 @@ impl ServerCapabilities {
             text_document_sync: TextDocumentSyncKind::Full,
             hover_provider: true,
             completion_provider: CompletionOptions {},
+            document_formatting_provider: DocumentFormattingOptions {},
         }
     }
 }
@@ -33,6 +35,11 @@ struct CompletionOptions {
     // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionOptions
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct DocumentFormattingOptions {
+    // WARNING: This could also inherit WorkDoneProgressOptions (not implemented yet).
+}
+
 #[cfg(test)]
 mod tests {
     use super::ServerCapabilities;
@@ -45,7 +52,7 @@ mod tests {
 
         assert_eq!(
             serialized,
-            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{}}"
+            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{},\"documentFormattingProvider\":{}}"
         );
     }
 }

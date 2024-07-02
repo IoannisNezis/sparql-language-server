@@ -6,8 +6,7 @@ use tree_sitter::{Parser, Tree};
 use crate::lsp::textdocument::TextDocumentItem;
 
 pub struct AnalysisState {
-    documents: HashMap<String, TextDocumentItem>,
-    trees: HashMap<String, Option<Tree>>,
+    documents: HashMap<String, (TextDocumentItem, Option<Tree>)>,
     parser: Parser,
 }
 
@@ -22,7 +21,6 @@ impl AnalysisState {
         };
         Self {
             documents: HashMap::new(),
-            trees: HashMap::new(),
             parser,
         }
     }
@@ -31,8 +29,7 @@ impl AnalysisState {
         let tree = self.parser.parse(&text_document.text, None);
 
         let uri = text_document.uri.clone();
-        self.trees.insert(uri.clone(), tree);
-        self.documents.insert(uri, text_document);
+        self.documents.insert(uri.clone(), (text_document, tree));
     }
 
     pub(crate) fn change_document(
@@ -41,10 +38,10 @@ impl AnalysisState {
         content_changes: Vec<crate::lsp::TextDocumentContentChangeEvent>,
     ) {
         match self.documents.get_mut(&uri) {
-            Some(text_document) => {
+            Some((text_document, old_tree)) => {
                 text_document.apply_changes(content_changes);
                 let tree = self.parser.parse(&text_document.text, None);
-                self.trees.insert(uri.clone(), tree);
+                *old_tree = tree;
             }
             None => {
                 error!("Recived changes for unknown document: {}", uri);
@@ -52,7 +49,11 @@ impl AnalysisState {
         }
     }
 
+    pub(crate) fn get_document(&self, uri: &String) -> Option<&(TextDocumentItem, Option<Tree>)> {
+        self.documents.get(uri)
+    }
+
     pub(crate) fn get_tree(&self, uri: &str) -> Option<&Tree> {
-        self.trees.get(uri)?.as_ref()
+        self.documents.get(uri)?.1.as_ref()
     }
 }
