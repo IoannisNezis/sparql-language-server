@@ -88,7 +88,7 @@ mod tests {
     use super::{HoverRequest, HoverResponse};
 
     #[test]
-    fn decode_hover_request() {
+    fn deserialize() {
         let message = br#"{"params":{"textDocument":{"uri":"file:///dings"},"position":{"character":42,"line":3}},"method":"textDocument/hover","id":2,"jsonrpc":"2.0"}"#;
         let hover_request: HoverRequest = serde_json::from_slice(message).unwrap();
 
@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn encode_hover_response() {
+    fn serialize() {
         let hover_response = HoverResponse::new(42, "hover content".to_string());
         let expected_message = r#"{"jsonrpc":"2.0","id":42,"result":{"contents":[{"language":"sparql","value":"hover content"}]}}"#;
         assert_eq!(

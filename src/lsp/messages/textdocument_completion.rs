@@ -141,7 +141,7 @@ mod tests {
     use super::CompletionRequest;
 
     #[test]
-    fn decode_completion_request() {
+    fn deserialize() {
         let message = br#"{"id":4,"params":{"position":{"line":0,"character":0},"context":{"triggerKind":1},"textDocument":{"uri":"file:///dings"}},"jsonrpc":"2.0","method":"textDocument/completion"}"#;
         let completion_request: CompletionRequest = serde_json::from_slice(message).unwrap();
 
@@ -165,5 +165,10 @@ mod tests {
                 }
             }
         )
+    }
+
+    #[test]
+    fn serialze() {
+        todo!()
     }
 }

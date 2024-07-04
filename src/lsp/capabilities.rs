@@ -45,7 +45,7 @@ mod tests {
     use super::ServerCapabilities;
 
     #[test]
-    fn test_serialization() {
+    fn serialize() {
         let server_capabilities = ServerCapabilities::new();
 
         let serialized = serde_json::to_string(&server_capabilities).unwrap();

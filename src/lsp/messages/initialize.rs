@@ -73,24 +73,7 @@ mod tests {
     use super::{InitializeParams, InitializeRequest};
 
     #[test]
-    fn test_parse_initialize_params() {
-        let init_params = serde_json::from_slice::<InitializeParams>(
-            b"{\"clientInfo\": {\"name\": \"dings\", \"version\": \"42.1\"}}",
-        )
-        .expect("This is a valid InitParams String");
-        assert_eq!(
-            init_params,
-            InitializeParams {
-                client_info: ClientInfo {
-                    name: "dings".to_string(),
-                    version: Some("42.1".to_string())
-                }
-            }
-        );
-    }
-
-    #[test]
-    fn test_decode_initialize_request() {
+    fn deserialize() {
         let message = b"{\"jsonrpc\": \"2.0\",\"id\": 1, \"method\": \"initialize\", \"params\": { \"clientInfo\": {\"name\": \"dings\", \"version\": \"42.1\"}}}";
         let init_request: InitializeRequest = serde_json::from_slice(message).unwrap();
         assert_eq!(
