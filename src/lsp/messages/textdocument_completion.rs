@@ -48,27 +48,27 @@ impl CompletionResponse {
             base: ResponseMessage::new(id),
             result: CompletionResult {
                 items: vec![
-                    CompletionItem {
-                        label: "SELECT ${1:*} WHERE {\n  $0\n}".to_string(),
-                        kind: CompletionItemKind::Snippet,
-                        detail: "A template for a Select query".to_string(),
-                        documentation: "doc string".to_string(),
-                        insert_text_format: InsertTextFormat::Snippet,
-                    },
-                    CompletionItem {
-                        label: "DELETE {\n ${1}\n}\n WHERE {\n $0\n}".to_string(),
-                        kind: CompletionItemKind::Snippet,
-                        detail: "A template for Delete update query".to_string(),
-                        documentation: "doc string".to_string(),
-                        insert_text_format: InsertTextFormat::Snippet,
-                    },
-                    CompletionItem {
-                        label: "namespace:pred ".to_string(),
-                        kind: CompletionItemKind::Text,
-                        detail: "Property".to_string(),
-                        documentation: "".to_string(),
-                        insert_text_format: InsertTextFormat::PlainText,
-                    },
+                    // CompletionItem {
+                    //     label: "SELECT ${1:*} WHERE {\n  $0\n}".to_string(),
+                    //     kind: CompletionItemKind::Snippet,
+                    //     detail: "A template for a Select query".to_string(),
+                    //     documentation: "doc string".to_string(),
+                    //     insert_text_format: InsertTextFormat::Snippet,
+                    // },
+                    // CompletionItem {
+                    //     label: "DELETE {\n ${1}\n}\n WHERE {\n $0\n}".to_string(),
+                    //     kind: CompletionItemKind::Snippet,
+                    //     detail: "A template for Delete update query".to_string(),
+                    //     documentation: "doc string".to_string(),
+                    //     insert_text_format: InsertTextFormat::Snippet,
+                    // },
+                    // CompletionItem {
+                    //     label: "namespace:pred ".to_string(),
+                    //     kind: CompletionItemKind::Text,
+                    //     detail: "Property".to_string(),
+                    //     documentation: "".to_string(),
+                    //     insert_text_format: InsertTextFormat::PlainText,
+                    // },
                 ],
             },
         }
@@ -138,7 +138,7 @@ mod tests {
         rpc::{BaseMessage, RequestMessage},
     };
 
-    use super::CompletionRequest;
+    use super::{CompletionRequest, CompletionResponse};
 
     #[test]
     fn deserialize() {
@@ -168,7 +168,10 @@ mod tests {
     }
 
     #[test]
-    fn serialze() {
-        todo!()
+    fn serialize() {
+        let completion_response = CompletionResponse::new(1337);
+        let expected_message = r#"{"jsonrpc":"2.0","id":1337,"result":{"items":[]}}"#;
+        let actual_message = serde_json::to_string(&completion_response).unwrap();
+        assert_eq!(actual_message, expected_message);
     }
 }

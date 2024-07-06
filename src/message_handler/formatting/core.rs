@@ -6,6 +6,8 @@ use crate::lsp::{
     FormattingOptions,
 };
 
+use super::utils::KEYWORDS;
+
 pub(super) fn format_query(
     document: &TextDocumentItem,
     tree: &Tree,
@@ -19,7 +21,6 @@ pub(super) fn format_query(
     let text = format_helper(&document.text, &mut tree.walk(), 0, &indent_string);
     vec![TextEdit::new(range, text)]
 }
-
 pub(super) fn format_helper(
     text: &String,
     cursor: &mut TreeCursor,
@@ -30,10 +31,11 @@ pub(super) fn format_helper(
     let indent_str = &indent_base.repeat(indentation);
     let indent_str_small = match indentation {
         0 => String::new(),
-        i => "  ".repeat(i - 1),
+        i => (&indent_base).repeat(i - 1),
     };
     let line_break = "\n".to_string() + &indent_str;
     let line_break_small = "\n".to_string() + &indent_str_small;
+
     match cursor.node().kind() {
         "unit" => {
             result.push_str(&separate_children_by(
@@ -44,17 +46,44 @@ pub(super) fn format_helper(
                 indent_base,
             ));
         }
-        "Prologue" => {
+        "Prologue" | "GroupOrUnionGraphPattern" | "MinusGraphPattern" => {
             result.push_str(&separate_children_by(
                 text,
                 &cursor.node(),
                 &line_break,
-                0,
+                indentation,
                 indent_base,
             ));
         }
-        "BaseDecl" | "PrefixDecl" | "SelectQuery" | "SubSelect" | "SelectClause"
-        | "TriplesSameSubject" | "property" => {
+        "BaseDecl"
+        | "PrefixDecl"
+        | "SubSelect"
+        | "DatasetClause"
+        | "DefaultGraphClause"
+        | "NamedGraphClause"
+        | "TriplesSameSubject"
+        | "property"
+        | "WhereClause"
+        | "OptionalGraphPattern"
+        | "GraphGraphPattern"
+        | "ServiceGraphPattern"
+        | "Filter"
+        | "binary_expression"
+        | "Bind"
+        | "InlineData"
+        | "ValuesClause"
+        | "DataBlock"
+        | "GroupClause"
+        | "GroupCondition"
+        | "HavingClause"
+        | "HavingCondition"
+        | "OrderClause"
+        | "OrderCondition"
+        | "LimitOffsetClauses"
+        | "LimitClause"
+        | "OffsetClause"
+        | "ExistsFunc"
+        | "NotExistsFunc" => {
             result.push_str(&separate_children_by(
                 text,
                 &cursor.node(),
@@ -63,20 +92,32 @@ pub(super) fn format_helper(
                 indent_base,
             ));
         }
-        "ObjectList" => {
+        "Aggregate" | "SelectClause" => {
+            result.push_str(
+                &separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
+                    .replace("( ", "(")
+                    .replace(" )", ")"),
+            );
+        }
+
+        "ConstructQuery" => {
+            result.push_str(
+                &separate_children_by(text, &cursor.node(), "\n", indentation, indent_base)
+                    .replace("\n{", " {"),
+            );
+        }
+        "SelectQuery" | "DescribeQuery" | "AskQuery" => {
+            result.push_str(
+                &separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
+                    .replace("} \n", "}\n"),
+            );
+        }
+        "ObjectList" | "ExpressionList" | "SubstringExpression" | "RegexExpression" | "ArgList" => {
             result.push_str(
                 &separate_children_by(text, &cursor.node(), "", 0, indent_base).replace(",", ", "),
             );
         }
-        "WhereClause" | "OptionalGraphPattern" => {
-            result.push_str(&separate_children_by(
-                text,
-                &cursor.node(),
-                " ",
-                indentation,
-                indent_base,
-            ));
-        }
+        // TODO: indent propertys properly
         "PropertyListNotEmpty" => {
             result.push_str(&separate_children_by(
                 text,
@@ -86,7 +127,7 @@ pub(super) fn format_helper(
                 indent_base,
             ));
         }
-        "GroupGraphPattern" => {
+        "GroupGraphPattern" | "BrackettedExpression" | "ConstructTemplate" => {
             result.push_str(&separate_children_by(
                 text,
                 &cursor.node(),
@@ -95,22 +136,25 @@ pub(super) fn format_helper(
                 indent_base,
             ));
         }
-        "GroupGraphPatternSub" => {
+        "BuildInCall" | "FunctionCall" => {
+            result.push_str(&separate_children_by(
+                text,
+                &cursor.node(),
+                "",
+                indentation,
+                indent_base,
+            ));
+        }
+        "GroupGraphPatternSub" | "ConstructTriples" => {
             result.push_str(&line_break);
-
             result.push_str(
                 &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
                     .replace(&(line_break + "."), " ."),
             );
             result.push_str(&line_break_small);
         }
-        "TriplesBlock" => {
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
-                    .replace(". ", &(".".to_string() + &line_break)),
-            );
-        }
-        "GroupOrUnionGraphPattern" => {
+        "SolutionModifier" => {
+            result.push_str(&line_break);
             result.push_str(&separate_children_by(
                 text,
                 &cursor.node(),
@@ -119,12 +163,19 @@ pub(super) fn format_helper(
                 indent_base,
             ));
         }
-        "BASE" | "PREFIX" | "SELECT" | "DISTINCT" | "REDUCED" | "WHERE" | "UNION" | "OPTIONAL"
-        | "AS" => {
+        "TriplesBlock" => {
+            result.push_str(
+                &separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
+                    .replace(". ", &(".".to_string() + &line_break)),
+            );
+        }
+        keyword if (KEYWORDS.contains(&keyword)) => {
             result.push_str(&cursor.node().kind().to_string().to_uppercase());
         }
-        "PNAME_NS" | "IRIREF" | "VAR" | "(" | ")" | "{" | "}" | "." | "," | ";" | "*"
-        | "path_element" | "integer" => {
+        "PNAME_NS" | "IRIREF" | "VAR" | "INTEGER" | "DECIMAL" | "String" | "NIL"
+        | "BLANK_NODE_LABEL" | "RdfLiteral" | "PrefixedName" | "(" | ")" | "{" | "}" | "."
+        | "," | ";" | "*" | "+" | "-" | "/" | "<" | ">" | "=" | ">=" | "<=" | "!=" | "||"
+        | "&&" | "path_element" => {
             result.push_str(&extract_node(text, &cursor.node()));
         }
         other => {
