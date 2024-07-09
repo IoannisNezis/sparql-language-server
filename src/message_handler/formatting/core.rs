@@ -46,6 +46,12 @@ pub(super) fn format_helper(
                 indent_base,
             ));
         }
+        "Update" => {
+            result.push_str(
+                &separate_children_by(text, &cursor.node(), " ", 0, indent_base)
+                    .replace("; ", ";\n"),
+            );
+        }
         "Prologue" | "GroupOrUnionGraphPattern" | "MinusGraphPattern" => {
             result.push_str(&separate_children_by(
                 text,
@@ -54,6 +60,13 @@ pub(super) fn format_helper(
                 indentation,
                 indent_base,
             ));
+        }
+        "Modify" => {
+            result.push_str(
+                &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
+                    .replace("WITH\n", "WITH ")
+                    .replace("WHERE\n{", "WHERE {"),
+            );
         }
         "BaseDecl"
         | "PrefixDecl"
@@ -83,7 +96,23 @@ pub(super) fn format_helper(
         | "LimitClause"
         | "OffsetClause"
         | "ExistsFunc"
-        | "NotExistsFunc" => {
+        | "NotExistsFunc"
+        | "Load"
+        | "Clear"
+        | "Drop"
+        | "Add"
+        | "Move"
+        | "Copy"
+        | "Create"
+        | "InsertData"
+        | "DeleteData"
+        | "DeleteWhere"
+        | "GraphRef"
+        | "GraphRefAll"
+        | "GraphOrDefault"
+        | "DeleteClause"
+        | "InsertClause"
+        | "UsingClause" => {
             result.push_str(&separate_children_by(
                 text,
                 &cursor.node(),
@@ -127,7 +156,7 @@ pub(super) fn format_helper(
                 indent_base,
             ));
         }
-        "GroupGraphPattern" | "BrackettedExpression" | "ConstructTemplate" => {
+        "GroupGraphPattern" | "BrackettedExpression" | "ConstructTemplate" | "QuadData" => {
             result.push_str(&separate_children_by(
                 text,
                 &cursor.node(),
@@ -145,7 +174,22 @@ pub(super) fn format_helper(
                 indent_base,
             ));
         }
-        "GroupGraphPatternSub" | "ConstructTriples" => {
+        "QuadsNotTriples" => {
+            result.push_str(&separate_children_by(
+                text,
+                &cursor.node(),
+                " ",
+                indentation + 1,
+                indent_base,
+            ));
+        }
+        "TriplesTemplateBlock" => {
+            result.push_str(
+                &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
+                    .replace(&(line_break + "}"), &(line_break_small + "}")),
+            );
+        }
+        "GroupGraphPatternSub" | "ConstructTriples" | "Quads" => {
             result.push_str(&line_break);
             result.push_str(
                 &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
@@ -163,7 +207,7 @@ pub(super) fn format_helper(
                 indent_base,
             ));
         }
-        "TriplesBlock" => {
+        "TriplesBlock" | "TriplesTemplate" => {
             result.push_str(
                 &separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
                     .replace(". ", &(".".to_string() + &line_break)),

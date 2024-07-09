@@ -304,3 +304,149 @@ fn ask() {
     );
     format_and_compare(ugly_query, pretty_query)
 }
+
+#[test]
+fn graph_management() {
+    let ugly_query = indoc!(
+        "load SIlENT <a> INTO graph <c> ;
+              LOAD    <b>; Clear Graph <b>          ;
+          drop   graph<c>  ; ADD SILENT GRAPH <c> to DEFAULT ;MOVE default TO GRAPH <a> ;
+                  create graph <d>"
+    );
+    let pretty_query = indoc!(
+        "LOAD SILENT <a> INTO GRAPH <c> ;
+         LOAD <b> ;
+         CLEAR GRAPH <b> ;
+         DROP GRAPH <c> ;
+         ADD SILENT GRAPH <c> TO DEFAULT ;
+         MOVE DEFAULT TO GRAPH <a> ;
+         CREATE GRAPH <d>"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn insert_data() {
+    let ugly_query = indoc!(
+        "Insert   data
+         {
+            ?a ?b ?c.
+             graph <a> {
+         ?c ?b ?a }.
+         ?d ?e ?f
+         graph  ?d 
+         {
+         ?a ?d ?c
+         }
+         ?d ?e ?f
+         }"
+    );
+    let pretty_query = indoc!(
+        "INSERT DATA {
+           ?a ?b ?c .
+           GRAPH <a> {
+             ?c ?b ?a
+           } .
+           ?d ?e ?f
+           GRAPH ?d {
+             ?a ?d ?c
+           }
+           ?d ?e ?f
+         }"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn delete_data() {
+    let ugly_query = indoc!(
+        "delete   data
+         {
+            ?a ?b ?c.
+             graph <a> {
+         ?c ?b ?a }.
+         ?d ?e ?f
+         graph  ?d 
+         {
+         ?a ?d ?c
+         }
+         ?d ?e ?f
+         }"
+    );
+    let pretty_query = indoc!(
+        "DELETE DATA {
+           ?a ?b ?c .
+           GRAPH <a> {
+             ?c ?b ?a
+           } .
+           ?d ?e ?f
+           GRAPH ?d {
+             ?a ?d ?c
+           }
+           ?d ?e ?f
+         }"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn delete_where() {
+    let ugly_query = indoc!(
+        "delete   where
+         {
+            ?a ?b ?c.
+             graph <a> {
+         ?c ?b ?a }.
+         ?d ?e ?f
+         graph  ?d 
+         {
+         ?a ?d ?c
+         }
+         ?d ?e ?f
+         }"
+    );
+    let pretty_query = indoc!(
+        "DELETE WHERE {
+           ?a ?b ?c .
+           GRAPH <a> {
+             ?c ?b ?a
+           } .
+           ?d ?e ?f
+           GRAPH ?d {
+             ?a ?d ?c
+           }
+           ?d ?e ?f
+         }"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn modify() {
+    let ugly_query = indoc!(
+        "With <a> delete
+         { 
+         ?a  ?b   ?C   
+          } insert { ?x ?y ?z } using <a> using named <b> where
+             {
+         { ?a ?b ?c  .  }
+         }"
+    );
+    let pretty_query = indoc!(
+        "WITH <a>
+         DELETE {
+           ?a ?b ?C
+         }
+         INSERT {
+           ?x ?y ?z
+         }
+         USING <a>
+         USING NAMED <b>
+         WHERE {
+           {
+             ?a ?b ?c .
+           }
+         }"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}

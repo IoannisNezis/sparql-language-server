@@ -1,4 +1,4 @@
-pub const KEYWORDS: [&str; 93] = [
+pub const KEYWORDS: [&str; 110] = [
     "BASE",
     "PREFIX",
     "SELECT",
@@ -92,4 +92,21 @@ pub const KEYWORDS: [&str; 93] = [
     "EXISTS",
     "IN",
     "NOT",
+    "LOAD",
+    "INTO",
+    "CLEAR",
+    "ALL",
+    "NAMED",
+    "DEFAULT",
+    "DROP",
+    "ADD",
+    "TO",
+    "MOVE",
+    "COPY",
+    "INSERT",
+    "DATA",
+    "DELETE",
+    "WITH",
+    "USING",
+    "CREATE",
 ];
