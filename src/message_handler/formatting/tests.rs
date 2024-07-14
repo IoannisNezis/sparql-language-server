@@ -14,6 +14,7 @@ fn format_and_compare(ugly_query: &str, pretty_query: &str) {
         &mut tree.root_node().walk(),
         0,
         "  ",
+        "",
     );
     assert_eq!(formatted_query, pretty_query);
 }
@@ -258,7 +259,7 @@ fn construct() {
          WHERE       { ?x foaf:name ?name }"
     );
     let pretty_query = indoc!(
-        "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+        "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>
          PREFIX vcard: <http://www.w3.org/2001/vcard-rdf/3.0#>
 
          CONSTRUCT {
@@ -447,6 +448,68 @@ fn modify() {
              ?a ?b ?c .
            }
          }"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn property_paths() {
+    let ugly_query = indoc!(
+        "SELECT *
+         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S }"
+    );
+    let pretty_query = indoc!(
+        "SELECT * WHERE {
+           ?P foaf:givenName ?G ;
+              foaf:surname ?S
+         }"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn property_list_paths() {
+    let ugly_query = indoc!(
+        "SELECT * WHERE {
+           ?a          <iri>/^a/(!<>?)+   |           (<iri> 
+         | ^a |  a) ?b .
+         }"
+    );
+    let pretty_query = indoc!(
+        "SELECT * WHERE {
+           ?a <iri>/^a/(!<>?)+ | (<iri> | ^a | a) ?b .
+         }"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn prefix_indentation() {
+    let ugly_query = indoc!(
+        "PREFIX hello_world: <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_worl: <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_wor: <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_wo: <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_w: <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_: <http://xmlns.com/foaf/0.1/>
+         PREFIX hello: <http://xmlns.com/foaf/0.1/>
+         PREFIX hell: <http://xmlns.com/foaf/0.1/>
+         PREFIX hel: <http://xmlns.com/foaf/0.1/>
+         PREFIX he: <http://xmlns.com/foaf/0.1/>
+         PREFIX h: <http://xmlns.com/foaf/0.1/>"
+    );
+    let pretty_query = indoc!(
+        "PREFIX hello_world: <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_worl:  <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_wor:   <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_wo:    <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_w:     <http://xmlns.com/foaf/0.1/>
+         PREFIX hello_:      <http://xmlns.com/foaf/0.1/>
+         PREFIX hello:       <http://xmlns.com/foaf/0.1/>
+         PREFIX hell:        <http://xmlns.com/foaf/0.1/>
+         PREFIX hel:         <http://xmlns.com/foaf/0.1/>
+         PREFIX he:          <http://xmlns.com/foaf/0.1/>
+         PREFIX h:           <http://xmlns.com/foaf/0.1/>"
     );
     format_and_compare(ugly_query, pretty_query)
 }

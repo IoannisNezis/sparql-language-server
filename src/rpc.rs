@@ -1,4 +1,5 @@
 use core::panic;
+use std::io::{self, Write};
 
 use log::error;
 use nom::{
@@ -64,9 +65,13 @@ impl Header {
     }
 }
 
-pub fn encode<T: Serialize>(object: &T) -> String {
+pub fn send_message<T: Serialize>(object: &T) {
     match serde_json::to_string(object) {
-        Ok(string) => string,
+        Ok(string) => {
+            let message = format!("Content-Length: {}\r\n\r\n{}", string.len(), string);
+            print!("{}", message);
+            io::stdout().flush().expect("No IO errors or EOFs");
+        }
         Err(error) => {
             error!(
                 "An unexpected Error occured during the message encoding: {}, shutting down",

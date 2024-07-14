@@ -1,16 +1,17 @@
+mod completion;
 mod formatting;
 use std::process::exit;
 
 use log::{error, info, warn};
-use serde::Serialize;
 
 use crate::{
     lsp::{
-        analysis::get_token, textdocument::TextDocumentItem, CompletionRequest, CompletionResponse,
+        analysis::get_token, textdocument::TextDocumentItem, CompletionRequest,
         DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
         HoverRequest, HoverResponse, InitializeRequest, InitializeResonse,
     },
-    rpc::{self, RequestMessage, ResponseMessage},
+    message_handler::completion::handly_completion_request,
+    rpc::{self, send_message, RequestMessage, ResponseMessage},
     state::{ServerState, ServerStatus},
 };
 
@@ -117,7 +118,7 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
                         completion_request.get_document_uri(),
                         completion_request.get_position()
                     );
-                    let response = CompletionResponse::new(completion_request.get_id());
+                    let response = handly_completion_request(completion_request, state);
                     send_message(&response);
                 }
                 Err(error) => error!(
@@ -146,15 +147,4 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
     } else {
         error!("An error occured while parsing the request content");
     }
-}
-
-// TODO: This trait should be narrowed down, Serialize is not enougth to be jsonrpc message.
-fn send_message<T: Serialize>(message_body: &T) {
-    let message_body_string = rpc::encode(&message_body);
-    // info!("sending: {}", message_body_string);
-    println!(
-        "Content-Length: {}\r\n\r\n{}",
-        message_body_string.len(),
-        message_body_string
-    );
 }

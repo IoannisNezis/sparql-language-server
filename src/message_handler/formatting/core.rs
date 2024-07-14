@@ -1,5 +1,7 @@
-use log::warn;
-use tree_sitter::{Node, Tree, TreeCursor};
+use std::usize;
+
+use log::{error, info, warn};
+use tree_sitter::{Node, Query, QueryCapture, QueryCursor, Tree, TreeCursor};
 
 use crate::lsp::{
     textdocument::{TextDocumentItem, TextEdit},
@@ -18,7 +20,7 @@ pub(super) fn format_query(
         true => " ".repeat(options.tab_size as usize),
         false => "\t".to_string(),
     };
-    let text = format_helper(&document.text, &mut tree.walk(), 0, &indent_string);
+    let text = format_helper(&document.text, &mut tree.walk(), 0, &indent_string, "");
     vec![TextEdit::new(range, text)]
 }
 pub(super) fn format_helper(
@@ -26,8 +28,8 @@ pub(super) fn format_helper(
     cursor: &mut TreeCursor,
     indentation: usize,
     indent_base: &str,
+    extra_indent: &str,
 ) -> String {
-    let mut result = String::new();
     let indent_str = &indent_base.repeat(indentation);
     let indent_str_small = match indentation {
         0 => String::new(),
@@ -37,36 +39,52 @@ pub(super) fn format_helper(
     let line_break_small = "\n".to_string() + &indent_str_small;
 
     match cursor.node().kind() {
-        "unit" => {
-            result.push_str(&separate_children_by(
-                text,
-                &cursor.node(),
-                "\n\n",
-                0,
-                indent_base,
-            ));
-        }
+        "unit" => separate_children_by(text, &cursor.node(), "\n\n", 0, indent_base),
         "Update" => {
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), " ", 0, indent_base)
-                    .replace("; ", ";\n"),
-            );
+            separate_children_by(text, &cursor.node(), " ", 0, indent_base).replace("; ", ";\n")
         }
         "Prologue" | "GroupOrUnionGraphPattern" | "MinusGraphPattern" => {
-            result.push_str(&separate_children_by(
-                text,
-                &cursor.node(),
-                &line_break,
-                indentation,
-                indent_base,
-            ));
+            let mut formatted_string =
+                separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base);
+
+            // Indent the prefix iris to align.
+            if let Ok(query) = Query::new(
+                &tree_sitter_sparql::language(),
+                "(PrefixDecl (PNAME_NS) @prefix)",
+            ) {
+                // Step 1: Get all prefix strs and their lengths.
+                let mut query_cursor = QueryCursor::new();
+                let captures = query_cursor.captures(&query, cursor.node(), text.as_bytes());
+                let prefixes: Vec<(&str, usize)> = captures
+                    .map(|(query_match, capture_index)| {
+                        let node = query_match.captures[capture_index].node;
+                        (
+                            node.utf8_text(text.as_bytes()).unwrap(),
+                            node.end_position().column - node.start_position().column,
+                        )
+                    })
+                    .collect();
+                // Step 2: Get the length of the longest prefix.
+                let max_prefix_length = prefixes
+                    .iter()
+                    .fold(0, |old_max, (_, length)| old_max.max(*length));
+                // Step 3: Insert n spaces after each prefix, where n is the length difference to
+                // the logest prefix
+                for (prefix, length) in prefixes {
+                    formatted_string = formatted_string.replace(
+                        &(prefix.to_string() + " "),
+                        &(prefix.to_string() + &" ".repeat(max_prefix_length - length + 1)),
+                    );
+                }
+            } else {
+                error!("Query string to retrieve prefixes in invalid!\nIndentation of Prefixes was aborted.");
+            }
+            return formatted_string;
         }
         "Modify" => {
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
-                    .replace("WITH\n", "WITH ")
-                    .replace("WHERE\n{", "WHERE {"),
-            );
+            separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
+                .replace("WITH\n", "WITH ")
+                .replace("WHERE\n{", "WHERE {")
         }
         "BaseDecl"
         | "PrefixDecl"
@@ -112,122 +130,112 @@ pub(super) fn format_helper(
         | "GraphOrDefault"
         | "DeleteClause"
         | "InsertClause"
-        | "UsingClause" => {
-            result.push_str(&separate_children_by(
-                text,
-                &cursor.node(),
-                " ",
-                indentation,
-                indent_base,
-            ));
-        }
+        | "UsingClause"
+        | "PropertyListNotEmpty"
+        | "Path" => separate_children_by(text, &cursor.node(), " ", indentation, indent_base),
         "Aggregate" | "SelectClause" => {
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
-                    .replace("( ", "(")
-                    .replace(" )", ")"),
-            );
+            separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
+                .replace("( ", "(")
+                .replace(" )", ")")
         }
 
         "ConstructQuery" => {
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), "\n", indentation, indent_base)
-                    .replace("\n{", " {"),
-            );
+            separate_children_by(text, &cursor.node(), "\n", indentation, indent_base)
+                .replace("\n{", " {")
         }
         "SelectQuery" | "DescribeQuery" | "AskQuery" => {
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
-                    .replace("} \n", "}\n"),
-            );
+            separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
+                .replace("} \n", "}\n")
         }
         "ObjectList" | "ExpressionList" | "SubstringExpression" | "RegexExpression" | "ArgList" => {
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), "", 0, indent_base).replace(",", ", "),
-            );
+            separate_children_by(text, &cursor.node(), "", 0, indent_base).replace(",", ", ")
         }
-        // TODO: indent propertys properly
-        "PropertyListNotEmpty" => {
-            result.push_str(&separate_children_by(
-                text,
-                &cursor.node(),
-                &line_break,
-                indentation,
-                indent_base,
-            ));
+        "TriplesSameSubjectPath" => match cursor.node().child_count() {
+            2 => {
+                let subject = cursor
+                    .node()
+                    .child(0)
+                    .expect("The first node has to exist, i just checked if there are 2.");
+                let range = subject.range();
+                let predicate = cursor
+                    .node()
+                    .child(1)
+                    .expect("The second node has to exist, i just checked if there are 2.");
+
+                subject.utf8_text(text.as_bytes()).unwrap().to_string()
+                    + " "
+                    + &format_helper(
+                        text,
+                        &mut predicate.walk(),
+                        indentation,
+                        indent_base,
+                        &" ".repeat(range.end_point.column - range.start_point.column + 1),
+                    )
+            }
+            _ => separate_children_by(text, &cursor.node(), " ", indentation, indent_base),
+        },
+        "PropertyListPathNotEmpty" => {
+            separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
+                .replace("; ", &(";".to_string() + &line_break + extra_indent))
         }
         "GroupGraphPattern" | "BrackettedExpression" | "ConstructTemplate" | "QuadData" => {
-            result.push_str(&separate_children_by(
-                text,
-                &cursor.node(),
-                "",
-                indentation + 1,
-                indent_base,
-            ));
+            separate_children_by(text, &cursor.node(), "", indentation + 1, indent_base)
         }
-        "BuildInCall" | "FunctionCall" => {
-            result.push_str(&separate_children_by(
-                text,
-                &cursor.node(),
-                "",
-                indentation,
-                indent_base,
-            ));
-        }
+        "BuildInCall" | "FunctionCall" | "PathSequence" | "PathEltOrInverse" | "PathElt"
+        | "PathPrimary" => separate_children_by(text, &cursor.node(), "", indentation, indent_base),
         "QuadsNotTriples" => {
-            result.push_str(&separate_children_by(
-                text,
-                &cursor.node(),
-                " ",
-                indentation + 1,
-                indent_base,
-            ));
+            separate_children_by(text, &cursor.node(), " ", indentation + 1, indent_base)
         }
         "TriplesTemplateBlock" => {
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
-                    .replace(&(line_break + "}"), &(line_break_small + "}")),
-            );
+            separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
+                .replace(&(line_break + "}"), &(line_break_small + "}"))
         }
         "GroupGraphPatternSub" | "ConstructTriples" | "Quads" => {
-            result.push_str(&line_break);
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
-                    .replace(&(line_break + "."), " ."),
-            );
-            result.push_str(&line_break_small);
+            line_break.clone()
+                + &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
+                    .replace(&(line_break + "."), " .")
+                + &line_break_small
         }
         "SolutionModifier" => {
-            result.push_str(&line_break);
-            result.push_str(&separate_children_by(
-                text,
-                &cursor.node(),
-                &line_break,
-                indentation,
-                indent_base,
-            ));
+            line_break.clone()
+                + &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
         }
         "TriplesBlock" | "TriplesTemplate" => {
-            result.push_str(
-                &separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
-                    .replace(". ", &(".".to_string() + &line_break)),
-            );
+            separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
+                .replace(". ", &(".".to_string() + &line_break))
         }
-        keyword if (KEYWORDS.contains(&keyword)) => {
-            result.push_str(&cursor.node().kind().to_string().to_uppercase());
-        }
+
+        keyword if (KEYWORDS.contains(&keyword)) => keyword.to_string(),
         "PNAME_NS" | "IRIREF" | "VAR" | "INTEGER" | "DECIMAL" | "String" | "NIL"
-        | "BLANK_NODE_LABEL" | "RdfLiteral" | "PrefixedName" | "(" | ")" | "{" | "}" | "."
-        | "," | ";" | "*" | "+" | "-" | "/" | "<" | ">" | "=" | ">=" | "<=" | "!=" | "||"
-        | "&&" | "path_element" => {
-            result.push_str(&extract_node(text, &cursor.node()));
+        | "BLANK_NODE_LABEL" | "RdfLiteral" | "PrefixedName" | "PathMod" | "(" | ")" | "{"
+        | "}" | "." | "," | ";" | "*" | "+" | "-" | "/" | "<" | ">" | "=" | ">=" | "<=" | "!="
+        | "||" | "&&" | "|" | "^" => cursor
+            .node()
+            .utf8_text(text.as_bytes())
+            .unwrap()
+            .to_string(),
+        "ERROR" => {
+            if let Some(child) = cursor.node().child(0) {
+                format_helper(
+                    text,
+                    &mut child.walk(),
+                    indentation,
+                    indent_base,
+                    extra_indent,
+                )
+            } else {
+                String::new()
+            }
         }
         other => {
             warn!("found unknown node kind while formatting: {}", other);
-            result.push_str(&extract_node(text, &cursor.node()));
+            cursor
+                .node()
+                .utf8_text(text.as_bytes())
+                .unwrap()
+                .to_string()
         }
     }
-    return result;
 }
 
 fn separate_children_by(
@@ -238,14 +246,7 @@ fn separate_children_by(
     indent_base: &str,
 ) -> String {
     node.children(&mut node.walk())
-        .map(|node| format_helper(text, &mut node.walk(), indentation, indent_base))
+        .map(|node| format_helper(text, &mut node.walk(), indentation, indent_base, ""))
         .collect::<Vec<String>>()
         .join(seperator)
-}
-
-fn extract_node(source_code: &String, node: &Node) -> String {
-    source_code
-        .get(node.start_byte()..node.end_byte())
-        .unwrap()
-        .to_string()
 }
