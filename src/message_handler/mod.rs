@@ -8,7 +8,7 @@ use crate::{
     lsp::{
         analysis::get_token, textdocument::TextDocumentItem, CompletionRequest,
         DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
-        HoverRequest, HoverResponse, InitializeRequest, InitializeResonse,
+        HoverRequest, HoverResponse, InitializeRequest, InitializeResonse, ShutdownResponse,
     },
     message_handler::completion::handly_completion_request,
     rpc::{self, RequestMessage, ResponseMessage},
@@ -47,10 +47,7 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
             "shutdown" => match serde_json::from_slice::<RequestMessage>(bytes) {
                 Ok(shutdown_request) => {
                     info!("recieved shutdown request, preparing to shut down");
-                    let response = ResponseMessage {
-                        jsonrpc: "2.0".to_string(),
-                        id: shutdown_request.id,
-                    };
+                    let response = ShutdownResponse::new(shutdown_request.id);
                     state.status = ServerStatus::ShuttingDown;
                     return Some(serde_json::to_string(&response).unwrap());
                 }
