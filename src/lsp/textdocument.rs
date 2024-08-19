@@ -2,7 +2,12 @@ use std::fmt;
 
 use log::error;
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "native")]
 use tree_sitter::Point;
+
+#[cfg(feature = "wasm")]
+use tree_sitter_c2rust::Point;
 
 use super::TextDocumentContentChangeEvent;
 

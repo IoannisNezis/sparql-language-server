@@ -1,19 +1,25 @@
+#[cfg(all(feature = "wasm", feature = "native"))]
+compile_error!("feature \"wasm\" and feature \"native\" cannot be enabled at the same time");
+
 mod lsp;
 mod message_handler;
 mod rpc;
+mod server;
 mod state;
 
 use std::{
-    io::{self, BufReader, Read},
+    io::{self, BufReader, Read, Write},
     process::exit,
 };
 
 use log::{error, info};
+use server::Server;
 
-use crate::{message_handler::dispatch, rpc::Header};
+use crate::rpc::Header;
 
 fn main() {
     // Initialize logging
+    #[cfg(feature = "native")]
     log4rs::init_file("/home/ianni/code/sparql-lsp/log4rs.yml", Default::default()).unwrap();
     info!("Started LSP Server!");
 
@@ -24,7 +30,7 @@ fn main() {
     let mut buffer = vec![];
 
     // Initialize the server state
-    let mut server_state = state::ServerState::new();
+    let mut server = Server::new();
 
     loop {
         match bytes.next() {
@@ -75,7 +81,14 @@ fn main() {
                     }
                 }
             }
-            dispatch(&buffer, &mut server_state);
+            match server.handle_message(buffer.clone()) {
+                Some(response) => {
+                    print!("Content-Length: {}\r\n\r\n{}", response.len(), response);
+                    io::stdout().flush().expect("No IO errors or EOFs");
+                }
+                _ => {}
+            }
+
             buffer.clear();
         }
     }

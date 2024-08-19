@@ -496,7 +496,8 @@ fn prefix_indentation() {
          PREFIX hell: <http://xmlns.com/foaf/0.1/>
          PREFIX hel: <http://xmlns.com/foaf/0.1/>
          PREFIX he: <http://xmlns.com/foaf/0.1/>
-         PREFIX h: <http://xmlns.com/foaf/0.1/>"
+         PREFIX h: <http://xmlns.com/foaf/0.1/>
+         SELECT * {}"
     );
     let pretty_query = indoc!(
         "PREFIX hello_world: <http://xmlns.com/foaf/0.1/>
@@ -509,7 +510,28 @@ fn prefix_indentation() {
          PREFIX hell:        <http://xmlns.com/foaf/0.1/>
          PREFIX hel:         <http://xmlns.com/foaf/0.1/>
          PREFIX he:          <http://xmlns.com/foaf/0.1/>
-         PREFIX h:           <http://xmlns.com/foaf/0.1/>"
+         PREFIX h:           <http://xmlns.com/foaf/0.1/>
+
+         SELECT * {}"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn prefix_indentation2() {
+    let ugly_query = indoc!(
+        "PREFIX aa: <>
+         PREFIX a:   <>
+         PREFIX a:   <>
+
+         SELECT * {}"
+    );
+    let pretty_query = indoc!(
+        "PREFIX aa: <>
+         PREFIX a:  <>
+         PREFIX a:  <>
+
+         SELECT * {}"
     );
     format_and_compare(ugly_query, pretty_query)
 }

@@ -11,13 +11,13 @@ use crate::{
         HoverRequest, HoverResponse, InitializeRequest, InitializeResonse,
     },
     message_handler::completion::handly_completion_request,
-    rpc::{self, send_message, RequestMessage, ResponseMessage},
-    state::{ServerState, ServerStatus},
+    rpc::{self, RequestMessage, ResponseMessage},
+    server::{ServerState, ServerStatus},
 };
 
 use self::formatting::handle_format_request;
 
-pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
+pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
     if let Ok(message) = rpc::decode_message(bytes) {
         match message.method.as_str() {
             "initialize" => match serde_json::from_slice::<InitializeRequest>(bytes) {
@@ -32,13 +32,17 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
                             .unwrap_or("no version specified".to_string())
                     );
                     let initialize_response = InitializeResonse::new(initialize_request.base.id);
-                    send_message(&initialize_response);
+                    return Some(serde_json::to_string(&initialize_response).unwrap());
                 }
-                Err(error) => error!("Could not parse initialize request: {:?}", error),
+                Err(error) => {
+                    error!("Could not parse initialize request: {:?}", error);
+                    return None;
+                }
             },
             "initialized" => {
                 info!("initialization completed");
                 state.status = ServerStatus::Running;
+                return None;
             }
             "shutdown" => match serde_json::from_slice::<RequestMessage>(bytes) {
                 Ok(shutdown_request) => {
@@ -47,10 +51,13 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
                         jsonrpc: "2.0".to_string(),
                         id: shutdown_request.id,
                     };
-                    send_message(&response);
                     state.status = ServerStatus::ShuttingDown;
+                    return Some(serde_json::to_string(&response).unwrap());
                 }
-                Err(error) => error!("Could not parse shutdown request: {:?}", error),
+                Err(error) => {
+                    error!("Could not parse shutdown request: {:?}", error);
+                    return None;
+                }
             },
             "exit" => {
                 info!("recieved exit notification, shutting down!");
@@ -67,9 +74,11 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
                         let text_document: TextDocumentItem =
                             did_open_notification.get_text_document();
                         state.add_document(text_document);
+                        return None;
                     }
                     Err(error) => {
-                        error!("Could not parse textDocument/didOpen request: {:?}", error)
+                        error!("Could not parse textDocument/didOpen request: {:?}", error);
+                        return None;
                     }
                 }
             }
@@ -83,13 +92,15 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
                         state.change_document(
                             did_change_notification.params.text_document.base.uri,
                             did_change_notification.params.content_changes,
-                        )
+                        );
+                        return None;
                     }
                     Err(error) => {
                         error!(
                             "Could not parse textDocument/didChange notification: {:?}",
                             error
-                        )
+                        );
+                        return None;
                     }
                 }
             }
@@ -107,9 +118,12 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
                     );
 
                     let response = HoverResponse::new(hover_request.get_id(), response_content);
-                    send_message(&response);
+                    return Some(serde_json::to_string(&response).unwrap());
                 }
-                Err(error) => error!("Could not parse textDocument/hover request: {:?}", error),
+                Err(error) => {
+                    error!("Could not parse textDocument/hover request: {:?}", error);
+                    return None;
+                }
             },
             "textDocument/completion" => match serde_json::from_slice::<CompletionRequest>(bytes) {
                 Ok(completion_request) => {
@@ -119,22 +133,28 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
                         completion_request.get_position()
                     );
                     let response = handly_completion_request(completion_request, state);
-                    send_message(&response);
+                    return Some(serde_json::to_string(&response).unwrap());
                 }
-                Err(error) => error!(
-                    "Could not parse textDocument/completion request: {:?}",
-                    error
-                ),
+                Err(error) => {
+                    error!(
+                        "Could not parse textDocument/completion request: {:?}",
+                        error
+                    );
+                    return None;
+                }
             },
             "textDocument/formatting" => match serde_json::from_slice::<FormattingRequest>(bytes) {
                 Ok(formatting_request) => {
                     let response = handle_format_request(formatting_request, state);
-                    send_message(&response);
+                    return Some(serde_json::to_string(&response).unwrap());
                 }
-                Err(error) => error!(
-                    "Could not parse textDocument/formatting request: {:?}",
-                    error
-                ),
+                Err(error) => {
+                    error!(
+                        "Could not parse textDocument/formatting request: {:?}",
+                        error
+                    );
+                    return None;
+                }
             },
             unknown_method => {
                 warn!(
@@ -142,9 +162,11 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) {
                     unknown_method,
                     String::from_utf8(bytes.to_vec()).unwrap()
                 );
+                return None;
             }
         };
     } else {
         error!("An error occured while parsing the request content");
+        return None;
     }
 }

@@ -1,7 +1,12 @@
 use std::collections::HashMap;
 
 use log::{error, info};
+
+#[cfg(feature = "native")]
 use tree_sitter::{Parser, Tree};
+
+#[cfg(feature = "wasm")]
+use tree_sitter_c2rust::{Parser, Tree};
 
 use crate::lsp::textdocument::TextDocumentItem;
 

@@ -1,7 +1,11 @@
-use std::usize;
+use std::{collections::HashSet, usize};
 
-use log::{error, info, warn};
-use tree_sitter::{Node, Query, QueryCapture, QueryCursor, Tree, TreeCursor};
+use log::{error, warn};
+#[cfg(feature = "native")]
+use tree_sitter::{Node, Query, QueryCursor, Tree, TreeCursor};
+
+#[cfg(feature = "wasm")]
+use tree_sitter_c2rust::{Node, Query, QueryCursor, Tree, TreeCursor};
 
 use crate::lsp::{
     textdocument::{TextDocumentItem, TextEdit},
@@ -53,9 +57,10 @@ pub(super) fn format_helper(
                 "(PrefixDecl (PNAME_NS) @prefix)",
             ) {
                 // Step 1: Get all prefix strs and their lengths.
+                // NOTE: Here a `HashSet` is used to avoid douplication of prefixes.
                 let mut query_cursor = QueryCursor::new();
                 let captures = query_cursor.captures(&query, cursor.node(), text.as_bytes());
-                let prefixes: Vec<(&str, usize)> = captures
+                let prefixes: HashSet<(&str, usize)> = captures
                     .map(|(query_match, capture_index)| {
                         let node = query_match.captures[capture_index].node;
                         (
@@ -69,11 +74,11 @@ pub(super) fn format_helper(
                     .iter()
                     .fold(0, |old_max, (_, length)| old_max.max(*length));
                 // Step 3: Insert n spaces after each prefix, where n is the length difference to
-                // the logest prefix
+                //         the longest prefix
                 for (prefix, length) in prefixes {
                     formatted_string = formatted_string.replace(
-                        &(prefix.to_string() + " "),
-                        &(prefix.to_string() + &" ".repeat(max_prefix_length - length + 1)),
+                        &format!(" {} ", prefix),
+                        &format!(" {}{}", prefix, " ".repeat(max_prefix_length - length + 1)),
                     );
                 }
             } else {
@@ -214,19 +219,20 @@ pub(super) fn format_helper(
             .utf8_text(text.as_bytes())
             .unwrap()
             .to_string(),
-        "ERROR" => {
-            if let Some(child) = cursor.node().child(0) {
-                format_helper(
-                    text,
-                    &mut child.walk(),
-                    indentation,
-                    indent_base,
-                    extra_indent,
-                )
-            } else {
-                String::new()
-            }
-        }
+        // "ERROR" => {
+        //     cursor.node().child
+        //     if let Some(child) = cursor.node().child(0) {
+        //         format_helper(
+        //             text,
+        //             &mut child.walk(),
+        //             indentation,
+        //             indent_base,
+        //             extra_indent,
+        //         )
+        //     } else {
+        //         String::new()
+        //     }
+        // }
         other => {
             warn!("found unknown node kind while formatting: {}", other);
             cursor

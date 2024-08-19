@@ -5,7 +5,7 @@ use log::{error, info};
 
 use crate::{
     lsp::{FormattingRequest, FormattingResponse},
-    state::ServerState,
+    server::ServerState,
 };
 
 pub fn handle_format_request(
