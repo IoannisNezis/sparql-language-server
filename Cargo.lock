@@ -368,28 +368,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lspexample"
-version = "0.1.0"
-dependencies = [
- "cc",
- "console_error_panic_hook",
- "env_logger",
- "getrandom",
- "indoc",
- "log",
- "log4rs",
- "nom",
- "serde",
- "serde-wasm-bindgen",
- "serde_json",
- "serde_repr",
- "tree-sitter",
- "tree-sitter-c2rust",
- "tree-sitter-sparql",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "memchr"
 version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -645,6 +623,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
+name = "sparql-language-server"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "console_error_panic_hook",
+ "env_logger",
+ "getrandom",
+ "indoc",
+ "log",
+ "log4rs",
+ "nom",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "serde_repr",
+ "tree-sitter",
+ "tree-sitter-c2rust",
+ "tree-sitter-sparql",
+ "wasm-bindgen",
+ "wasm-logger",
+]
+
+[[package]]
 name = "syn"
 version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -822,6 +823,27 @@ name = "wasm-bindgen-shared"
 version = "0.2.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c62a0a307cb4a311d3a07867860911ca130c3494e8c2719593806c08bc5d0484"
+
+[[package]]
+name = "wasm-logger"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "074649a66bb306c8f2068c9016395fa65d8e08d2affcbf95acf3c24c3ab19718"
+dependencies = [
+ "log",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
+name = "web-sys"
+version = "0.3.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77afa9a11836342370f4817622a2f0f418b134426d91a82dfb48f532d2ec13ef"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "winapi"
