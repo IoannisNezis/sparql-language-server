@@ -1,17 +1,19 @@
 mod completion;
 mod formatting;
+mod hovering;
 use std::process::exit;
 
+use hovering::handle_hover_request;
 use log::{error, info, warn};
 
 use crate::{
     lsp::{
-        analysis::get_token, textdocument::TextDocumentItem, CompletionRequest,
-        DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
-        HoverRequest, HoverResponse, InitializeRequest, InitializeResonse, ShutdownResponse,
+        textdocument::TextDocumentItem, CompletionRequest, DidChangeTextDocumentNotification,
+        DidOpenTextDocumentNotification, FormattingRequest, HoverRequest, HoverResponse,
+        InitializeRequest, InitializeResonse, ShutdownResponse,
     },
     message_handler::completion::handly_completion_request,
-    rpc::{self, RequestMessage, ResponseMessage},
+    rpc::{self, RequestMessage},
     server::{ServerState, ServerStatus},
 };
 
@@ -90,6 +92,7 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
                             did_change_notification.params.text_document.base.uri,
                             did_change_notification.params.content_changes,
                         );
+
                         return None;
                     }
                     Err(error) => {
@@ -108,13 +111,8 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
                         hover_request.get_document_uri(),
                         hover_request.get_position()
                     );
-                    let response_content = get_token(
-                        &state.analysis_state,
-                        hover_request.get_document_uri(),
-                        hover_request.get_position(),
-                    );
+                    let response = handle_hover_request(&hover_request, state);
 
-                    let response = HoverResponse::new(hover_request.get_id(), response_content);
                     return Some(serde_json::to_string(&response).unwrap());
                 }
                 Err(error) => {

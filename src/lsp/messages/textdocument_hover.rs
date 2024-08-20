@@ -46,10 +46,10 @@ impl HoverResponse {
         HoverResponse {
             base: ResponseMessage::new(id),
             result: HoverResult {
-                contents: HoverResultContents::MultipleMarkedString(vec![MarkedString::Content {
-                    language: "sparql".to_string(),
+                contents: HoverResultContents::MarkupContent(MarkupContent::Content {
+                    kind: Markupkind::Markdown,
                     value: content,
-                }]),
+                }),
             },
         }
     }
@@ -65,14 +65,27 @@ struct HoverResult {
 enum HoverResultContents {
     SingleMarkedString(MarkedString),
     MultipleMarkedString(Vec<MarkedString>),
-    //WARNING: This is not to spec, the hover.contents also support markup content
-    //see: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
+    MarkupContent(MarkupContent), //WARNING: This is not to spec, the hover.contents also support markup content
+                                  //see: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 enum MarkedString {
     Content { language: String, value: String },
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
+enum MarkupContent {
+    Content { kind: Markupkind, value: String },
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub enum Markupkind {
+    Plaintext,
+    Markdown,
 }
 
 #[cfg(test)]
@@ -117,7 +130,7 @@ mod tests {
     #[test]
     fn serialize() {
         let hover_response = HoverResponse::new(42, "hover content".to_string());
-        let expected_message = r#"{"jsonrpc":"2.0","id":42,"result":{"contents":[{"language":"sparql","value":"hover content"}]}}"#;
+        let expected_message = r#"{"jsonrpc":"2.0","id":42,"result":{"contents":{"kind":"markdown","value":"hover content"}}}"#;
         assert_eq!(
             serde_json::to_string(&hover_response).unwrap(),
             expected_message
