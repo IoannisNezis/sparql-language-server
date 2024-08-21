@@ -5,7 +5,6 @@ mod lsp;
 mod message_handler;
 mod rpc;
 mod server;
-mod state;
 
 use std::{
     io::{self, BufReader, Read, Write},

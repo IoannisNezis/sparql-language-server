@@ -9,10 +9,10 @@ use log::{error, info, warn};
 use crate::{
     lsp::{
         textdocument::TextDocumentItem, CompletionRequest, DidChangeTextDocumentNotification,
-        DidOpenTextDocumentNotification, FormattingRequest, HoverRequest, HoverResponse,
-        InitializeRequest, InitializeResonse, ShutdownResponse,
+        DidOpenTextDocumentNotification, FormattingRequest, HoverRequest, InitializeRequest,
+        InitializeResonse, ShutdownResponse,
     },
-    message_handler::completion::handly_completion_request,
+    message_handler::completion::handel_completion_request,
     rpc::{self, RequestMessage},
     server::{ServerState, ServerStatus},
 };
@@ -127,7 +127,7 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
                         completion_request.get_document_uri(),
                         completion_request.get_position()
                     );
-                    let response = handly_completion_request(completion_request, state);
+                    let response = handel_completion_request(completion_request, state);
                     return Some(serde_json::to_string(&response).unwrap());
                 }
                 Err(error) => {
