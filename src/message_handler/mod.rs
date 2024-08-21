@@ -6,6 +6,8 @@ use std::process::exit;
 use hovering::handle_hover_request;
 use log::{error, info, warn};
 
+pub use formatting::format_raw;
+
 use crate::{
     lsp::{
         textdocument::TextDocumentItem, CompletionRequest, DidChangeTextDocumentNotification,

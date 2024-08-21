@@ -7,88 +7,65 @@ mod rpc;
 mod server;
 
 use std::{
-    io::{self, BufReader, Read, Write},
-    process::exit,
+    fs::{File, OpenOptions},
+    io::{Read, Write},
 };
 
-use log::{error, info};
+use camino::Utf8PathBuf;
+use message_handler::format_raw;
 use server::Server;
 
-use crate::rpc::Header;
+use clap::{Parser, Subcommand};
+
+/// monza: An SPARQL language server and formatter
+#[derive(Debug, Parser)]
+#[command(version, about, long_about= None)]
+struct Cli {
+    #[clap(subcommand)]
+    command: Command,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Run the language server
+    Server,
+    /// Run the formatter on a given file
+    Format { path: Utf8PathBuf },
+}
 
 fn main() {
     // Initialize logging
     #[cfg(feature = "native")]
     log4rs::init_file("/home/ianni/code/sparql-lsp/log4rs.yml", Default::default()).unwrap();
-    info!("Started LSP Server!");
 
-    // Initialize input stream
-    let stdin = io::stdin();
-    let reader = BufReader::new(stdin);
-    let mut bytes = reader.bytes();
-    let mut buffer = vec![];
-
-    // Initialize the server state
-    let mut server = Server::new();
-
-    loop {
-        match bytes.next() {
-            Some(Ok(byte)) => {
-                buffer.push(byte);
-            }
-            Some(Err(error)) => {
-                error!("Error while reading byte: {}", error);
-                panic!("{}", error);
-            }
-            None => {
-                error!("Stream ended unexpected while waiting for header, shutting down");
-                exit(1);
-            }
+    // Parse command line arguments
+    let cli = Cli::parse();
+    match cli.command {
+        Command::Server => {
+            // Start server and listen to stdio
+            let mut server = Server::new();
+            server.listen_stdio();
         }
-        if buffer.ends_with(b"\r\n\r\n") {
-            let header = match Header::from_string(
-                String::from_utf8(buffer.clone()).expect("valid utf8 bytes"),
-            ) {
-                Ok(header) => header,
-                Err(err) => {
-                    error!("Received error while parsing header: {err}, clearing buffer");
-                    buffer.clear();
-                    continue;
+        Command::Format { path } => {
+            match File::open(path.clone()) {
+                Ok(mut file) => {
+                    let mut contents = String::new();
+                    file.read_to_string(&mut contents)
+                        .expect("Could not read file");
+                    let formatted_contents = format_raw(contents);
+                    let mut file = OpenOptions::new()
+                        .write(true)
+                        .append(false)
+                        .open(path.clone())
+                        .expect("Could not write to file");
+                    file.write_all(formatted_contents.as_bytes())
+                        .expect("Unable to write");
+                }
+                Err(e) => {
+                    panic!("Could not open file: {}", e)
                 }
             };
-            buffer.clear();
-            for ele in 0..header.content_length {
-                match bytes.next() {
-                    Some(Ok(byte)) => {
-                        buffer.push(byte);
-                    }
-                    Some(Err(err)) => {
-                        error!(
-                            "Error {} occured while reading byte {} of {}, clearing buffer",
-                            err, ele, header.content_length
-                        );
-                        buffer.clear();
-                        break;
-                    }
-                    None => {
-                        error!(
-                            "Byte stream endet after {} of {} bytes, clearing message buffer",
-                            ele, header.content_length
-                        );
-                        buffer.clear();
-                        break;
-                    }
-                }
-            }
-            match server.handle_message(buffer.clone()) {
-                Some(response) => {
-                    print!("Content-Length: {}\r\n\r\n{}", response.len(), response);
-                    io::stdout().flush().expect("No IO errors or EOFs");
-                }
-                _ => {}
-            }
-
-            buffer.clear();
+            println!("Sucessfully formatted {path}");
         }
-    }
+    };
 }

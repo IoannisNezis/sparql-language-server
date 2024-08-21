@@ -1,5 +1,5 @@
 [package]
-name = "sparql-language-server"
+name = "monza"
 version = "0.1.0"
 edition = "2021"
 
@@ -29,6 +29,8 @@ wasm-bindgen = "0.2.93"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 getrandom = { version = "0.2", features = ["js"] }
 serde-wasm-bindgen = "0.6.5"
+clap = { version = "4.5.16", features = ["derive"] }
+camino = "1.1.9"
 
 [build-dependencies]
 cc = "1.0.100"

@@ -14,7 +14,7 @@ use crate::lsp::{
 
 use super::utils::KEYWORDS;
 
-pub(super) fn format_query(
+pub(super) fn format_textdoument(
     document: &TextDocumentItem,
     tree: &Tree,
     options: &FormattingOptions,
@@ -27,6 +27,7 @@ pub(super) fn format_query(
     let text = format_helper(&document.text, &mut tree.walk(), 0, &indent_string, "");
     vec![TextEdit::new(range, text)]
 }
+
 pub(super) fn format_helper(
     text: &String,
     cursor: &mut TreeCursor,
