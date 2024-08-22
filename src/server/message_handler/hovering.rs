@@ -1,8 +1,8 @@
 use indoc::indoc;
-use log::info;
 
 use crate::{
-    lsp::{analysis::get_kind_at_position, HoverRequest, HoverResponse},
+    analysis::get_kind_at_position,
+    lsp::{HoverRequest, HoverResponse},
     server::ServerState,
 };
 

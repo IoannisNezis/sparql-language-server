@@ -3,6 +3,7 @@ mod formatting;
 mod hovering;
 use std::process::exit;
 
+use completion::handel_completion_request;
 use hovering::handle_hover_request;
 use log::{error, info, warn};
 
@@ -14,7 +15,6 @@ use crate::{
         DidOpenTextDocumentNotification, FormattingRequest, HoverRequest, InitializeRequest,
         InitializeResonse, ShutdownResponse,
     },
-    message_handler::completion::handel_completion_request,
     rpc::{self, RequestMessage},
     server::{ServerState, ServerStatus},
 };

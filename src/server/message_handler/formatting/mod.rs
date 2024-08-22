@@ -21,7 +21,7 @@ pub fn handle_format_request(
 ) -> FormattingResponse {
     let uri = request.get_document_uri();
     info!("Received formatting request for: {}", uri);
-    match state.analysis_state.get_document(uri) {
+    match state.analysis_state.get_state(uri) {
         Some((document, Some(tree))) => {
             let options = request.get_options();
             let text_edits = format_textdoument(document, tree, options);
