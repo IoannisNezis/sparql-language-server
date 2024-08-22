@@ -49,25 +49,32 @@ impl CompletionResponse {
             result: CompletionResult {
                 items: vec![
                     CompletionItem {
-                        label: "SELECT ${1:*} WHERE {\n  $0\n}".to_string(),
+                        label: "SELECT".to_string(),
+                        insert_text: "SELECT ${1:*} WHERE {\n  $0\n}".to_string(),
                         kind: CompletionItemKind::Snippet,
-                        detail: "A template for a Select query".to_string(),
-                        documentation: "doc string".to_string(),
+                        detail: "Select query".to_string(),
                         insert_text_format: InsertTextFormat::Snippet,
                     },
                     CompletionItem {
-                        label: "DELETE {\n ${1}\n}\n WHERE {\n $0\n}".to_string(),
+                        label: "PREFIX".to_string(),
+                        insert_text: "PREFIX ${1:namespace}: <${0:iri}>".to_string(),
                         kind: CompletionItemKind::Snippet,
-                        detail: "A template for Delete update query".to_string(),
-                        documentation: "doc string".to_string(),
+                        detail: "Declare a namespace".to_string(),
                         insert_text_format: InsertTextFormat::Snippet,
                     },
                     CompletionItem {
-                        label: "namespace:pred ".to_string(),
-                        kind: CompletionItemKind::Text,
-                        detail: "Property".to_string(),
-                        documentation: "".to_string(),
-                        insert_text_format: InsertTextFormat::PlainText,
+                        label: "FILTER".to_string(),
+                        insert_text: "FILTER ( $0 )".to_string(),
+                        kind: CompletionItemKind::Snippet,
+                        detail: "Filter the results".to_string(),
+                        insert_text_format: InsertTextFormat::Snippet,
+                    },
+                    CompletionItem {
+                        label: "ORDER BY".to_string(),
+                        insert_text: "ORDER BY ${1|ASC,DESC|} ( $0 )".to_string(),
+                        kind: CompletionItemKind::Snippet,
+                        detail: "Sort the results".to_string(),
+                        insert_text_format: InsertTextFormat::Snippet,
                     },
                 ],
             },
@@ -86,7 +93,7 @@ struct CompletionItem {
     label: String,
     kind: CompletionItemKind,
     detail: String,
-    documentation: String,
+    insert_text: String,
     insert_text_format: InsertTextFormat,
 }
 
