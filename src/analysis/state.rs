@@ -54,7 +54,11 @@ impl AnalysisState {
         }
     }
 
-    pub(crate) fn get_document(&self, uri: &String) -> Option<&(TextDocumentItem, Option<Tree>)> {
+    pub(crate) fn documents(&self) -> impl Iterator<Item = &String> {
+        self.documents.keys()
+    }
+
+    pub(crate) fn get_state(&self, uri: &String) -> Option<&(TextDocumentItem, Option<Tree>)> {
         self.documents.get(uri)
     }
 

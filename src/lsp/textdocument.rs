@@ -62,7 +62,7 @@ pub struct TextDocumentIdentifier {
 
 type Uri = String;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Position {
     line: u32,
     character: u32,
@@ -87,7 +87,7 @@ impl fmt::Display for Position {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Range {
     start: Position,
     end: Position,

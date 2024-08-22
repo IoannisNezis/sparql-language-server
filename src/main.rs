@@ -1,8 +1,8 @@
 #[cfg(all(feature = "wasm", feature = "native"))]
 compile_error!("feature \"wasm\" and feature \"native\" cannot be enabled at the same time");
 
+mod analysis;
 mod lsp;
-mod message_handler;
 mod rpc;
 mod server;
 
@@ -12,8 +12,7 @@ use std::{
 };
 
 use camino::Utf8PathBuf;
-use message_handler::format_raw;
-use server::Server;
+use server::{format_raw, Server};
 
 use clap::{Parser, Subcommand};
 

@@ -52,6 +52,15 @@ pub struct BaseMessage {
     pub method: String,
 }
 
+impl BaseMessage {
+    pub fn new(method: String) -> Self {
+        Self {
+            jsonrpc: "2.0".to_string(),
+            method,
+        }
+    }
+}
+
 fn parse_header(input: &str) -> IResult<&str, usize> {
     let (input, _) = tag("Content-Length: ")(input)?;
     let (input, number) = take_while(|c: char| c.is_digit(10))(input)?;
