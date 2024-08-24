@@ -1,7 +1,3 @@
-use core::panic;
-use std::io::{self, Write};
-
-use log::error;
 use nom::{
     bytes::complete::{tag, take_while},
     IResult,
@@ -71,23 +67,6 @@ impl Header {
     pub fn from_string(string: String) -> Result<Header, String> {
         let (_rest, content_length) = parse_header(string.as_str()).expect("Expected valid header");
         Ok(Header { content_length })
-    }
-}
-
-pub fn send_message<T: Serialize>(object: &T) {
-    match serde_json::to_string(object) {
-        Ok(string) => {
-            let message = format!("Content-Length: {}\r\n\r\n{}", string.len(), string);
-            print!("{}", message);
-            io::stdout().flush().expect("No IO errors or EOFs");
-        }
-        Err(error) => {
-            error!(
-                "An unexpected Error occured during the message encoding: {}, shutting down",
-                error
-            );
-            panic!("Error during serialization");
-        }
     }
 }
 
