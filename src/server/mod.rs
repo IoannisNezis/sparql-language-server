@@ -1,15 +1,17 @@
 mod message_handler;
 use crate::{
-    analysis::{self, AnalysisState},
+    analysis::AnalysisState,
     lsp::{
-        textdocument::TextDocumentItem, Diagnostic, DiagnosticSeverity,
-        PublishDiagnosticsNotification, PublishDiagnosticsPrarams, TextDocumentContentChangeEvent,
+        textdocument::TextDocumentItem, PublishDiagnosticsNotification, PublishDiagnosticsPrarams,
+        TextDocumentContentChangeEvent,
     },
     rpc::{BaseMessage, Header},
 };
 use log::{error, info};
-use message_handler::dispatch;
+use message_handler::{collect_diagnostics, dispatch};
+
 pub use message_handler::format_raw;
+
 use std::{
     io::{self, BufReader, Read, Write},
     process::exit,
@@ -35,32 +37,16 @@ impl Server {
         dispatch(&message, &mut self.state)
     }
 
-    pub fn publish_diagnostic(&self) -> String {
-        let usused_prefixes = analysis::get_unused_prefixes(&self.state.analysis_state);
+    pub fn publish_diagnostic(&self, uri: String) -> String {
+        let notification: PublishDiagnosticsNotification = PublishDiagnosticsNotification {
+            base: BaseMessage::new("textDocument/publishDiagnostics".to_string()),
+            params: PublishDiagnosticsPrarams {
+                uri: uri.clone(),
+                diagnostics: collect_diagnostics(&self.state.analysis_state, &uri).collect(),
+            },
+        };
 
-        let notification: Vec<PublishDiagnosticsNotification> = usused_prefixes
-            .iter()
-            .map(|(uri, prefixes)| PublishDiagnosticsNotification {
-                base: BaseMessage::new("textDocument/publishDiagnostics".to_string()),
-                params: PublishDiagnosticsPrarams {
-                    uri: uri.clone(),
-                    diagnostics: prefixes
-                        .iter()
-                        .map(|(prefix, range)| Diagnostic {
-                            range: range.clone(),
-                            severity: DiagnosticSeverity::Warning,
-                            source: "monza (unused_prefix)".to_string(),
-                            message: format!(
-                                "'{}' was declared as a prefix but never used",
-                                prefix
-                            ),
-                        })
-                        .collect(),
-                },
-            })
-            .collect();
-
-        serde_json::to_string(&notification.first())
+        serde_json::to_string(&notification)
             .expect("Could not parse PublishDiagnosticsNotification")
     }
 

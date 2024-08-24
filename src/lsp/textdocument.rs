@@ -4,10 +4,10 @@ use log::error;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "native")]
-use tree_sitter::Point;
+use tree_sitter::{Node, Point};
 
 #[cfg(feature = "wasm")]
-use tree_sitter_c2rust::Point;
+use tree_sitter_c2rust::{Node, Point};
 
 use super::TextDocumentContentChangeEvent;
 
@@ -21,6 +21,14 @@ pub struct TextDocumentItem {
 }
 
 impl TextDocumentItem {
+    pub(crate) fn new(uri: &str, text: &str) -> TextDocumentItem {
+        TextDocumentItem {
+            uri: uri.to_string(),
+            text: text.to_string(),
+            language_id: "sparql".to_string(),
+            version: 0,
+        }
+    }
     pub(crate) fn apply_changes(
         &mut self,
         mut content_canges: Vec<TextDocumentContentChangeEvent>,
@@ -100,6 +108,21 @@ impl Range {
             end: Position::new(end_line, end_character),
         }
     }
+
+    pub(crate) fn from_node(node: Node) -> Range {
+        Self {
+            start: Position::new(
+                node.start_position().row as u32,
+                node.start_position().column as u32,
+            ),
+            end: Position::new(
+                node.end_position().row as u32,
+                node.end_position().column as u32,
+            ),
+        }
+    }
+
+    // pub from_node(node: N
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

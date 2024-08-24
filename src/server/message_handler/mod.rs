@@ -1,12 +1,14 @@
 mod completion;
+mod diagnostic;
 mod formatting;
 mod hovering;
 use std::process::exit;
 
 use completion::handel_completion_request;
 use hovering::handle_hover_request;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 
+pub use diagnostic::*;
 pub use formatting::format_raw;
 
 use crate::{
@@ -67,7 +69,7 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
             "textDocument/didOpen" => {
                 match serde_json::from_slice::<DidOpenTextDocumentNotification>(bytes) {
                     Ok(did_open_notification) => {
-                        info!(
+                        debug!(
                             "opened text document: \"{}\"\n{}",
                             did_open_notification.params.text_document.uri,
                             did_open_notification.params.text_document.text
@@ -86,7 +88,7 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
             "textDocument/didChange" => {
                 match serde_json::from_slice::<DidChangeTextDocumentNotification>(bytes) {
                     Ok(did_change_notification) => {
-                        info!(
+                        debug!(
                             "text document changed: {}",
                             did_change_notification.params.text_document.base.uri
                         );
@@ -108,7 +110,7 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
             }
             "textDocument/hover" => match serde_json::from_slice::<HoverRequest>(bytes) {
                 Ok(hover_request) => {
-                    info!(
+                    debug!(
                         "recieved hover request for {} {}",
                         hover_request.get_document_uri(),
                         hover_request.get_position()
@@ -124,7 +126,7 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
             },
             "textDocument/completion" => match serde_json::from_slice::<CompletionRequest>(bytes) {
                 Ok(completion_request) => {
-                    info!(
+                    debug!(
                         "Received completion request for {} {}",
                         completion_request.get_document_uri(),
                         completion_request.get_position()
