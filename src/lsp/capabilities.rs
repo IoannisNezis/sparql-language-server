@@ -8,6 +8,7 @@ pub struct ServerCapabilities {
     hover_provider: bool,
     completion_provider: CompletionOptions,
     document_formatting_provider: DocumentFormattingOptions,
+    diagnostic_provider: DiagnosticOptions,
 }
 
 impl ServerCapabilities {
@@ -17,6 +18,24 @@ impl ServerCapabilities {
             hover_provider: true,
             completion_provider: CompletionOptions {},
             document_formatting_provider: DocumentFormattingOptions {},
+            diagnostic_provider: DiagnosticOptions::new(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+struct DiagnosticOptions {
+    identifier: String,
+    inter_file_dependencies: bool,
+    workspace_diagnostics: bool,
+}
+
+impl DiagnosticOptions {
+    fn new() -> Self {
+        Self {
+            identifier: "monza".to_string(),
+            inter_file_dependencies: false,
+            workspace_diagnostics: false,
         }
     }
 }
@@ -52,7 +71,7 @@ mod tests {
 
         assert_eq!(
             serialized,
-            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{},\"documentFormattingProvider\":{}}"
+            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{},\"documentFormattingProvider\":{},\"diagnosticProvider\":{\"identifier\":\"monza\",\"inter_file_dependencies\":false,\"workspace_diagnostics\":false}}}"
         );
     }
 }
