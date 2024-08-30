@@ -16,7 +16,7 @@ impl ServerCapabilities {
         Self {
             text_document_sync: TextDocumentSyncKind::Full,
             hover_provider: true,
-            completion_provider: CompletionOptions {},
+            completion_provider: CompletionOptions::new(),
             document_formatting_provider: DocumentFormattingOptions {},
             diagnostic_provider: DiagnosticOptions::new(),
         }
@@ -33,7 +33,7 @@ struct DiagnosticOptions {
 impl DiagnosticOptions {
     fn new() -> Self {
         Self {
-            identifier: "monza".to_string(),
+            identifier: "sparql-lsp".to_string(),
             inter_file_dependencies: false,
             workspace_diagnostics: false,
         }
@@ -49,9 +49,19 @@ pub enum TextDocumentSyncKind {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 struct CompletionOptions {
-    // WARNING: This is not to spec, there are multiple optional options:
+    // WARNING: This is not to spec, there are more optional options:
     // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionOptions
+    trigger_characters: Vec<String>,
+}
+
+impl CompletionOptions {
+    fn new() -> Self {
+        Self {
+            trigger_characters: vec!["?".to_string()],
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

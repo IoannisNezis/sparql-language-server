@@ -6,12 +6,52 @@ use log::{error, info};
 pub use state::*;
 
 #[cfg(feature = "native")]
-use tree_sitter::{Query, QueryCursor};
+use tree_sitter::{Node, Query, QueryCursor};
 
 #[cfg(feature = "wasm")]
-use tree_sitter_c2rust::{Query, QueryCursor};
+use tree_sitter_c2rust::{Node, Query, QueryCursor};
 
 use crate::lsp::textdocument::{Position, Range};
+
+fn collect_all_unique_captures(node: Node, query_str: &str, text: &String) -> Vec<String> {
+    match Query::new(&tree_sitter_sparql::language(), query_str) {
+        Ok(query) => QueryCursor::new()
+            .captures(&query, node, text.as_bytes())
+            .map(|(query_match, capture_index)| {
+                query_match.captures[capture_index]
+                    .node
+                    .utf8_text(text.as_bytes())
+                    .unwrap()
+                    .split_at(1)
+                    .1
+                    .to_string()
+            })
+            .collect::<HashSet<String>>()
+            .into_iter()
+            .collect(),
+
+        Err(_) => {
+            error!("Building a tree-sitter query failed: {}", query_str);
+            vec![]
+        }
+    }
+}
+
+pub fn get_all_variables(analyis_state: &AnalysisState, uri: &String) -> Vec<String> {
+    match analyis_state.get_state(uri) {
+        Some((document, Some(tree))) => {
+            collect_all_unique_captures(tree.root_node(), "(VAR) @variable", &document.text)
+        }
+        Some((_document, None)) => {
+            info!("Could not compute variables for {}: No tree availible", uri);
+            vec![]
+        }
+        None => {
+            error!("Could not compute variables for {}: No such document", uri);
+            vec![]
+        }
+    }
+}
 
 pub fn get_kind_at_position(
     analyis_state: &AnalysisState,

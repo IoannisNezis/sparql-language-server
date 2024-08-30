@@ -16,16 +16,20 @@ pub struct CompletionRequest {
 }
 
 impl CompletionRequest {
-    pub fn get_position(&self) -> &Position {
+    pub(crate) fn get_position(&self) -> &Position {
         &self.params.base.position
     }
 
-    pub fn get_document_uri(&self) -> &String {
+    pub(crate) fn get_document_uri(&self) -> &String {
         &self.params.base.text_document.uri
     }
 
     pub(crate) fn get_id(&self) -> u32 {
         self.base.id
+    }
+
+    pub(crate) fn get_completion_context(&self) -> &CompletionContext {
+        return &self.params.context;
     }
 }
 
@@ -33,6 +37,22 @@ impl CompletionRequest {
 pub struct CompletionParams {
     #[serde(flatten)]
     base: TextDocumentPositionParams,
+    context: CompletionContext,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct CompletionContext {
+    pub trigger_kind: CompletionTriggerKind,
+    pub trigger_character: Option<String>,
+}
+
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq)]
+#[repr(u8)]
+pub enum CompletionTriggerKind {
+    Invoked = 1,
+    TriggerCharacter = 2,
+    TriggerForIncompleteCompletions = 3,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -77,6 +97,24 @@ impl CompletionResponse {
                         insert_text_format: InsertTextFormat::Snippet,
                     },
                 ],
+            },
+        }
+    }
+
+    pub(crate) fn from_variables(id: u32, variables: Vec<String>) -> Self {
+        CompletionResponse {
+            base: ResponseMessage::new(id),
+            result: CompletionResult {
+                items: variables
+                    .iter()
+                    .map(|variable| CompletionItem {
+                        label: variable.to_owned(),
+                        insert_text: variable.to_owned(),
+                        kind: CompletionItemKind::Variable,
+                        detail: "".to_string(),
+                        insert_text_format: InsertTextFormat::Snippet,
+                    })
+                    .collect(),
             },
         }
     }
