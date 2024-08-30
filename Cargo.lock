@@ -432,31 +432,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
-name = "monza"
-version = "0.1.0"
-dependencies = [
- "camino",
- "cc",
- "clap",
- "console_error_panic_hook",
- "env_logger",
- "getrandom",
- "indoc",
- "log",
- "log4rs",
- "nom",
- "serde",
- "serde-wasm-bindgen",
- "serde_json",
- "serde_repr",
- "tree-sitter",
- "tree-sitter-c2rust",
- "tree-sitter-sparql",
- "wasm-bindgen",
- "wasm-logger",
-]
-
-[[package]]
 name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -698,6 +673,31 @@ name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
+
+[[package]]
+name = "sparql-language-server"
+version = "0.1.0"
+dependencies = [
+ "camino",
+ "cc",
+ "clap",
+ "console_error_panic_hook",
+ "env_logger",
+ "getrandom",
+ "indoc",
+ "log",
+ "log4rs",
+ "nom",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "serde_repr",
+ "tree-sitter",
+ "tree-sitter-c2rust",
+ "tree-sitter-sparql",
+ "wasm-bindgen",
+ "wasm-logger",
+]
 
 [[package]]
 name = "strsim"

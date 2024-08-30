@@ -1,5 +1,5 @@
 [package]
-name = "monza"
+name = "sparql-language-server"
 version = "0.1.0"
 edition = "2021"
 
