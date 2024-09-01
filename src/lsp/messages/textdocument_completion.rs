@@ -178,7 +178,7 @@ mod tests {
         lsp::{
             messages::utils::TextDocumentPositionParams,
             textdocument::{Position, TextDocumentIdentifier},
-            CompletionParams,
+            CompletionContext, CompletionParams,
         },
         rpc::{BaseMessage, RequestMessage},
     };
@@ -206,6 +206,10 @@ mod tests {
                             uri: "file:///dings".to_string()
                         },
                         position: Position::new(0, 0)
+                    },
+                    context: CompletionContext {
+                        trigger_kind: crate::lsp::CompletionTriggerKind::Invoked,
+                        trigger_character: None
                     }
                 }
             }
