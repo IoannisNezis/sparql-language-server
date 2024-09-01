@@ -44,7 +44,7 @@ pub(super) fn format_helper(
     let line_break_small = "\n".to_string() + &indent_str_small;
 
     match cursor.node().kind() {
-        "unit" => separate_children_by(text, &cursor.node(), "\n\n", 0, indent_base),
+        "unit" => separate_children_by(text, &cursor.node(), &line_break, 0, indent_base),
         "Update" => {
             separate_children_by(text, &cursor.node(), " ", 0, indent_base).replace("; ", ";\n")
         }

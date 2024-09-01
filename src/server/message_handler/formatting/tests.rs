@@ -33,7 +33,6 @@ fn prologue() {
     let pretty_query = indoc!(
         "PREFIX namespace: <uri>
          PREFIX namespace: <uri>
-
          SELECT * {}"
     );
     format_and_compare(ugly_query, pretty_query);
@@ -210,7 +209,6 @@ fn values_clause() {
     let ugly_query = indoc!("SELECT * {}values ?a { 1 2 3}");
     let pretty_query = indoc!(
         "SELECT * {}
-
          VALUES ?a { 1 2 3 }"
     );
     format_and_compare(ugly_query, pretty_query)
@@ -245,7 +243,6 @@ fn dataset_clause() {
     );
     let pretty_query = indoc!(
         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-
          SELECT ?name FROM <http://example.org/foaf/aliceFoaf> WHERE {
            ?x foaf:name ?name
          }"
@@ -264,7 +261,6 @@ fn construct() {
     let pretty_query = indoc!(
         "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>
          PREFIX vcard: <http://www.w3.org/2001/vcard-rdf/3.0#>
-
          CONSTRUCT {
            <http://example.org/person#Alice> vcard:FN ?name
          }
@@ -284,7 +280,6 @@ fn describe() {
     );
     let pretty_query = indoc!(
         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-
          DESCRIBE ?x ?y <http://example.org/> WHERE {
            ?x foaf:knows ?y
          }"
@@ -301,7 +296,6 @@ fn ask() {
     );
     let pretty_query = indoc!(
         r#"PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-
            ASK {
              ?x foaf:name "Alice"
            }"#
@@ -514,7 +508,6 @@ fn prefix_indentation() {
          PREFIX hel:         <http://xmlns.com/foaf/0.1/>
          PREFIX he:          <http://xmlns.com/foaf/0.1/>
          PREFIX h:           <http://xmlns.com/foaf/0.1/>
-
          SELECT * {}"
     );
     format_and_compare(ugly_query, pretty_query)
@@ -526,14 +519,12 @@ fn prefix_indentation2() {
         "PREFIX aa: <>
          PREFIX a:   <>
          PREFIX a:   <>
-
          SELECT * {}"
     );
     let pretty_query = indoc!(
         "PREFIX aa: <>
          PREFIX a:  <>
          PREFIX a:  <>
-
          SELECT * {}"
     );
     format_and_compare(ugly_query, pretty_query)
