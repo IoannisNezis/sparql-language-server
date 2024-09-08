@@ -219,7 +219,7 @@ mod tests {
     #[test]
     fn serialize() {
         let completion_response = CompletionResponse::new(1337);
-        let expected_message = r#"{"jsonrpc":"2.0","id":1337,"result":{"items":[]}}"#;
+        let expected_message = r#"{"jsonrpc":"2.0","id":1337,"result":{"items":[{"label":"SELECT","kind":15,"detail":"Select query","insertText":"SELECT ${1:*} WHERE {\n  $0\n}","insertTextFormat":2},{"label":"PREFIX","kind":15,"detail":"Declare a namespace","insertText":"PREFIX ${1:namespace}: <${0:iri}>","insertTextFormat":2},{"label":"FILTER","kind":15,"detail":"Filter the results","insertText":"FILTER ( $0 )","insertTextFormat":2},{"label":"ORDER BY","kind":15,"detail":"Sort the results","insertText":"ORDER BY ${1|ASC,DESC|} ( $0 )","insertTextFormat":2}]}}"#;
         let actual_message = serde_json::to_string(&completion_response).unwrap();
         assert_eq!(actual_message, expected_message);
     }

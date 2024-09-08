@@ -33,7 +33,7 @@ struct DiagnosticOptions {
 impl DiagnosticOptions {
     fn new() -> Self {
         Self {
-            identifier: "sparql-lsp".to_string(),
+            identifier: "sparql-ls".to_string(),
             inter_file_dependencies: false,
             workspace_diagnostics: false,
         }
@@ -81,7 +81,7 @@ mod tests {
 
         assert_eq!(
             serialized,
-            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{},\"documentFormattingProvider\":{},\"diagnosticProvider\":{\"identifier\":\"monza\",\"inter_file_dependencies\":false,\"workspace_diagnostics\":false}}}"
+            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{\"triggerCharacters\":[\"?\"]},\"documentFormattingProvider\":{},\"diagnosticProvider\":{\"identifier\":\"sparql-ls\",\"inter_file_dependencies\":false,\"workspace_diagnostics\":false}}"
         );
     }
 }
