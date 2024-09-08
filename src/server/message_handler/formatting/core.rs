@@ -1,7 +1,7 @@
-use std::{collections::HashSet, usize};
+use std::usize;
 
-use log::{error, warn};
-use tree_sitter_c2rust::{Node, Query, QueryCursor, Tree, TreeCursor};
+use log::warn;
+use tree_sitter_c2rust::{Node, Tree, TreeCursor};
 
 use crate::lsp::{
     textdocument::{TextDocumentItem, TextEdit},
@@ -40,12 +40,16 @@ pub(super) fn format_helper(
     let line_break_small = "\n".to_string() + &indent_str_small;
 
     match cursor.node().kind() {
-        "unit" => separate_children_by(text, &cursor.node(), &line_break, 0, indent_base),
+        "unit" => separate_children_by(text, &cursor.node(), &line_break, 0, indent_base)
+            .replace("→", "")
+            .replace("←", ""),
         "Update" => {
             separate_children_by(text, &cursor.node(), " ", 0, indent_base).replace("; ", ";\n")
         }
         "Prologue" | "GroupOrUnionGraphPattern" | "MinusGraphPattern" => {
             separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
+                .replace("→", "")
+                .replace("←", "")
         }
         "Modify" => {
             separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
@@ -146,6 +150,10 @@ pub(super) fn format_helper(
         }
         "GroupGraphPattern" | "BrackettedExpression" | "ConstructTemplate" | "QuadData" => {
             separate_children_by(text, &cursor.node(), "", indentation + 1, indent_base)
+                .replace("{→", &("{".to_string() + &line_break + indent_base))
+                .replace("→", indent_base)
+                .replace("←}", &(line_break + "}"))
+                .replace("←", "")
         }
         "BuildInCall" | "FunctionCall" | "PathSequence" | "PathEltOrInverse" | "PathElt"
         | "PathPrimary" => separate_children_by(text, &cursor.node(), "", indentation, indent_base),
@@ -160,6 +168,8 @@ pub(super) fn format_helper(
             line_break.clone()
                 + &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
                     .replace(&(line_break + "."), " .")
+                    .replace("→", "")
+                    .replace("←", "")
                 + &line_break_small
         }
         "SolutionModifier" => {
@@ -169,8 +179,13 @@ pub(super) fn format_helper(
         "TriplesBlock" | "TriplesTemplate" => {
             separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
                 .replace(". ", &(".".to_string() + &line_break))
+                .replace("→", "")
+                .replace("← ", &line_break)
         }
-
+        // NOTE: Here a marker chars (→ and ←) are used to mark the start and end of a comment node.
+        // Later these markers are removed.
+        // This assumes that the marker char does not appear in queries.
+        "comment" => "→".to_string() + cursor.node().utf8_text(text.as_bytes()).unwrap() + "←",
         keyword if (KEYWORDS.contains(&keyword)) => keyword.to_string(),
         "PNAME_NS" | "IRIREF" | "VAR" | "INTEGER" | "DECIMAL" | "String" | "NIL"
         | "BLANK_NODE_LABEL" | "RdfLiteral" | "PrefixedName" | "PathMod" | "(" | ")" | "{"

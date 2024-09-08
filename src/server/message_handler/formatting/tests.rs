@@ -476,3 +476,43 @@ fn property_list_paths() {
     );
     format_and_compare(ugly_query, pretty_query)
 }
+
+#[test]
+fn comments() {
+    let ugly_query = indoc!(
+        "# unit comment 1
+         PREFIX test: <test>
+           # prolouge comment
+         PREFIX test: <test>  # unit comment 2
+         SELECT ?a WHERE {
+         # GroupGraphPattern comment 1
+           ?c <> ?a . # Triples comment
+           ?d <> ?b .
+           ?b <> ?a .
+           # GroupGraphPatternSub comment
+           {} # GroupGraphPattern comment 2
+         }
+
+
+         # unit comment 3"
+    );
+    let pretty_query = indoc!(
+        "# unit comment 1
+         PREFIX test: <test>
+         # prolouge comment
+         PREFIX test: <test>
+         # unit comment 2
+         SELECT ?a WHERE {
+           # GroupGraphPattern comment 1
+           ?c <> ?a .
+           # Triples comment
+           ?d <> ?b .
+           ?b <> ?a .
+           # GroupGraphPatternSub comment
+           {}
+           # GroupGraphPattern comment 2
+         }
+         # unit comment 3"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
