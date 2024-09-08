@@ -45,43 +45,7 @@ pub(super) fn format_helper(
             separate_children_by(text, &cursor.node(), " ", 0, indent_base).replace("; ", ";\n")
         }
         "Prologue" | "GroupOrUnionGraphPattern" | "MinusGraphPattern" => {
-            let mut formatted_string =
-                separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base);
-
-            // Indent the prefix iris to align.
-            if let Ok(query) = Query::new(
-                &tree_sitter_sparql::language(),
-                "(PrefixDecl (PNAME_NS) @prefix)",
-            ) {
-                // Step 1: Get all prefix strs and their lengths.
-                // NOTE: Here a `HashSet` is used to avoid douplication of prefixes.
-                let mut query_cursor = QueryCursor::new();
-                let captures = query_cursor.captures(&query, cursor.node(), text.as_bytes());
-                let prefixes: HashSet<(&str, usize)> = captures
-                    .map(|(query_match, capture_index)| {
-                        let node = query_match.captures[capture_index].node;
-                        (
-                            node.utf8_text(text.as_bytes()).unwrap(),
-                            node.end_position().column - node.start_position().column,
-                        )
-                    })
-                    .collect();
-                // Step 2: Get the length of the longest prefix.
-                let max_prefix_length = prefixes
-                    .iter()
-                    .fold(0, |old_max, (_, length)| old_max.max(*length));
-                // Step 3: Insert n spaces after each prefix, where n is the length difference to
-                //         the longest prefix
-                for (prefix, length) in prefixes {
-                    formatted_string = formatted_string.replace(
-                        &format!(" {} ", prefix),
-                        &format!(" {}{}", prefix, " ".repeat(max_prefix_length - length + 1)),
-                    );
-                }
-            } else {
-                error!("Query string to retrieve prefixes in invalid!\nIndentation of Prefixes was aborted.");
-            }
-            return formatted_string;
+            separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
         }
         "Modify" => {
             separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)

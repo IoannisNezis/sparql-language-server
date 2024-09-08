@@ -250,13 +250,13 @@ fn dataset_clause() {
 #[test]
 fn construct() {
     let ugly_query = indoc!(
-        "PREFIX foaf:    <http://xmlns.com/foaf/0.1/>
-         PREFIX vcard:   <http://www.w3.org/2001/vcard-rdf/3.0#>
+        "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>
+         PREFIX vcard:  <http://www.w3.org/2001/vcard-rdf/3.0#>
          CONSTRUCT   { <http://example.org/person#Alice> vcard:FN ?name }
          WHERE       { ?x foaf:name ?name }"
     );
     let pretty_query = indoc!(
-        "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>
+        "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
          PREFIX vcard: <http://www.w3.org/2001/vcard-rdf/3.0#>
          CONSTRUCT {
            <http://example.org/person#Alice> vcard:FN ?name
@@ -473,56 +473,6 @@ fn property_list_paths() {
         "SELECT * WHERE {
            ?a <iri>/^a/(!<>?)+ | (<iri> | ^a | a) ?b .
          }"
-    );
-    format_and_compare(ugly_query, pretty_query)
-}
-
-#[test]
-fn prefix_indentation() {
-    let ugly_query = indoc!(
-        "PREFIX hello_world: <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_worl: <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_wor: <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_wo: <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_w: <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_: <http://xmlns.com/foaf/0.1/>
-         PREFIX hello: <http://xmlns.com/foaf/0.1/>
-         PREFIX hell: <http://xmlns.com/foaf/0.1/>
-         PREFIX hel: <http://xmlns.com/foaf/0.1/>
-         PREFIX he: <http://xmlns.com/foaf/0.1/>
-         PREFIX h: <http://xmlns.com/foaf/0.1/>
-         SELECT * {}"
-    );
-    let pretty_query = indoc!(
-        "PREFIX hello_world: <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_worl:  <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_wor:   <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_wo:    <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_w:     <http://xmlns.com/foaf/0.1/>
-         PREFIX hello_:      <http://xmlns.com/foaf/0.1/>
-         PREFIX hello:       <http://xmlns.com/foaf/0.1/>
-         PREFIX hell:        <http://xmlns.com/foaf/0.1/>
-         PREFIX hel:         <http://xmlns.com/foaf/0.1/>
-         PREFIX he:          <http://xmlns.com/foaf/0.1/>
-         PREFIX h:           <http://xmlns.com/foaf/0.1/>
-         SELECT * {}"
-    );
-    format_and_compare(ugly_query, pretty_query)
-}
-
-#[test]
-fn prefix_indentation2() {
-    let ugly_query = indoc!(
-        "PREFIX aa: <>
-         PREFIX a:   <>
-         PREFIX a:   <>
-         SELECT * {}"
-    );
-    let pretty_query = indoc!(
-        "PREFIX aa: <>
-         PREFIX a:  <>
-         PREFIX a:  <>
-         SELECT * {}"
     );
     format_and_compare(ugly_query, pretty_query)
 }
