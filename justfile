@@ -6,9 +6,10 @@ test:
 build-native:
 	cargo build --release
 
-build-web:
+build-wasm:
 	wasm-pack build --release --scope ioannisnezis
 
 publish:
 	wasm-pack publish
 	maturin publish
+	cargo publish
