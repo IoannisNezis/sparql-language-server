@@ -7,5 +7,8 @@ build-native:
 	cargo build --release
 
 build-web:
-	wasm-pack build --release
+	wasm-pack build --release --scope ioannisnezis
 
+publish:
+	wasm-pack publish
+	maturin publish

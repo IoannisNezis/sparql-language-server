@@ -1,7 +1,13 @@
 [package]
-name = "sparql-language-server"
+name = "fichu"
 version = "0.1.5"
 edition = "2021"
+authors = ["Ioannis Nezis <ioannis@nezis.de>"]
+description = "A formatter for SPARQL queries"
+repository = "https://github.com/IoannisNezis/sparql-language-server"
+license = "MIT"
+license-file = "LICENSE"
+keywords = ["SPARQL", "formatter", "lsp", "wasm"]
 
 [lib]
 name = "sparql_language_server_web"
@@ -9,7 +15,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
-name = "sparql_language_server_native"
+name = "fichu"
 path = "src/main.rs"
 
 [features]

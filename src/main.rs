@@ -13,7 +13,7 @@ use server::{format_raw, Server};
 
 use clap::{Parser, Subcommand};
 
-/// monza: An SPARQL language server and formatter
+/// fichu: An SPARQL language server and formatter
 #[derive(Debug, Parser)]
 #[command(version, about, long_about= None)]
 struct Cli {
