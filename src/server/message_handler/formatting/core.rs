@@ -1,7 +1,7 @@
 use std::usize;
 
 use log::warn;
-use tree_sitter_c2rust::{Node, Tree, TreeCursor};
+use tree_sitter::{Node, Tree, TreeCursor};
 
 use crate::lsp::{
     textdocument::{TextDocumentItem, TextEdit},
@@ -58,6 +58,7 @@ pub(super) fn format_helper(
         }
         "BaseDecl"
         | "PrefixDecl"
+        | "SelectClause"
         | "SubSelect"
         | "DatasetClause"
         | "DefaultGraphClause"
@@ -68,9 +69,7 @@ pub(super) fn format_helper(
         | "OptionalGraphPattern"
         | "GraphGraphPattern"
         | "ServiceGraphPattern"
-        | "Filter"
         | "binary_expression"
-        | "Bind"
         | "InlineData"
         | "ValuesClause"
         | "DataBlock"
@@ -79,8 +78,6 @@ pub(super) fn format_helper(
         | "HavingClause"
         | "HavingCondition"
         | "OrderClause"
-        | "OrderCondition"
-        | "LimitOffsetClauses"
         | "LimitClause"
         | "OffsetClause"
         | "ExistsFunc"
@@ -103,12 +100,11 @@ pub(super) fn format_helper(
         | "UsingClause"
         | "PropertyListNotEmpty"
         | "Path" => separate_children_by(text, &cursor.node(), " ", indentation, indent_base),
-        "Aggregate" | "SelectClause" => {
-            separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
-                .replace("( ", "(")
-                .replace(" )", ")")
-        }
-
+        "assignment" => separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
+            .replace("( ", "(")
+            .replace(" )", ")"),
+        "Filter" => separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
+            .replace("FILTER (", "FILTER("),
         "ConstructQuery" => {
             separate_children_by(text, &cursor.node(), "\n", indentation, indent_base)
                 .replace("\n{", " {")
@@ -117,6 +113,7 @@ pub(super) fn format_helper(
             separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
                 .replace("} \n", "}\n")
         }
+
         "ObjectList" | "ExpressionList" | "SubstringExpression" | "RegexExpression" | "ArgList" => {
             separate_children_by(text, &cursor.node(), "", 0, indent_base).replace(",", ", ")
         }
@@ -155,8 +152,10 @@ pub(super) fn format_helper(
                 .replace("←}", &(line_break + "}"))
                 .replace("←", "")
         }
-        "BuildInCall" | "FunctionCall" | "PathSequence" | "PathEltOrInverse" | "PathElt"
-        | "PathPrimary" => separate_children_by(text, &cursor.node(), "", indentation, indent_base),
+        "OrderCondition" | "Aggregate" | "Bind" | "BuildInCall" | "FunctionCall"
+        | "PathSequence" | "PathEltOrInverse" | "PathElt" | "PathPrimary" => {
+            separate_children_by(text, &cursor.node(), "", indentation, indent_base)
+        }
         "QuadsNotTriples" => {
             separate_children_by(text, &cursor.node(), " ", indentation + 1, indent_base)
         }
@@ -175,6 +174,9 @@ pub(super) fn format_helper(
         "SolutionModifier" => {
             line_break.clone()
                 + &separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
+        }
+        "LimitOffsetClauses" => {
+            separate_children_by(text, &cursor.node(), &line_break, indentation, indent_base)
         }
         "TriplesBlock" | "TriplesTemplate" => {
             separate_children_by(text, &cursor.node(), " ", indentation, indent_base)

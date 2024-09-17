@@ -1,6 +1,3 @@
-#[cfg(all(feature = "native", feature = "wasm"))]
-compile_error!("feature \"native\" and feature \"wasm\" cannot be enabled at the same time");
-
 mod analysis;
 mod lsp;
 mod rpc;
@@ -11,7 +8,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub fn init_language_server() -> Server {
-    #[cfg(feature = "wasm")]
+    #[cfg(target_arch = "wasm32")]
     wasm_logger::init(wasm_logger::Config::default());
     return Server::new();
 }

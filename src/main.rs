@@ -1,6 +1,3 @@
-#[cfg(all(feature = "wasm", feature = "native"))]
-compile_error!("feature \"wasm\" and feature \"native\" cannot be enabled at the same time");
-
 mod analysis;
 mod lsp;
 mod rpc;
@@ -34,8 +31,12 @@ enum Command {
 
 fn main() {
     // Initialize logging
-    #[cfg(feature = "native")]
-    log4rs::init_file("/home/ianni/code/sparql-lsp/log4rs.yml", Default::default()).unwrap();
+    #[cfg(not(target_arch = "wasm32"))]
+    log4rs::init_file(
+        "/home/ianni/code/sparql-language-server/log4rs.yml",
+        Default::default(),
+    )
+    .unwrap();
 
     // Parse command line arguments
     let cli = Cli::parse();

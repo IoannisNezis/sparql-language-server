@@ -1,12 +1,11 @@
-build target='native':
-	cargo build --release --no-default-features --features {{target}}
+export CFLAGS_wasm32_unknown_unknown := `echo "-I$(pwd)/wasm-sysroot -Wbad-function-cast -Wcast-function-type -fno-builtin"`
 
-test target='native':
-	cargo test --release --no-default-features --features {{target}}
+test:
+	cargo test
 
-wasm-pack-on-change:
-	watchexec --exts rs --restart wasm-pack build
+build-native:
+	cargo build --release
 
-build-and-test-on-change:
-	watchexec --exts rs --restart "just build; just test"
+build-web:
+	wasm-pack build --release
 

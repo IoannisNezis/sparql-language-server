@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use log::{error, info};
 
-use tree_sitter_c2rust::{Parser, Tree};
+use tree_sitter::{Parser, Tree};
 
 use crate::lsp::textdocument::TextDocumentItem;
 

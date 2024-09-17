@@ -3,7 +3,7 @@ mod utils;
 use core::*;
 use log::{error, info};
 
-use tree_sitter_c2rust::Parser;
+use tree_sitter::Parser;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{

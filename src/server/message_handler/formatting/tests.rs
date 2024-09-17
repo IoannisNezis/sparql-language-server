@@ -1,5 +1,5 @@
 use indoc::indoc;
-use tree_sitter_c2rust::Parser;
+use tree_sitter::Parser;
 
 use crate::server::message_handler::formatting::format_helper;
 
@@ -152,7 +152,7 @@ fn filter() {
     let ugly_query = indoc!("SELECT * {filter   (1>0)}");
     let pretty_query = indoc!(
         "SELECT * {
-           FILTER (1 > 0)
+           FILTER(1 > 0)
          }"
     );
     format_and_compare(ugly_query, pretty_query)
@@ -173,7 +173,7 @@ fn binary_expression() {
     );
     let pretty_query = indoc!(
         "SELECT * {
-           FILTER (1 = 3 + 2 - 2.9 * 10 / 0 && 1 > 2 || 1 < 2 || 1 <= 2 && 1 >= 9 || 1 != 3 || 5 IN (1, 2, 3) && 6 NOT IN (4, 5, 6 + 3))
+           FILTER(1 = 3 + 2 - 2.9 * 10 / 0 && 1 > 2 || 1 < 2 || 1 <= 2 && 1 >= 9 || 1 != 3 || 5 IN (1, 2, 3) && 6 NOT IN (4, 5, 6 + 3))
          }"
     );
     format_and_compare(ugly_query, pretty_query)
@@ -184,7 +184,7 @@ fn bind() {
     let ugly_query = indoc!("SELECT * {Bind (1 as ?var )}");
     let pretty_query = indoc!(
         "SELECT * {
-           BIND ( 1 AS ?var )
+           BIND(1 AS ?var)
          }"
     );
     format_and_compare(ugly_query, pretty_query)
@@ -222,10 +222,11 @@ fn solution_modifier() {
     );
     let pretty_query = indoc!(
         "SELECT * WHERE {}
-         GROUP BY ( 2 AS ?a )
+         GROUP BY (2 AS ?a)
          HAVING (2 > 2) (1 > 2)
-         ORDER BY ASC (?c)
-         OFFSET 3 LIMIT 3"
+         ORDER BY ASC(?c)
+         OFFSET 3
+         LIMIT 3"
     );
     format_and_compare(ugly_query, pretty_query)
 }
@@ -513,6 +514,37 @@ fn comments() {
            # GroupGraphPattern comment 2
          }
          # unit comment 3"
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn function_like_keywords() {
+    let ugly_query = indoc!(
+        "SELECT (MAX (?a)  AS ?max_a ) WHERE {
+           BIND (  \"A\" AS  ?a )
+           FILTER ( ?a = \"A\")
+           FILTER YEAR ( ?a)
+           FILTER <>  (2)
+         }
+         GROUP BY(2 AS ?d)
+         HAVING (?a > 2)
+         ORDER BY DESC (?d)
+         LIMIT 12 OFFSET 20
+        "
+    );
+    let pretty_query = indoc!(
+        "SELECT (MAX(?a) AS ?max_a) WHERE {
+           BIND(\"A\" AS ?a)
+           FILTER(?a = \"A\")
+           FILTER YEAR(?a)
+           FILTER <>(2)
+         }
+         GROUP BY (2 AS ?d)
+         HAVING (?a > 2)
+         ORDER BY DESC(?d)
+         LIMIT 12
+         OFFSET 20"
     );
     format_and_compare(ugly_query, pretty_query)
 }

@@ -3,7 +3,7 @@ use std::fmt;
 use log::error;
 use serde::{Deserialize, Serialize};
 
-use tree_sitter_c2rust::{Node, Point};
+use tree_sitter::{Node, Point};
 
 use super::TextDocumentContentChangeEvent;
 

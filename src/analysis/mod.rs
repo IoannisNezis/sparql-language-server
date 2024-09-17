@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use log::{error, info};
 pub use state::*;
 
-use tree_sitter_c2rust::{Node, Query, QueryCursor};
+use tree_sitter::{Node, Query, QueryCursor};
 
 use crate::lsp::textdocument::{Position, Range};
 
