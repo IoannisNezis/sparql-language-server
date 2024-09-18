@@ -82,6 +82,8 @@ pub(super) fn format_helper(
         | "OffsetClause"
         | "ExistsFunc"
         | "NotExistsFunc"
+        | "Filter"
+        | "Bind"
         | "Load"
         | "Clear"
         | "Drop"
@@ -103,8 +105,6 @@ pub(super) fn format_helper(
         "assignment" => separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
             .replace("( ", "(")
             .replace(" )", ")"),
-        "Filter" => separate_children_by(text, &cursor.node(), " ", indentation, indent_base)
-            .replace("FILTER (", "FILTER("),
         "ConstructQuery" => {
             separate_children_by(text, &cursor.node(), "\n", indentation, indent_base)
                 .replace("\n{", " {")
@@ -152,8 +152,8 @@ pub(super) fn format_helper(
                 .replace("←}", &(line_break + "}"))
                 .replace("←", "")
         }
-        "OrderCondition" | "Aggregate" | "Bind" | "BuildInCall" | "FunctionCall"
-        | "PathSequence" | "PathEltOrInverse" | "PathElt" | "PathPrimary" => {
+        "OrderCondition" | "Aggregate" | "BuildInCall" | "FunctionCall" | "PathSequence"
+        | "PathEltOrInverse" | "PathElt" | "PathPrimary" => {
             separate_children_by(text, &cursor.node(), "", indentation, indent_base)
         }
         "QuadsNotTriples" => {
