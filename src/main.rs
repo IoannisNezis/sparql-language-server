@@ -9,6 +9,13 @@ use std::{
 };
 
 use camino::Utf8PathBuf;
+use log::{info, LevelFilter};
+use log4rs::{
+    append::file::FileAppender,
+    config::{Appender, Root},
+    encode::pattern::PatternEncoder,
+    Config,
+};
 use server::{format_raw, Server};
 
 use clap::{Parser, Subcommand};
@@ -29,16 +36,32 @@ enum Command {
     Format { path: Utf8PathBuf },
 }
 
-fn main() {
-    // Initialize logging
-    #[cfg(not(target_arch = "wasm32"))]
-    log4rs::init_file(
-        "/home/ianni/code/sparql-language-server/log4rs.yml",
-        Default::default(),
-    )
-    .unwrap();
+fn configure_logging() {
+    let mut app_dir = dirs_next::data_dir().expect("Failed to find data directory");
+    app_dir.push("fichu");
+    if !app_dir.exists() {
+        std::fs::create_dir_all(&app_dir).expect("Failed to create app directory");
+    }
+    let log_file_path = app_dir.join("fichu.log");
+    //
+    let logfile = FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{l} - {m}{n}")))
+        .build(log_file_path)
+        .expect("Failed to create logfile");
 
-    // Parse command line arguments
+    let config = Config::builder()
+        .appender(Appender::builder().build("file", Box::new(logfile)))
+        .build(Root::builder().appender("file").build(LevelFilter::Info))
+        .unwrap();
+
+    log4rs::init_config(config).expect("Failed to configure logger");
+    info!("{:?}", app_dir);
+}
+
+fn main() {
+    #[cfg(not(target_arch = "wasm32"))]
+    configure_logging();
+
     let cli = Cli::parse();
     match cli.command {
         Command::Server => {
