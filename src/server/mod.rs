@@ -1,4 +1,6 @@
+mod configuration;
 mod message_handler;
+
 use crate::{
     analysis::AnalysisState,
     lsp::{
@@ -7,6 +9,7 @@ use crate::{
     },
     rpc::{BaseMessage, Header},
 };
+use configuration::Settings;
 use log::{error, info};
 use message_handler::{collect_diagnostics, dispatch};
 
@@ -22,19 +25,28 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 pub struct Server {
     state: ServerState,
+    settings: Settings,
 }
 
 #[wasm_bindgen]
 impl Server {
     pub fn new() -> Self {
+        // Load configuration
+        let config = config::Config::builder()
+            .add_source(config::File::with_name("fichu").required(false))
+            .build()
+            .unwrap();
+        let settings: Settings = config.try_deserialize().expect("could not load Settings");
+        info!("{:?}", settings);
         info!("Started LSP Server!!");
         Self {
             state: ServerState::new(),
+            settings,
         }
     }
 
     pub fn handle_message(&mut self, message: Vec<u8>) -> Option<String> {
-        dispatch(&message, &mut self.state)
+        dispatch(&message, &mut self.state, &self.settings)
     }
 
     pub fn publish_diagnostic(&self, uri: String) -> String {

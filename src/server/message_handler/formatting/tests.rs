@@ -1,9 +1,10 @@
 use indoc::indoc;
 use tree_sitter::Parser;
 
-use crate::server::message_handler::formatting::format_helper;
+use crate::server::{configuration::FormatSettings, message_handler::formatting::format_helper};
 
 fn format_and_compare(ugly_query: &str, pretty_query: &str) {
+    let format_settings = FormatSettings::default();
     let mut parser = Parser::new();
     parser
         .set_language(&tree_sitter_sparql::language())
@@ -15,6 +16,7 @@ fn format_and_compare(ugly_query: &str, pretty_query: &str) {
         0,
         "  ",
         "",
+        &format_settings,
     );
     assert_eq!(formatted_query, pretty_query);
 }
@@ -152,7 +154,7 @@ fn filter() {
     let ugly_query = indoc!("SELECT * {filter   (1>0)}");
     let pretty_query = indoc!(
         "SELECT * {
-           FILTER(1 > 0)
+           FILTER (1 > 0)
          }"
     );
     format_and_compare(ugly_query, pretty_query)
@@ -173,7 +175,7 @@ fn binary_expression() {
     );
     let pretty_query = indoc!(
         "SELECT * {
-           FILTER(1 = 3 + 2 - 2.9 * 10 / 0 && 1 > 2 || 1 < 2 || 1 <= 2 && 1 >= 9 || 1 != 3 || 5 IN (1, 2, 3) && 6 NOT IN (4, 5, 6 + 3))
+           FILTER (1 = 3 + 2 - 2.9 * 10 / 0 && 1 > 2 || 1 < 2 || 1 <= 2 && 1 >= 9 || 1 != 3 || 5 IN (1, 2, 3) && 6 NOT IN (4, 5, 6 + 3))
          }"
     );
     format_and_compare(ugly_query, pretty_query)
@@ -184,7 +186,7 @@ fn bind() {
     let ugly_query = indoc!("SELECT * {Bind (1 as ?var )}");
     let pretty_query = indoc!(
         "SELECT * {
-           BIND(1 AS ?var)
+           BIND (1 AS ?var)
          }"
     );
     format_and_compare(ugly_query, pretty_query)
@@ -535,8 +537,8 @@ fn function_like_keywords() {
     );
     let pretty_query = indoc!(
         "SELECT (MAX(?a) AS ?max_a) WHERE {
-           BIND(\"A\" AS ?a)
-           FILTER(?a = \"A\")
+           BIND (\"A\" AS ?a)
+           FILTER (?a = \"A\")
            FILTER YEAR(?a)
            FILTER <>(2)
          }

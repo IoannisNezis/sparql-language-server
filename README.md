@@ -43,6 +43,21 @@ fichu server
 
 This will create a language server listening on stdio.
 
+# Configuration
+
+Fichu can be configured through a `fichu.toml` or `fichu.yml` file.
+
+Here is the full default configuration
+```toml
+[format]
+align_predicates = false
+align_prefixes = false
+separate_prolouge = true
+capitalize_keywords = true
+insert_spaces = true
+tab_size = 2
+where_new_line = true
+```
 
 # use in web
 

@@ -23,7 +23,9 @@ use crate::{
 
 use self::formatting::handle_format_request;
 
-pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
+use super::configuration::Settings;
+
+pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState, settings: &Settings) -> Option<String> {
     if let Ok(message) = rpc::decode_message(bytes) {
         match message.method.as_str() {
             "initialize" => match serde_json::from_slice::<InitializeRequest>(bytes) {
@@ -144,7 +146,7 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState) -> Option<String> {
             },
             "textDocument/formatting" => match serde_json::from_slice::<FormattingRequest>(bytes) {
                 Ok(formatting_request) => {
-                    let response = handle_format_request(formatting_request, state);
+                    let response = handle_format_request(formatting_request, state, settings);
                     return Some(serde_json::to_string(&response).unwrap());
                 }
                 Err(error) => {

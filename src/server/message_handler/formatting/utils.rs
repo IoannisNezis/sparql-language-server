@@ -1,4 +1,5 @@
-pub const KEYWORDS: [&str; 110] = [
+pub const KEYWORDS: [&str; 111] = [
+    "a",
     "BASE",
     "PREFIX",
     "SELECT",
