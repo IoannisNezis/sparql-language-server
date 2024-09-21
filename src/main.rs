@@ -5,7 +5,10 @@ mod server;
 
 use std::{
     fs::{File, OpenOptions},
-    io::{Read, Write},
+    io::{BufRead, BufReader, Read, Seek, SeekFrom, Write},
+    path::PathBuf,
+    sync::mpsc::channel,
+    time::Duration,
 };
 
 use camino::Utf8PathBuf;
@@ -16,6 +19,7 @@ use log4rs::{
     encode::pattern::PatternEncoder,
     Config,
 };
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use server::{format_raw, Server};
 
 use clap::{Parser, Subcommand};
@@ -34,19 +38,24 @@ enum Command {
     Server,
     /// Run the formatter on a given file
     Format { path: Utf8PathBuf },
+    /// Watch the logs
+    Logs,
 }
 
-fn configure_logging() {
+fn get_logfile_path() -> PathBuf {
     let mut app_dir = dirs_next::data_dir().expect("Failed to find data directory");
     app_dir.push("fichu");
     if !app_dir.exists() {
         std::fs::create_dir_all(&app_dir).expect("Failed to create app directory");
     }
-    let log_file_path = app_dir.join("fichu.log");
-    //
+    app_dir.join("fichu.log")
+}
+
+fn configure_logging() {
+    let logfile_path = get_logfile_path();
     let logfile = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{l} - {m}{n}")))
-        .build(log_file_path)
+        .build(logfile_path)
         .expect("Failed to create logfile");
 
     let config = Config::builder()
@@ -55,7 +64,6 @@ fn configure_logging() {
         .unwrap();
 
     log4rs::init_config(config).expect("Failed to configure logger");
-    info!("{:?}", app_dir);
 }
 
 fn main() {
@@ -89,6 +97,48 @@ fn main() {
                 }
             };
             println!("Sucessfully formatted {path}");
+        }
+        Command::Logs => {
+            let logfile_path = get_logfile_path();
+            // Open the file and seek to the end (to mimic `tail -f` behavior)
+            let mut file = File::open(&logfile_path).expect("Could not open file");
+            let mut pos = std::fs::metadata(&logfile_path)
+                .expect("could not read file metatdaa")
+                .len();
+
+            let (tx, rx) = channel();
+
+            // Create a file watcher
+            let mut watcher: RecommendedWatcher =
+                Watcher::new(tx, notify::Config::default()).expect("Could not create watcher");
+
+            // Start watching the file
+            watcher
+                .watch(logfile_path.as_ref(), RecursiveMode::NonRecursive)
+                .expect("Could not watch file");
+
+            for res in rx {
+                match res {
+                    Ok(_event) => {
+                        // ignore any event that didn't change the pos
+                        if file.metadata().unwrap().len() == pos {
+                            continue;
+                        }
+
+                        // read from pos to end of file
+                        file.seek(std::io::SeekFrom::Start(pos)).unwrap();
+
+                        // update post to end of file
+                        pos = file.metadata().unwrap().len();
+
+                        let reader = BufReader::new(&file);
+                        for line in reader.lines() {
+                            println!("{}", line.unwrap());
+                        }
+                    }
+                    Err(error) => println!("{error:?}"),
+                }
+            }
         }
     };
 }
