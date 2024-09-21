@@ -5,14 +5,13 @@ mod server;
 
 use std::{
     fs::{File, OpenOptions},
-    io::{BufRead, BufReader, Read, Seek, SeekFrom, Write},
+    io::{BufRead, BufReader, Read, Seek, Write},
     path::PathBuf,
     sync::mpsc::channel,
-    time::Duration,
 };
 
 use camino::Utf8PathBuf;
-use log::{info, LevelFilter};
+use log::LevelFilter;
 use log4rs::{
     append::file::FileAppender,
     config::{Appender, Root},

@@ -13,9 +13,9 @@ pub use formatting::format_raw;
 
 use crate::{
     lsp::{
-        textdocument::TextDocumentItem, CompletionRequest, DidChangeTextDocumentNotification,
-        DidOpenTextDocumentNotification, FormattingRequest, HoverRequest, InitializeRequest,
-        InitializeResonse, ShutdownResponse,
+        textdocument::TextDocumentItem, CompletionRequest, Diagnostic, DiagnosticRequest,
+        DiagnosticResponse, DidChangeTextDocumentNotification, DidOpenTextDocumentNotification,
+        FormattingRequest, HoverRequest, InitializeRequest, InitializeResonse, ShutdownResponse,
     },
     rpc::{self, RequestMessage},
     server::{ServerState, ServerStatus},
@@ -152,6 +152,24 @@ pub fn dispatch(bytes: &Vec<u8>, state: &mut ServerState, settings: &Settings) -
                 Err(error) => {
                     error!(
                         "Could not parse textDocument/formatting request: {:?}",
+                        error
+                    );
+                    return None;
+                }
+            },
+            "textDocument/diagnostic" => match serde_json::from_slice::<DiagnosticRequest>(bytes) {
+                Ok(diagnostic_request) => {
+                    let diagnostics: Vec<Diagnostic> = collect_diagnostics(
+                        &state.analysis_state,
+                        &diagnostic_request.params.text_document.uri,
+                    )
+                    .collect();
+                    let resonse = DiagnosticResponse::new(diagnostic_request.base.id, diagnostics);
+                    return Some(serde_json::to_string(&resonse).unwrap());
+                }
+                Err(error) => {
+                    error!(
+                        "Could not parse textDocument/diagnostic request: {:?}",
                         error
                     );
                     return None;
