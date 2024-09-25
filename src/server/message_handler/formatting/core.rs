@@ -58,7 +58,7 @@ pub(super) fn format_helper(
             .replace("←", ""),
         "Update" => separate_children_by(text, &cursor.node(), " ", 0, indent_base, settings)
             .replace("; ", ";\n"),
-        "Prologue" | "GroupOrUnionGraphPattern" | "MinusGraphPattern" => {
+        "Prologue" => {
             let mut formatted_string = separate_children_by(
                 text,
                 &cursor.node(),
@@ -76,6 +76,15 @@ pub(super) fn format_helper(
                     false => "",
                 }
         }
+        "GroupOrUnionGraphPattern" => separate_children_by(
+            text,
+            &cursor.node(),
+            &line_break,
+            indentation,
+            indent_base,
+            settings,
+        )
+        .replace(&("UNION".to_string() + &line_break), "UNION "),
         "Modify" => separate_children_by(
             text,
             &cursor.node(),
@@ -91,6 +100,7 @@ pub(super) fn format_helper(
         | "SelectClause"
         | "SubSelect"
         | "DatasetClause"
+        | "MinusGraphPattern"
         | "DefaultGraphClause"
         | "NamedGraphClause"
         | "TriplesSameSubject"

@@ -75,14 +75,16 @@ fn alternating_group_graph_pattern() {
 fn union() {
     let ugly_query = indoc!(
         "SELECT * {
-           {} UNION {}
+           {} UNION { {} UNION {}}
              }"
     );
     let pretty_query = indoc!(
         "SELECT * {
            {}
-           UNION
-           {}
+           UNION {
+             {}
+             UNION {}
+           }
          }"
     );
     format_and_compare(ugly_query, pretty_query)
@@ -118,14 +120,16 @@ fn optional() {
 fn minus() {
     let ugly_query = indoc!(
         "SELECT * {
-             {} minus {}
+             {} MINUS {{} MINUS {}}
              }"
     );
     let pretty_query = indoc!(
         "SELECT * {
            {}
-           MINUS
-           {}
+           MINUS {
+             {}
+             MINUS {}
+           }
          }"
     );
     format_and_compare(ugly_query, pretty_query)
