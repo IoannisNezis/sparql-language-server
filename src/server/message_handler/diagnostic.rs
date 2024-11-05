@@ -22,7 +22,7 @@ fn unused_prefix(state: &AnalysisState, uri: &String) -> impl Iterator<Item = Di
 fn undeclared_prefix(state: &AnalysisState, uri: &String) -> impl Iterator<Item = Diagnostic> {
     get_undeclared_prefixes(state, uri).map(|(prefix, range)| Diagnostic {
         range: range.clone(),
-        severity: DiagnosticSeverity::Warning,
+        severity: DiagnosticSeverity::Error,
         source: "fichu (undeclared_prefix)".to_string(),
         message: format!("'{}' is used here, but was never delared\n", prefix),
     })
