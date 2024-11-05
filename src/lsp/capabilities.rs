@@ -1,46 +1,24 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ServerCapabilities {
-    text_document_sync: TextDocumentSyncKind,
-    hover_provider: bool,
-    completion_provider: CompletionOptions,
-    document_formatting_provider: DocumentFormattingOptions,
-    diagnostic_provider: DiagnosticOptions,
+    pub text_document_sync: TextDocumentSyncKind,
+    pub hover_provider: bool,
+    pub completion_provider: CompletionOptions,
+    pub document_formatting_provider: DocumentFormattingOptions,
+    pub diagnostic_provider: DiagnosticOptions,
 }
 
-impl ServerCapabilities {
-    pub fn new() -> Self {
-        Self {
-            text_document_sync: TextDocumentSyncKind::Full,
-            hover_provider: true,
-            completion_provider: CompletionOptions::new(),
-            document_formatting_provider: DocumentFormattingOptions {},
-            diagnostic_provider: DiagnosticOptions::new(),
-        }
-    }
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct DiagnosticOptions {
+    pub identifier: String,
+    pub inter_file_dependencies: bool,
+    pub workspace_diagnostics: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-struct DiagnosticOptions {
-    identifier: String,
-    inter_file_dependencies: bool,
-    workspace_diagnostics: bool,
-}
-
-impl DiagnosticOptions {
-    fn new() -> Self {
-        Self {
-            identifier: "sparql-ls".to_string(),
-            inter_file_dependencies: false,
-            workspace_diagnostics: false,
-        }
-    }
-}
-
-#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq, Clone)]
 #[repr(u8)]
 pub enum TextDocumentSyncKind {
     None = 0,
@@ -48,40 +26,48 @@ pub enum TextDocumentSyncKind {
     Incremental = 2,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-struct CompletionOptions {
+pub struct CompletionOptions {
     // WARNING: This is not to spec, there are more optional options:
     // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionOptions
-    trigger_characters: Vec<String>,
+    pub trigger_characters: Vec<String>,
 }
 
-impl CompletionOptions {
-    fn new() -> Self {
-        Self {
-            trigger_characters: vec!["?".to_string()],
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct DocumentFormattingOptions {
     // WARNING: This could also inherit WorkDoneProgressOptions (not implemented yet).
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::lsp::capabilities::{
+        CompletionOptions, DiagnosticOptions, DocumentFormattingOptions, TextDocumentSyncKind,
+    };
+
     use super::ServerCapabilities;
 
     #[test]
     fn serialize() {
-        let server_capabilities = ServerCapabilities::new();
+        let server_capabilities = ServerCapabilities {
+            text_document_sync: TextDocumentSyncKind::Full,
+            hover_provider: true,
+            completion_provider: CompletionOptions {
+                trigger_characters: vec!["?".to_string()],
+            },
+            document_formatting_provider: DocumentFormattingOptions {},
+            diagnostic_provider: DiagnosticOptions {
+                identifier: "my-ls".to_string(),
+                inter_file_dependencies: false,
+                workspace_diagnostics: false,
+            },
+        };
 
         let serialized = serde_json::to_string(&server_capabilities).unwrap();
 
         assert_eq!(
             serialized,
-            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{\"triggerCharacters\":[\"?\"]},\"documentFormattingProvider\":{},\"diagnosticProvider\":{\"identifier\":\"sparql-ls\",\"inter_file_dependencies\":false,\"workspace_diagnostics\":false}}"
+            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{\"triggerCharacters\":[\"?\"]},\"documentFormattingProvider\":{},\"diagnosticProvider\":{\"identifier\":\"my-ls\",\"inter_file_dependencies\":false,\"workspace_diagnostics\":false}}"
         );
     }
 }

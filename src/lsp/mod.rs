@@ -1,4 +1,4 @@
-mod capabilities;
+pub mod capabilities;
 pub mod messages;
 pub mod textdocument;
 

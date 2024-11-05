@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    lsp::capabilities::ServerCapabilities,
+    lsp::capabilities::{self, ServerCapabilities},
     rpc::{RequestMessage, ResponseMessage},
+    server::Server,
 };
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -25,7 +26,7 @@ pub struct InitializeRequest {
     pub params: InitializeParams,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ServerInfo {
     pub name: String,
     pub version: Option<String>,
@@ -46,18 +47,15 @@ pub struct InitializeResonse {
 }
 
 impl InitializeResonse {
-    pub fn new(id: u32) -> Self {
+    pub fn new(id: u32, server: &Server) -> Self {
         InitializeResonse {
             base: ResponseMessage {
                 jsonrpc: "2.0".to_string(),
                 id,
             },
             result: InitializeResult {
-                capabilities: ServerCapabilities::new(),
-                server_info: Some(ServerInfo {
-                    name: "lsping".to_string(),
-                    version: Some("0.0.0.1".to_string()),
-                }),
+                capabilities: server.capabilities.clone(),
+                server_info: Some(server.server_info.clone()),
             },
         }
     }

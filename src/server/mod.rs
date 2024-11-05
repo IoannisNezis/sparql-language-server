@@ -4,11 +4,12 @@ mod message_handler;
 use crate::{
     analysis::AnalysisState,
     lsp::{
-        textdocument::TextDocumentItem, PublishDiagnosticsNotification, PublishDiagnosticsPrarams,
-        TextDocumentContentChangeEvent,
+        capabilities, textdocument::TextDocumentItem, PublishDiagnosticsNotification,
+        PublishDiagnosticsPrarams, ServerInfo, TextDocumentContentChangeEvent,
     },
     rpc::{BaseMessage, Header},
 };
+// use crate::lsp::;
 use configuration::Settings;
 use log::{error, info};
 use message_handler::{collect_diagnostics, dispatch};
@@ -24,8 +25,10 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct Server {
-    state: ServerState,
-    settings: Settings,
+    pub(crate) state: ServerState,
+    pub(crate) settings: Settings,
+    pub(crate) capabilities: capabilities::ServerCapabilities,
+    pub(crate) server_info: ServerInfo,
 }
 
 #[wasm_bindgen]
@@ -42,11 +45,28 @@ impl Server {
         Self {
             state: ServerState::new(),
             settings,
+            capabilities: capabilities::ServerCapabilities {
+                text_document_sync: capabilities::TextDocumentSyncKind::Full,
+                hover_provider: true,
+                diagnostic_provider: capabilities::DiagnosticOptions {
+                    identifier: "fichu".to_string(),
+                    inter_file_dependencies: false,
+                    workspace_diagnostics: false,
+                },
+                completion_provider: capabilities::CompletionOptions {
+                    trigger_characters: vec!["?".to_string()],
+                },
+                document_formatting_provider: capabilities::DocumentFormattingOptions {},
+            },
+            server_info: ServerInfo {
+                name: "fichu".to_string(),
+                version: Some("0.0.0.1".to_string()),
+            },
         }
     }
 
     pub fn handle_message(&mut self, message: Vec<u8>) -> Option<String> {
-        dispatch(&message, &mut self.state, &self.settings)
+        dispatch(self, &message)
     }
 
     pub fn publish_diagnostic(&self, uri: String) -> String {
