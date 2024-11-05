@@ -1,5 +1,5 @@
-use core::alloc;
 use std::{collections::HashSet, usize};
+use streaming_iterator::StreamingIterator;
 
 use log::{error, warn};
 use tree_sitter::{Node, Query, QueryCursor, Tree, TreeCursor};
@@ -390,29 +390,29 @@ fn separate_children_by(
 
 fn align_prefixes(mut formatted_string: String, node: &Node, text: &String) -> String {
     if let Ok(query) = Query::new(
-        &tree_sitter_sparql::language(),
+        &tree_sitter_sparql::LANGUAGE.into(),
         "(PrefixDecl (PNAME_NS) @prefix)",
     ) {
         // Step 1: Get all prefix strs and their lengths.
         // NOTE: Here a `HashSet` is used to avoid douplication of prefixes.
+        //
         let mut query_cursor = QueryCursor::new();
-        let captures = query_cursor.captures(&query, *node, text.as_bytes());
-        let prefixes: HashSet<(&str, usize)> = captures
-            .map(|(query_match, capture_index)| {
-                let node = query_match.captures[capture_index].node;
-                (
-                    node.utf8_text(text.as_bytes()).unwrap(),
-                    node.end_position().column - node.start_position().column,
-                )
-            })
-            .collect();
+        let mut captures = query_cursor.captures(&query, *node, text.as_bytes());
+        let mut namespaces_set: HashSet<(&str, usize)> = HashSet::new();
+        while let Some((mat, capture_index)) = captures.next() {
+            let node = mat.captures[*capture_index].node;
+            namespaces_set.insert((
+                node.utf8_text(text.as_bytes()).unwrap(),
+                node.end_position().column - node.start_position().column,
+            ));
+        }
         // Step 2: Get the length of the longest prefix.
-        let max_prefix_length = prefixes
+        let max_prefix_length = namespaces_set
             .iter()
             .fold(0, |old_max, (_, length)| old_max.max(*length));
         // Step 3: Insert n spaces after each prefix, where n is the length difference to
         //         the longest prefix
-        for (prefix, length) in prefixes {
+        for (prefix, length) in namespaces_set {
             formatted_string = formatted_string.replace(
                 &format!(" {} ", prefix),
                 &format!(" {}{}", prefix, " ".repeat(max_prefix_length - length + 1)),

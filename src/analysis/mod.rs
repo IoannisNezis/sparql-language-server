@@ -1,4 +1,5 @@
 mod state;
+use streaming_iterator::StreamingIterator;
 
 use std::collections::HashSet;
 
@@ -10,21 +11,25 @@ use tree_sitter::{Node, Query, QueryCursor};
 use crate::lsp::textdocument::{Position, Range};
 
 fn collect_all_unique_captures(node: Node, query_str: &str, text: &String) -> Vec<String> {
-    match Query::new(&tree_sitter_sparql::language(), query_str) {
-        Ok(query) => QueryCursor::new()
-            .captures(&query, node, text.as_bytes())
-            .map(|(query_match, capture_index)| {
-                query_match.captures[capture_index]
-                    .node
-                    .utf8_text(text.as_bytes())
-                    .unwrap()
-                    .split_at(1)
-                    .1
-                    .to_string()
-            })
-            .collect::<HashSet<String>>()
-            .into_iter()
-            .collect(),
+    match Query::new(&tree_sitter_sparql::LANGUAGE.into(), query_str) {
+        Ok(query) => {
+            let mut capture_set: HashSet<String> = HashSet::new();
+            let mut query_cursor = QueryCursor::new();
+            let mut captures = query_cursor.captures(&query, node, text.as_bytes());
+            while let Some((mat, capture_index)) = captures.next() {
+                let node: Node = mat.captures[*capture_index].node;
+                if node.end_byte() != node.start_byte() {
+                    capture_set.insert(
+                        node.utf8_text(text.as_bytes())
+                            .unwrap()
+                            .split_at(1)
+                            .1
+                            .to_string(),
+                    );
+                }
+            }
+            capture_set.into_iter().collect()
+        }
 
         Err(_) => {
             error!("Building a tree-sitter query failed: {}", query_str);
@@ -71,22 +76,25 @@ pub fn get_declared_namspaces(analyis_state: &AnalysisState, uri: &String) -> Ve
     match analyis_state.get_state(uri) {
         Some((document, Some(tree))) => {
             match Query::new(
-                &tree_sitter_sparql::language(),
+                &tree_sitter_sparql::LANGUAGE.into(),
                 "(PrefixDecl (PNAME_NS) @namespace)",
             ) {
-                Ok(query) => QueryCursor::new()
-                    .captures(&query, tree.root_node(), document.text.as_bytes())
-                    .map(|(query_match, capture_index)| {
-                        let node = query_match.captures[capture_index].node;
-                        (
+                Ok(query) => {
+                    let mut query_cursor = QueryCursor::new();
+                    let mut captures =
+                        query_cursor.captures(&query, tree.root_node(), document.text.as_bytes());
+                    let mut namespaces: Vec<(String, Range)> = Vec::new();
+                    while let Some((mat, capture_index)) = captures.next() {
+                        let node = mat.captures[*capture_index].node;
+                        namespaces.push((
                             node.utf8_text(document.text.as_bytes())
                                 .unwrap()
                                 .to_string(),
                             Range::from_node(node),
-                        )
-                    })
-                    .collect(),
-
+                        ));
+                    }
+                    return namespaces;
+                }
                 Err(_) => {
                     error!(
                         "Could not compute declared namspaces for {}: Query could not be build",
@@ -117,21 +125,25 @@ pub fn get_used_namspaces(analyis_state: &AnalysisState, uri: &String) -> Vec<(S
     match analyis_state.get_state(uri) {
         Some((document, Some(tree))) => {
             match Query::new(
-                &tree_sitter_sparql::language(),
+                &tree_sitter_sparql::LANGUAGE.into(),
                 "(PrefixedName (PNAME_NS) @namespace)",
             ) {
-                Ok(query) => QueryCursor::new()
-                    .captures(&query, tree.root_node(), document.text.as_bytes())
-                    .map(|(query_match, capture_index)| {
-                        let node = query_match.captures[capture_index].node;
-                        (
+                Ok(query) => {
+                    let mut query_cursor = QueryCursor::new();
+                    let mut captures =
+                        query_cursor.captures(&query, tree.root_node(), document.text.as_bytes());
+                    let mut namespaces: Vec<(String, Range)> = Vec::new();
+                    while let Some((mat, capture_index)) = captures.next() {
+                        let node = mat.captures[*capture_index].node;
+                        namespaces.push((
                             node.utf8_text(document.text.as_bytes())
                                 .unwrap()
                                 .to_string(),
                             Range::from_node(node),
-                        )
-                    })
-                    .collect(),
+                        ));
+                    }
+                    return namespaces;
+                }
 
                 Err(_) => {
                     error!(

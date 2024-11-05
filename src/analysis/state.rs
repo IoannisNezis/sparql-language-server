@@ -14,7 +14,7 @@ pub struct AnalysisState {
 impl AnalysisState {
     pub fn new() -> Self {
         let mut parser = Parser::new();
-        match parser.set_language(&tree_sitter_sparql::language()) {
+        match parser.set_language(&tree_sitter_sparql::LANGUAGE.into()) {
             Ok(()) => {
                 info!("Successfully initialized Parser")
             }

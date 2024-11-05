@@ -7,7 +7,7 @@ fn format_and_compare(ugly_query: &str, pretty_query: &str) {
     let format_settings = FormatSettings::default();
     let mut parser = Parser::new();
     parser
-        .set_language(&tree_sitter_sparql::language())
+        .set_language(&tree_sitter_sparql::LANGUAGE.into())
         .unwrap();
     let tree = parser.parse(ugly_query, None).unwrap();
     let formatted_query = format_helper(

@@ -39,7 +39,7 @@ pub fn format_raw(text: String) -> String {
     let mut parser = Parser::new();
     // TODO: look for user configuration
     let format_settings = FormatSettings::default();
-    match parser.set_language(&tree_sitter_sparql::language()) {
+    match parser.set_language(&tree_sitter_sparql::LANGUAGE.into()) {
         Ok(()) => {
             let tree = parser.parse(text.clone(), None).expect("could not parse");
             let formatted_text =
