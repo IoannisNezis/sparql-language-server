@@ -43,6 +43,50 @@ fichu server
 
 This will create a language server listening on stdio.
 
+# Capabilities
+
+## Formatting
+
+**Status**: Full support
+
+Formats SPARQL queries to ensure consistent and readable syntax.
+Customizable options to align with preferred query styles are also implemented.
+
+## Diagnostics
+
+**Status**: Partial support
+
+Currently provides a few basic diagnostics for syntax errors and simple issues in SPARQL queries.
+Further enhancements are planned to cover a broader range of semantic and logic-related diagnostics.
+
+**Currently provided diagnostics**:
+
+- unused namespace (warning): A declared namespace is not used
+- undefined namespace (error): A used namespace is not declared
+
+**Planed diagnostics**:
+
+- path compresion possible (info): A declared namespace is not used
+
+## Completion
+
+**Status**: Rudimentary
+
+Basic auto-completion for SPARQL keywords and variables. Currently not context aware.  
+Future improvements will expand suggestions to include functions, predicates, and custom completions based on query context.
+
+## Code Actions
+
+**Status**: Planed
+
+Future support for code actions, such as quick fixes and refactoring suggestions, to improve productivity and code quality in SPARQL development.
+
+**Planed code actions**:
+
+- Consolidate property paths
+- Refactor iris into namespaces
+- Sort Prefixes
+
 # Configuration
 
 Fichu can be configured through a `fichu.toml` or `fichu.yml` file.
