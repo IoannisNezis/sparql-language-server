@@ -260,7 +260,7 @@ fn construct() {
         "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>
          PREFIX vcard:  <http://www.w3.org/2001/vcard-rdf/3.0#>
          CONSTRUCT   { <http://example.org/person#Alice> vcard:FN ?name }
-         WHERE       { ?x foaf:name ?name }"
+         WHERE       { ?x foaf:name ?name } LIMIT 10"
     );
     let pretty_query = indoc!(
         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -270,7 +270,8 @@ fn construct() {
          }
          WHERE {
            ?x foaf:name ?name
-         }"
+         }
+         LIMIT 10"
     );
     format_and_compare(ugly_query, pretty_query)
 }

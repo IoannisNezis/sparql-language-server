@@ -175,12 +175,13 @@ pub(super) fn format_helper(
         "ConstructQuery" => separate_children_by(
             text,
             &cursor.node(),
-            "\n",
+            " ",
             indentation,
             indent_base,
             settings,
         )
-        .replace("\n{", " {"),
+        .replace(" WHERE", "\nWHERE")
+        .replace("} ", "}"),
         "SelectQuery" | "DescribeQuery" | "AskQuery" => separate_children_by(
             text,
             &cursor.node(),
