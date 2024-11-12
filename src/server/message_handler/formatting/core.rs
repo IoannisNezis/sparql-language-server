@@ -182,7 +182,7 @@ pub(super) fn format_helper(
         )
         .replace(" WHERE", "\nWHERE")
         .replace("} ", "}"),
-        "SelectQuery" | "DescribeQuery" | "AskQuery" => separate_children_by(
+        "DescribeQuery" | "AskQuery" => separate_children_by(
             text,
             &cursor.node(),
             " ",
@@ -191,6 +191,21 @@ pub(super) fn format_helper(
             settings,
         )
         .replace("} \n", "}\n"),
+        "SelectQuery" => {
+            let seperator = match &cursor.node().child(1) {
+                Some(node) if node.kind() == "DatasetClause" => &line_break,
+                _ => " ",
+            };
+            separate_children_by(
+                text,
+                &cursor.node(),
+                seperator,
+                indentation,
+                indent_base,
+                settings,
+            )
+            .replace("} \n", "}\n")
+        }
 
         "ObjectList" | "ExpressionList" | "SubstringExpression" | "RegexExpression" | "ArgList" => {
             separate_children_by(text, &cursor.node(), "", 0, indent_base, settings)

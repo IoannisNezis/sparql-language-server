@@ -241,13 +241,15 @@ fn solution_modifier() {
 fn dataset_clause() {
     let ugly_query = indoc!(
         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-         SELECT  ?name
-         FROM    <http://example.org/foaf/aliceFoaf>
+         SELECT  ?name ?x FROM    <http://example.org/foaf/aliceFoaf> FROM    <http://example.org/foaf/aliceFoaf>
          WHERE   { ?x foaf:name ?name }"
     );
     let pretty_query = indoc!(
         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-         SELECT ?name FROM <http://example.org/foaf/aliceFoaf> WHERE {
+         SELECT ?name ?x
+         FROM <http://example.org/foaf/aliceFoaf>
+         FROM <http://example.org/foaf/aliceFoaf>
+         WHERE {
            ?x foaf:name ?name
          }"
     );
