@@ -12,7 +12,7 @@ keywords = ["SPARQL", "formatter", "lsp", "wasm"]
 [lib]
 name = "sparql_language_server_web"
 path = "src/lib.rs"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [[bin]]
 name = "fichu"
@@ -34,10 +34,10 @@ serde_repr = "0.1.19"
 
 # tree-sitter
 tree-sitter = { package = "tree-sitter-c2rust", version = "0.24.3" }
-tree-sitter-sparql = { version = "0.23" }
+tree-sitter-sparql = { version = "0.24" }
 
 # wasm
-wasm-bindgen = "0.2.93"
+wasm-bindgen = "0.2.95"
 console_error_panic_hook = { version = "0.1.7", optional = true }
 getrandom = { version = "0.2", features = ["js"] }
 serde-wasm-bindgen = "0.6.5"
