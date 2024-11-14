@@ -6,8 +6,11 @@ test:
 build-native:
 	cargo build --release
 
-build-wasm:
-	wasm-pack build --release --scope ioannisnezis
+build-wasm-web:
+	wasm-pack build --release --target web --scope ioannisnezis
+
+build-wasm-bundler:
+	wasm-pack build --release --target bundler --scope ioannisnezis
 
 publish:
 	wasm-pack publish
