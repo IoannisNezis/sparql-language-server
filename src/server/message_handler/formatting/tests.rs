@@ -557,3 +557,32 @@ fn function_like_keywords() {
     );
     format_and_compare(ugly_query, pretty_query)
 }
+
+#[test]
+fn full_select_querry() {
+    let ugly_query = indoc!(
+        "PREFIX namespace <iri>
+         SELECT ?var From <dataset> FROM <dataset> WHERE {
+         ?s ?p ?o
+         }
+         GROUP BY ?s
+         HAVING (?p > 0)
+         ORDER BY DESC(?o)
+         LIMIT 12 OFFSET 20"
+    );
+    let pretty_query = indoc!(
+        "PREFIX namespace <iri>
+         SELECT ?var
+         FROM <dataset>
+         FROM <dataset>
+         WHERE {
+           ?s ?p ?o
+         }
+         GROUP BY ?s
+         HAVING (?p > 0)
+         ORDER BY DESC(?o)
+         LIMIT 12
+         OFFSET 20"
+    );
+    format_and_compare(ugly_query, pretty_query);
+}

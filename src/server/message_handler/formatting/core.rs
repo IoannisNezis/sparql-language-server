@@ -307,7 +307,18 @@ pub(super) fn format_helper(
                 + &line_break_small
         }
         "SolutionModifier" => {
-            line_break.clone()
+            // NOTE: If the Query contains a DatasetClause the childs are speparated by a newline
+            // in this case no line break is required here
+            match &cursor
+                .node()
+                .parent()
+                .map(|parent| parent.child(1))
+                .flatten()
+            {
+                Some(node) if node.kind() == "DatasetClause" => "",
+                _ => &line_break,
+            }
+            .to_string()
                 + &separate_children_by(
                     text,
                     &cursor.node(),
