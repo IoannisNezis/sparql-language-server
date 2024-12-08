@@ -43,6 +43,35 @@ fichu server
 
 This will create a language server listening on stdio.
 
+## Connect to Neovim
+
+After you installed the language server, add this to your `init.lua`:
+
+```lua
+vim.api.nvim_create_autocmd({ 'FileType' }, {
+  desc = 'Connect to sparql-language-server',
+  pattern = { 'sparql' },
+  callback = function()
+    vim.lsp.start {
+      name = 'fichu',
+      cmd = { 'fichu', 'server' },
+      root_dir = vim.fn.getcwd(),
+      on_attach = function(client, bufnr)
+        vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, { buffer = bufnr, desc = 'LSP: ' .. '[F]ormat' })
+      end,
+    }
+  end,
+})
+```
+
+Open a `.rq` file and check that the buffer is attached to th server:
+
+```
+:checkhealth lsp
+```
+
+Configure keymaps in `on_attach` function.
+
 # Capabilities
 
 ## Formatting
