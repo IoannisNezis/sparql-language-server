@@ -11,7 +11,7 @@ use crate::{
 };
 // use crate::lsp::;
 use configuration::Settings;
-use log::{error, info};
+use log::{debug, error, info};
 use message_handler::{collect_diagnostics, dispatch};
 
 pub use message_handler::format_raw;
@@ -40,24 +40,26 @@ impl Server {
             .build()
             .unwrap();
         let settings: Settings = config.try_deserialize().expect("could not load Settings");
-        info!("{:?}", settings);
-        info!("Started LSP Server!!");
+        let capabilities = capabilities::ServerCapabilities {
+            text_document_sync: capabilities::TextDocumentSyncKind::Incremental,
+            hover_provider: true,
+            diagnostic_provider: capabilities::DiagnosticOptions {
+                identifier: "fichu".to_string(),
+                inter_file_dependencies: false,
+                workspace_diagnostics: false,
+            },
+            completion_provider: capabilities::CompletionOptions {
+                trigger_characters: vec!["?".to_string()],
+            },
+            document_formatting_provider: capabilities::DocumentFormattingOptions {},
+        };
+        info!("Started Language Server!!1!");
+        debug!("Capabilities: {:?}", capabilities);
+        debug!("Settings:\n{:?}", settings);
         Self {
             state: ServerState::new(),
             settings,
-            capabilities: capabilities::ServerCapabilities {
-                text_document_sync: capabilities::TextDocumentSyncKind::Full,
-                hover_provider: true,
-                diagnostic_provider: capabilities::DiagnosticOptions {
-                    identifier: "fichu".to_string(),
-                    inter_file_dependencies: false,
-                    workspace_diagnostics: false,
-                },
-                completion_provider: capabilities::CompletionOptions {
-                    trigger_characters: vec!["?".to_string()],
-                },
-                document_formatting_provider: capabilities::DocumentFormattingOptions {},
-            },
+            capabilities,
             server_info: ServerInfo {
                 name: "fichu".to_string(),
                 version: Some("0.0.0.1".to_string()),
