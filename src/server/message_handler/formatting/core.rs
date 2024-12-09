@@ -20,6 +20,8 @@ pub(super) fn format_textdoument(
     settings: &FormatSettings,
     options: &FormattingOptions,
 ) -> Vec<TextEdit> {
+    // WARNING: ALWAYS maintain a newline at the end of a query as this is POSIX conform
+    // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
     let range = document.get_full_range();
     let indent_string = match settings.insert_spaces {
         true => " ".repeat(settings.tab_size as usize),
@@ -32,7 +34,7 @@ pub(super) fn format_textdoument(
         &indent_string,
         "",
         settings,
-    );
+    ) + "\n";
     vec![TextEdit::new(range, text)]
 }
 

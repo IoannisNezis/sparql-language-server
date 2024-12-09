@@ -10,6 +10,20 @@ pub struct Header {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct BaseMessage {
+    pub jsonrpc: String,
+    pub method: String,
+}
+
+impl BaseMessage {
+    pub fn new(method: String) -> Self {
+        Self {
+            jsonrpc: "2.0".to_string(),
+            method,
+        }
+    }
+}
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct RequestMessage {
     #[serde(flatten)]
     pub base: BaseMessage,
@@ -40,21 +54,6 @@ struct ResponseError {
     message: String,
     // WARNING: This is not to Spec! It could also be a number, bool, object, ...
     data: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct BaseMessage {
-    pub jsonrpc: String,
-    pub method: String,
-}
-
-impl BaseMessage {
-    pub fn new(method: String) -> Self {
-        Self {
-            jsonrpc: "2.0".to_string(),
-            method,
-        }
-    }
 }
 
 fn parse_header(input: &str) -> IResult<&str, usize> {

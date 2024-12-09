@@ -4,7 +4,7 @@ use log::{error, info};
 
 use tree_sitter::{Parser, Tree};
 
-use crate::lsp::textdocument::TextDocumentItem;
+use crate::lsp::textdocument::{TextDocumentItem, TextEdit};
 
 pub struct AnalysisState {
     documents: HashMap<String, (TextDocumentItem, Option<Tree>)>,
@@ -40,7 +40,14 @@ impl AnalysisState {
     ) {
         match self.documents.get_mut(&uri) {
             Some((text_document, old_tree)) => {
-                text_document.apply_changes(content_changes);
+                text_document.apply_text_edits(
+                    content_changes
+                        .into_iter()
+                        .map(|change_event| {
+                            TextEdit::from_text_document_content_change_event(change_event)
+                        })
+                        .collect::<Vec<TextEdit>>(),
+                );
                 let tree = self.parser.parse(&text_document.text, None);
                 *old_tree = tree;
             }

@@ -1,6 +1,11 @@
+use core::fmt;
+
 use serde::{Deserialize, Serialize};
 
-use crate::{lsp::textdocument::VersionedTextDocumentIdentifier, rpc::BaseMessage};
+use crate::{
+    lsp::textdocument::{Range, VersionedTextDocumentIdentifier},
+    rpc::BaseMessage,
+};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct DidChangeTextDocumentNotification {
@@ -16,9 +21,19 @@ pub struct DidChangeTextDocumentParams {
     pub content_changes: Vec<TextDocumentContentChangeEvent>,
 }
 
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct TextDocumentContentChangeEvent {
-    // WARNING: This is not to spec, this could also be a incremental diff.
-    // See: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
+    pub range: Range,
     pub text: String,
+}
+
+impl fmt::Display for TextDocumentContentChangeEvent {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "\"{}\"; [{}-{}]",
+            self.text, self.range.start, self.range.end
+        )
+    }
 }
