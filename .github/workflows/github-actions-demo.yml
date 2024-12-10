@@ -7,6 +7,12 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
+      - name: Cache target dir
+        id: cache-primes
+        uses: actions/cache@v4
+        with:
+          path: target/
+          key: target-${{  github.run_number }}-${{ github.run.attempt }}
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       - name: build release
@@ -21,6 +27,11 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
+      - name: Restore cargo build
+        uses: actions/cache/restore@v4
+        with:
+          path: target/
+          key: target-${{  github.run_number }}-${{ github.run.attempt }}
       - run: ls
       # - uses: jetli/wasm-pack-action@v0.4.0
       #   with:
