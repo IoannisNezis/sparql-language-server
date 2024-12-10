@@ -9,6 +9,7 @@ on:
 
 jobs:
   build-and-test:
+    name: 🏗️ build and 🔍 test
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -26,9 +27,9 @@ jobs:
       - name: 🔍 test release
         run: cargo test --release
   publish:
+    name: 📦 Publish to crates.io
     if: github.event_name == 'release' && github.event.action == 'published'
     needs: build-and-test
-    name: 📦 Publish to crates.io
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
