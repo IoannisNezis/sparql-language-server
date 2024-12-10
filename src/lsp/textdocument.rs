@@ -57,7 +57,7 @@ impl TextDocumentItem {
             .chars()
             .rev()
             .next()
-            .expect("At least one charackter hat to be in the text");
+            .expect("At least one character has to be in the text");
         match last_char {
             '\n' => Range::new(0, 0, line_count as u32, 0),
             _ => {
