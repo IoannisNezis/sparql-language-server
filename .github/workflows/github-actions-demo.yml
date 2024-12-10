@@ -12,7 +12,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target/
-          key: target-${{  github.run_number }}-${{ github.run.attempt }}
+          key: target-${{  github.run_number }}-${{ github.run_attempt }}
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       - name: build release
@@ -31,8 +31,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: target/
-          key: target-${{  github.run_number }}-${{ github.run.attempt }}
+          key: target-${{  github.run_number }}-${{ github.run_attempt }}
       - run: ls
+      - name: publish to crate.io
+        run: cargo publish --no-verify --token ${{ secrets.CRATEIO_TOKEN }}
       # - uses: jetli/wasm-pack-action@v0.4.0
       #   with:
       #     version: 'latest'
