@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    lsp::textdocument::Position,
+use crate::lsp::{
     rpc::{RequestMessage, ResponseMessage},
+    textdocument::Position,
 };
 
 use super::utils::TextDocumentPositionParams;
@@ -90,12 +90,10 @@ pub enum Markupkind {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        lsp::{
-            messages::textdocument_hover::{HoverParams, Position, TextDocumentPositionParams},
-            textdocument::TextDocumentIdentifier,
-        },
+    use crate::lsp::{
+        messages::textdocument_hover::{HoverParams, Position, TextDocumentPositionParams},
         rpc::{BaseMessage, RequestMessage},
+        textdocument::TextDocumentIdentifier,
     };
 
     use super::{HoverRequest, HoverResponse};

@@ -13,17 +13,18 @@ pub use formatting::format_raw;
 
 use crate::{
     lsp::{
-        textdocument::TextDocumentItem, CompletionRequest, Diagnostic, DiagnosticRequest,
-        DiagnosticResponse, DidChangeTextDocumentNotification, DidOpenTextDocumentNotification,
-        FormattingRequest, HoverRequest, InitializeRequest, InitializeResonse, ShutdownResponse,
+        rpc::{self, RequestMessage},
+        textdocument::TextDocumentItem,
+        CompletionRequest, Diagnostic, DiagnosticRequest, DiagnosticResponse,
+        DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
+        HoverRequest, InitializeRequest, InitializeResonse, ShutdownResponse,
     },
-    rpc::{self, RequestMessage},
-    server::{ServerState, ServerStatus},
+    server::ServerStatus,
 };
 
 use self::formatting::handle_format_request;
 
-use super::{configuration::Settings, Server};
+use super::Server;
 
 pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
     if let Ok(message) = rpc::decode_message(bytes) {

@@ -2,9 +2,9 @@ use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    lsp::textdocument::{Range, VersionedTextDocumentIdentifier},
+use crate::lsp::{
     rpc::BaseMessage,
+    textdocument::{Range, VersionedTextDocumentIdentifier},
 };
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

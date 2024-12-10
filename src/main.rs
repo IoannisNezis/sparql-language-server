@@ -1,6 +1,5 @@
 mod analysis;
 mod lsp;
-mod rpc;
 mod server;
 
 use std::{

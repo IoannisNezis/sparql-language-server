@@ -4,10 +4,12 @@ mod message_handler;
 use crate::{
     analysis::AnalysisState,
     lsp::{
-        capabilities, textdocument::TextDocumentItem, PublishDiagnosticsNotification,
-        PublishDiagnosticsPrarams, ServerInfo, TextDocumentContentChangeEvent,
+        capabilities,
+        rpc::{BaseMessage, Header},
+        textdocument::TextDocumentItem,
+        PublishDiagnosticsNotification, PublishDiagnosticsPrarams, ServerInfo,
+        TextDocumentContentChangeEvent,
     },
-    rpc::{BaseMessage, Header},
 };
 // use crate::lsp::;
 use configuration::Settings;
