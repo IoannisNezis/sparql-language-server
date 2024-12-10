@@ -51,10 +51,7 @@ WHERE {
 }
 
 pub fn handle_hover_request(request: &HoverRequest, state: &ServerState) -> HoverResponse {
-    let node_kind = get_kind_at_position(
-        &state.analysis_state,
-        request.get_document_uri(),
-        request.get_position(),
-    );
+    let node_kind =
+        get_kind_at_position(&state, request.get_document_uri(), request.get_position());
     HoverResponse::new(request.get_id(), documentation(node_kind.unwrap_or("")))
 }

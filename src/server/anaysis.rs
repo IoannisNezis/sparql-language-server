@@ -8,7 +8,7 @@ use tree_sitter::{Node, Query, QueryCursor};
 
 use super::{
     lsp::textdocument::{Position, Range},
-    state::AnalysisState,
+    state::ServerState,
 };
 
 fn collect_all_unique_captures(node: Node, query_str: &str, text: &String) -> Vec<String> {
@@ -39,7 +39,7 @@ fn collect_all_unique_captures(node: Node, query_str: &str, text: &String) -> Ve
     }
 }
 
-pub fn get_all_variables(analyis_state: &AnalysisState, uri: &String) -> Vec<String> {
+pub fn get_all_variables(analyis_state: &ServerState, uri: &String) -> Vec<String> {
     match analyis_state.get_state(uri) {
         Some((document, Some(tree))) => {
             collect_all_unique_captures(tree.root_node(), "(VAR) @variable", &document.text)
@@ -56,7 +56,7 @@ pub fn get_all_variables(analyis_state: &AnalysisState, uri: &String) -> Vec<Str
 }
 
 pub fn get_kind_at_position(
-    analyis_state: &AnalysisState,
+    analyis_state: &ServerState,
     uri: &String,
     position: &Position,
 ) -> Option<&'static str> {
@@ -73,7 +73,7 @@ pub fn get_kind_at_position(
     }
 }
 
-pub fn get_declared_namspaces(analyis_state: &AnalysisState, uri: &String) -> Vec<(String, Range)> {
+pub fn get_declared_namspaces(analyis_state: &ServerState, uri: &String) -> Vec<(String, Range)> {
     match analyis_state.get_state(uri) {
         Some((document, Some(tree))) => {
             match Query::new(
@@ -122,7 +122,7 @@ pub fn get_declared_namspaces(analyis_state: &AnalysisState, uri: &String) -> Ve
     }
 }
 
-pub fn get_used_namspaces(analyis_state: &AnalysisState, uri: &String) -> Vec<(String, Range)> {
+pub fn get_used_namspaces(analyis_state: &ServerState, uri: &String) -> Vec<(String, Range)> {
     match analyis_state.get_state(uri) {
         Some((document, Some(tree))) => {
             match Query::new(
@@ -173,7 +173,7 @@ pub fn get_used_namspaces(analyis_state: &AnalysisState, uri: &String) -> Vec<(S
 }
 
 pub(crate) fn get_unused_prefixes(
-    analysis_state: &AnalysisState,
+    analysis_state: &ServerState,
     uri: &String,
 ) -> impl Iterator<Item = (String, Range)> {
     let declared_namespaces = get_declared_namspaces(analysis_state, uri);
@@ -201,7 +201,7 @@ pub(crate) fn get_unused_prefixes(
 }
 
 pub(crate) fn get_undeclared_prefixes(
-    analysis_state: &AnalysisState,
+    analysis_state: &ServerState,
     uri: &String,
 ) -> impl Iterator<Item = (String, Range)> {
     let declared_namespaces = get_declared_namspaces(analysis_state, uri);
@@ -238,12 +238,12 @@ mod tests {
             get_used_namspaces,
         },
         lsp::textdocument::TextDocumentItem,
-        state::AnalysisState,
+        state::ServerState,
     };
 
     #[test]
     fn declared_namespaces() {
-        let mut state = AnalysisState::new();
+        let mut state = ServerState::new();
         state.add_document(TextDocumentItem::new(
             "uri",
             indoc!(
@@ -266,7 +266,7 @@ mod tests {
 
     #[test]
     fn used_namespaces() {
-        let mut state = AnalysisState::new();
+        let mut state = ServerState::new();
         state.add_document(TextDocumentItem::new(
             "uri",
             indoc!("SELECT * {?a wdt:P32 ?b. ?a wd:p32 ?b. ?a wdt:P31 ?b}"),
@@ -283,7 +283,7 @@ mod tests {
 
     #[test]
     fn undeclared_namespaces() {
-        let mut state = AnalysisState::new();
+        let mut state = ServerState::new();
         state.add_document(TextDocumentItem::new(
             "uri",
             indoc!("SELECT * {x:y y:p x:x}"),
@@ -295,7 +295,7 @@ mod tests {
     }
     #[test]
     fn unused_namespaces() {
-        let mut state = AnalysisState::new();
+        let mut state = ServerState::new();
         state.add_document(TextDocumentItem::new(
             "uri",
             indoc!(

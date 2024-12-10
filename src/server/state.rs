@@ -17,37 +17,11 @@ pub enum ServerStatus {
 
 pub struct ServerState {
     pub status: ServerStatus,
-    pub analysis_state: AnalysisState,
-}
-
-impl ServerState {
-    pub fn new() -> Self {
-        ServerState {
-            status: ServerStatus::Initializing,
-            analysis_state: AnalysisState::new(),
-        }
-    }
-
-    pub fn add_document(&mut self, document: TextDocumentItem) {
-        self.analysis_state.add_document(document);
-    }
-
-    pub(crate) fn change_document(
-        &mut self,
-        document_uri: String,
-        content_changes: Vec<TextDocumentContentChangeEvent>,
-    ) {
-        self.analysis_state
-            .change_document(document_uri, content_changes)
-    }
-}
-
-pub struct AnalysisState {
     documents: HashMap<String, (TextDocumentItem, Option<Tree>)>,
     parser: Parser,
 }
 
-impl AnalysisState {
+impl ServerState {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         match parser.set_language(&tree_sitter_sparql::LANGUAGE.into()) {
@@ -56,7 +30,8 @@ impl AnalysisState {
             }
             Err(err) => error!("Error while initializing parser: {}", err),
         };
-        Self {
+        ServerState {
+            status: ServerStatus::Initializing,
             documents: HashMap::new(),
             parser,
         }
@@ -92,10 +67,6 @@ impl AnalysisState {
             }
         }
     }
-
-    // pub(crate) fn documents(&self) -> impl Iterator<Item = &String> {
-    //     self.documents.keys()
-    // }
 
     pub(crate) fn get_state(&self, uri: &String) -> Option<&(TextDocumentItem, Option<Tree>)> {
         self.documents.get(uri)

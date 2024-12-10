@@ -1,17 +1,14 @@
 use crate::server::{
     anaysis::{get_undeclared_prefixes, get_unused_prefixes},
     lsp::{Diagnostic, DiagnosticSeverity},
-    state::AnalysisState,
+    state::ServerState,
 };
 
-pub fn collect_diagnostics(
-    state: &AnalysisState,
-    uri: &String,
-) -> impl Iterator<Item = Diagnostic> {
+pub fn collect_diagnostics(state: &ServerState, uri: &String) -> impl Iterator<Item = Diagnostic> {
     unused_prefix(state, uri).chain(undeclared_prefix(state, uri))
 }
 
-fn unused_prefix(state: &AnalysisState, uri: &String) -> impl Iterator<Item = Diagnostic> {
+fn unused_prefix(state: &ServerState, uri: &String) -> impl Iterator<Item = Diagnostic> {
     get_unused_prefixes(state, uri).map(|(prefix, range)| Diagnostic {
         range: range.clone(),
         severity: DiagnosticSeverity::Warning,
@@ -20,7 +17,7 @@ fn unused_prefix(state: &AnalysisState, uri: &String) -> impl Iterator<Item = Di
     })
 }
 
-fn undeclared_prefix(state: &AnalysisState, uri: &String) -> impl Iterator<Item = Diagnostic> {
+fn undeclared_prefix(state: &ServerState, uri: &String) -> impl Iterator<Item = Diagnostic> {
     get_undeclared_prefixes(state, uri).map(|(prefix, range)| Diagnostic {
         range: range.clone(),
         severity: DiagnosticSeverity::Error,

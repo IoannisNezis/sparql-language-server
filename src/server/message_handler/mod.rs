@@ -168,7 +168,7 @@ pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
             "textDocument/diagnostic" => match serde_json::from_slice::<DiagnosticRequest>(bytes) {
                 Ok(diagnostic_request) => {
                     let diagnostics: Vec<Diagnostic> = collect_diagnostics(
-                        &server.state.analysis_state,
+                        &server.state,
                         &diagnostic_request.params.text_document.uri,
                     )
                     .collect();

@@ -77,7 +77,7 @@ impl Server {
             base: BaseMessage::new("textDocument/publishDiagnostics".to_string()),
             params: PublishDiagnosticsPrarams {
                 uri: uri.clone(),
-                diagnostics: collect_diagnostics(&self.state.analysis_state, &uri).collect(),
+                diagnostics: collect_diagnostics(&self.state, &uri).collect(),
             },
         };
 

@@ -19,7 +19,7 @@ pub fn handel_completion_request(
         // i.e. "?"
         CompletionTriggerKind::TriggerCharacter => CompletionResponse::from_variables(
             request.get_id(),
-            get_all_variables(&state.analysis_state, request.get_document_uri()),
+            get_all_variables(&state, request.get_document_uri()),
         ),
         CompletionTriggerKind::TriggerForIncompleteCompletions => {
             error!("Completion was triggered by \"TriggerForIncompleteCompetions\", this is not implemented yet");
