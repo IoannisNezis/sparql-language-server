@@ -8,8 +8,8 @@ on:
     types: [published]
 
 jobs:
-  build-and-test-native:
-    name: 🏗️ build Rust native 🦀
+  build-native:
+    name: 🏗️ build Rust 🦀
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -22,12 +22,26 @@ jobs:
           key: target-${{  github.run_number }}-${{ github.run_attempt }}
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: 🏗️ build release
-        run: cargo build --release
-      - name: 🔍 test release
-        run: cargo test --release
+      - name: cargo build
+        run: cargo build --release --bin fichu
+
+  test-native:
+    name: 🔍 run tests
+    needs: build-native
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+      - name: Restore cargo build
+        uses: actions/cache/restore@v4
+        with:
+          path: target/
+          key: target-${{  github.run_number }}-${{ github.run_attempt }}
+      - name: cargo test
+        run: cargo test --release --bin fichu
+
   build-python:
-    name: 🏗️ build python 🐍 with maturin
+    name: 🏗️ build python 🐍
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -37,10 +51,13 @@ jobs:
         with:
           command: build
           args: --release
+
   publish-createsio:
     name: 📦 Publish to crates.io
     if: github.event_name == 'release' && github.event.action == 'published'
-    needs: build-and-test-native
+    needs:
+      - build-native
+      - test-native
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -53,4 +70,3 @@ jobs:
       - run: ls
       - name: publish to crate.io
         run: cargo publish --no-verify --token ${{ secrets.CRATEIO_TOKEN }}
-
