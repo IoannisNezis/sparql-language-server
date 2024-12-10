@@ -8,7 +8,8 @@ on:
     types: [published]
 
 jobs:
-  build-and-test:
+  build-and-test-native:
+    name: 🏗️ build Rust native 🦀
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
@@ -25,7 +26,19 @@ jobs:
         run: cargo build --release
       - name: 🔍 test release
         run: cargo test --release
-  publish:
+  build-python:
+    name: 🏗️ build python 🐍 with maturin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+      - name: maturin build
+        uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release
+  publish-createsio:
+    name: 📦 Publish to crates.io
     if: github.event_name == 'release' && github.event.action == 'published'
     needs: build-and-test
     name: 📦 Publish to crates.io
@@ -41,3 +54,4 @@ jobs:
       - run: ls
       - name: publish to crate.io
         run: cargo publish --no-verify --token ${{ secrets.CRATEIO_TOKEN }}
+
