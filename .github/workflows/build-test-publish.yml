@@ -40,8 +40,7 @@ jobs:
   publish-createsio:
     name: 📦 Publish to crates.io
     if: github.event_name == 'release' && github.event.action == 'published'
-    needs: build-and-test
-    name: 📦 Publish to crates.io
+    needs: build-and-test-native
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
