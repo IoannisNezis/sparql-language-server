@@ -23,8 +23,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: 🏗️ build release
         run: cargo build --release
-      - name: test
-        run: 🔍 cargo test --release
+      - name: 🔍 test release
+        run: cargo test --release
   publish:
     if: github.event_name == 'release' && github.event.action == 'published'
     needs: build-and-test
