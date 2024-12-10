@@ -41,7 +41,8 @@ pub struct DocumentFormattingOptions {
 
 #[cfg(test)]
 mod tests {
-    use crate::lsp::capabilities::{
+
+    use crate::server::lsp::capabilities::{
         CompletionOptions, DiagnosticOptions, DocumentFormattingOptions, TextDocumentSyncKind,
     };
 

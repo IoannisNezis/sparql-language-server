@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::lsp::textdocument::{Position, TextDocumentIdentifier};
+use crate::server::lsp::textdocument::{Position, TextDocumentIdentifier};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]

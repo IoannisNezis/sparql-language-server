@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use crate::lsp::rpc::{RequestMessage, ResponseMessage};
-use crate::lsp::textdocument::TextDocumentIdentifier;
+use crate::server::lsp::rpc::{RequestMessage, ResponseMessage};
+use crate::server::lsp::textdocument::TextDocumentIdentifier;
 
 use super::Diagnostic;
 

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::lsp::rpc::ResponseMessage;
+use crate::server::lsp::rpc::ResponseMessage;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct ShutdownResponse {

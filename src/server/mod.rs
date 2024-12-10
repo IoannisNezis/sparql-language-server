@@ -1,22 +1,21 @@
+mod anaysis;
 mod configuration;
+mod lsp;
+mod state;
+
 mod message_handler;
 
-use crate::{
-    analysis::AnalysisState,
-    lsp::{
-        capabilities,
-        rpc::{BaseMessage, Header},
-        textdocument::TextDocumentItem,
-        PublishDiagnosticsNotification, PublishDiagnosticsPrarams, ServerInfo,
-        TextDocumentContentChangeEvent,
-    },
-};
-// use crate::lsp::;
 use configuration::Settings;
 use log::{debug, error, info};
+use lsp::{
+    capabilities,
+    rpc::{BaseMessage, Header},
+    PublishDiagnosticsNotification, PublishDiagnosticsPrarams, ServerInfo,
+};
 use message_handler::{collect_diagnostics, dispatch};
 
 pub use message_handler::format_raw;
+use state::ServerState;
 
 use std::{
     io::{self, BufReader, Read, Write},
@@ -74,7 +73,7 @@ impl Server {
     }
 
     pub fn publish_diagnostic(&self, uri: String) -> String {
-        let notification: PublishDiagnosticsNotification = PublishDiagnosticsNotification {
+        let notification = PublishDiagnosticsNotification {
             base: BaseMessage::new("textDocument/publishDiagnostics".to_string()),
             params: PublishDiagnosticsPrarams {
                 uri: uri.clone(),
@@ -153,39 +152,5 @@ impl Server {
                 buffer.clear();
             }
         }
-    }
-}
-
-#[derive(Debug)]
-pub enum ServerStatus {
-    Initializing,
-    Running,
-    ShuttingDown,
-}
-
-pub struct ServerState {
-    pub status: ServerStatus,
-    pub analysis_state: AnalysisState,
-}
-
-impl ServerState {
-    pub fn new() -> Self {
-        ServerState {
-            status: ServerStatus::Initializing,
-            analysis_state: AnalysisState::new(),
-        }
-    }
-
-    pub fn add_document(&mut self, document: TextDocumentItem) {
-        self.analysis_state.add_document(document);
-    }
-
-    pub(crate) fn change_document(
-        &mut self,
-        document_uri: String,
-        content_changes: Vec<TextDocumentContentChangeEvent>,
-    ) {
-        self.analysis_state
-            .change_document(document_uri, content_changes)
     }
 }

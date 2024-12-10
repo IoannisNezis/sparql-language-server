@@ -6,12 +6,10 @@ use log::{error, info};
 use tree_sitter::Parser;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-use crate::{
+use crate::server::{
+    configuration::{FormatSettings, Settings},
     lsp::{FormattingRequest, FormattingResponse},
-    server::{
-        configuration::{FormatSettings, Settings},
-        ServerState,
-    },
+    ServerState,
 };
 
 pub fn handle_format_request(

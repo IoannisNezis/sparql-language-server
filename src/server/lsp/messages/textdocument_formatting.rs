@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::lsp::{
+use crate::server::lsp::{
     rpc::{RequestMessage, ResponseMessage},
     textdocument::{TextDocumentIdentifier, TextEdit},
 };
@@ -57,7 +57,7 @@ impl FormattingResponse {
 
 #[cfg(test)]
 mod tests {
-    use crate::lsp::{
+    use crate::server::lsp::{
         messages::textdocument_formatting::{DocumentFormattingParams, FormattingOptions},
         rpc::{BaseMessage, RequestMessage},
         textdocument::{Range, TextDocumentIdentifier, TextEdit},

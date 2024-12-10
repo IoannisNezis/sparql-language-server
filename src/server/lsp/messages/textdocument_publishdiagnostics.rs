@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::lsp::{rpc::BaseMessage, textdocument::Range};
+use crate::server::lsp::{rpc::BaseMessage, textdocument::Range};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct PublishDiagnosticsNotification {

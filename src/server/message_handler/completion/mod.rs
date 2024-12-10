@@ -1,9 +1,9 @@
-use log::{error, info};
+use log::error;
 
-use crate::{
-    analysis::get_all_variables,
+use crate::server::{
+    anaysis::get_all_variables,
     lsp::{CompletionRequest, CompletionResponse, CompletionTriggerKind},
-    server::ServerState,
+    ServerState,
 };
 
 pub fn handel_completion_request(

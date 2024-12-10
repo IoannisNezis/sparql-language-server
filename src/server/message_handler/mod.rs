@@ -11,20 +11,22 @@ use log::{debug, error, info, warn};
 pub use diagnostic::*;
 pub use formatting::format_raw;
 
-use crate::{
-    lsp::{
-        rpc::{self, RequestMessage},
-        textdocument::TextDocumentItem,
-        CompletionRequest, Diagnostic, DiagnosticRequest, DiagnosticResponse,
-        DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
-        HoverRequest, InitializeRequest, InitializeResonse, ShutdownResponse,
-    },
-    server::ServerStatus,
+use crate::server::{
+    lsp::{textdocument::TextDocumentItem, InitializeResonse, ShutdownResponse},
+    state::ServerStatus,
 };
 
 use self::formatting::handle_format_request;
 
-use super::Server;
+use super::{
+    lsp::{
+        rpc::{self, RequestMessage},
+        CompletionRequest, Diagnostic, DiagnosticRequest, DiagnosticResponse,
+        DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
+        HoverRequest, InitializeRequest,
+    },
+    Server,
+};
 
 pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
     if let Ok(message) = rpc::decode_message(bytes) {

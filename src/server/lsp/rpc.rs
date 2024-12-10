@@ -78,7 +78,7 @@ pub fn decode_message(msg: &Vec<u8>) -> Result<BaseMessage, String> {
 #[cfg(test)]
 mod tests {
 
-    use crate::lsp::rpc::{BaseMessage, Header};
+    use crate::server::lsp::rpc::{BaseMessage, Header};
 
     use super::decode_message;
 

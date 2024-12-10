@@ -1,9 +1,9 @@
 use indoc::indoc;
 
-use crate::{
-    analysis::get_kind_at_position,
+use crate::server::{
+    anaysis::get_kind_at_position,
     lsp::{HoverRequest, HoverResponse},
-    server::ServerState,
+    ServerState,
 };
 
 fn documentation(kind: &str) -> String {

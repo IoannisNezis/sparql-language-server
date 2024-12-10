@@ -4,16 +4,17 @@ use streaming_iterator::StreamingIterator;
 use log::{error, warn};
 use tree_sitter::{Node, Query, QueryCursor, Tree, TreeCursor};
 
-use crate::{
+use crate::server::{
+    configuration::FormatSettings,
     lsp::{
         textdocument::{TextDocumentItem, TextEdit},
         FormattingOptions,
     },
-    server::configuration::FormatSettings,
 };
 
 use super::utils::KEYWORDS;
 
+// TODO: unify formatting options
 pub(super) fn format_textdoument(
     document: &TextDocumentItem,
     tree: &Tree,

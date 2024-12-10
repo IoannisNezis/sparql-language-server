@@ -2,7 +2,7 @@ use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use crate::lsp::{
+use crate::server::lsp::{
     rpc::BaseMessage,
     textdocument::{Range, VersionedTextDocumentIdentifier},
 };

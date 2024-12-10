@@ -1,14 +1,15 @@
-mod state;
 use streaming_iterator::StreamingIterator;
 
 use std::collections::HashSet;
 
 use log::{error, info};
-pub use state::*;
 
 use tree_sitter::{Node, Query, QueryCursor};
 
-use crate::lsp::textdocument::{Position, Range};
+use super::{
+    lsp::textdocument::{Position, Range},
+    state::AnalysisState,
+};
 
 fn collect_all_unique_captures(node: Node, query_str: &str, text: &String) -> Vec<String> {
     match Query::new(&tree_sitter_sparql::LANGUAGE.into(), query_str) {
@@ -231,12 +232,13 @@ pub(crate) fn get_undeclared_prefixes(
 mod tests {
     use indoc::indoc;
 
-    use crate::{
-        analysis::{
+    use crate::server::{
+        anaysis::{
             get_declared_namspaces, get_undeclared_prefixes, get_unused_prefixes,
-            get_used_namspaces, AnalysisState,
+            get_used_namspaces,
         },
         lsp::textdocument::TextDocumentItem,
+        state::AnalysisState,
     };
 
     #[test]

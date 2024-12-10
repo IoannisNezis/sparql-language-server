@@ -1,10 +1,46 @@
 use std::collections::HashMap;
 
 use log::{error, info};
-
 use tree_sitter::{Parser, Tree};
 
-use crate::lsp::textdocument::{TextDocumentItem, TextEdit};
+use super::lsp::{
+    textdocument::{TextDocumentItem, TextEdit},
+    TextDocumentContentChangeEvent,
+};
+
+#[derive(Debug)]
+pub enum ServerStatus {
+    Initializing,
+    Running,
+    ShuttingDown,
+}
+
+pub struct ServerState {
+    pub status: ServerStatus,
+    pub analysis_state: AnalysisState,
+}
+
+impl ServerState {
+    pub fn new() -> Self {
+        ServerState {
+            status: ServerStatus::Initializing,
+            analysis_state: AnalysisState::new(),
+        }
+    }
+
+    pub fn add_document(&mut self, document: TextDocumentItem) {
+        self.analysis_state.add_document(document);
+    }
+
+    pub(crate) fn change_document(
+        &mut self,
+        document_uri: String,
+        content_changes: Vec<TextDocumentContentChangeEvent>,
+    ) {
+        self.analysis_state
+            .change_document(document_uri, content_changes)
+    }
+}
 
 pub struct AnalysisState {
     documents: HashMap<String, (TextDocumentItem, Option<Tree>)>,
@@ -36,7 +72,7 @@ impl AnalysisState {
     pub(crate) fn change_document(
         &mut self,
         uri: String,
-        content_changes: Vec<crate::lsp::TextDocumentContentChangeEvent>,
+        content_changes: Vec<TextDocumentContentChangeEvent>,
     ) {
         match self.documents.get_mut(&uri) {
             Some((text_document, old_tree)) => {

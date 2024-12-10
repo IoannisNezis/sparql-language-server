@@ -1,6 +1,5 @@
 use std::{fmt, usize};
 
-use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 
 use tree_sitter::{Node, Point};
@@ -217,7 +216,7 @@ mod tests {
 
     use indoc::indoc;
 
-    use crate::lsp::textdocument::{Range, TextEdit};
+    use crate::server::lsp::textdocument::{Range, TextEdit};
 
     use super::TextDocumentItem;
 

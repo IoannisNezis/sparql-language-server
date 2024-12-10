@@ -1,6 +1,7 @@
-use crate::{
-    analysis::{get_undeclared_prefixes, get_unused_prefixes, AnalysisState},
+use crate::server::{
+    anaysis::{get_undeclared_prefixes, get_unused_prefixes},
     lsp::{Diagnostic, DiagnosticSeverity},
+    state::AnalysisState,
 };
 
 pub fn collect_diagnostics(

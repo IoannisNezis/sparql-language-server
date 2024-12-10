@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{
+use crate::server::{
     lsp::{
         capabilities::ServerCapabilities,
         rpc::{RequestMessage, ResponseMessage},
     },
-    server::Server,
+    Server,
 };
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -65,7 +65,7 @@ impl InitializeResonse {
 
 #[cfg(test)]
 mod tests {
-    use crate::lsp::{
+    use crate::server::lsp::{
         rpc::{BaseMessage, RequestMessage},
         ClientInfo,
     };

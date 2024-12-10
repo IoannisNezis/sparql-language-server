@@ -1,5 +1,3 @@
-mod analysis;
-mod lsp;
 mod server;
 
 use std::{

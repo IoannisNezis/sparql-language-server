@@ -1,9 +1,10 @@
 use indoc::indoc;
 use tree_sitter::Parser;
 
-use crate::{
+use crate::server::{
+    configuration::FormatSettings,
     lsp::{textdocument::TextDocumentItem, FormattingOptions},
-    server::{configuration::FormatSettings, message_handler::formatting::format_textdoument},
+    message_handler::formatting::format_textdoument,
 };
 
 fn format_and_compare(ugly_query: &str, pretty_query: &str) {

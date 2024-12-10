@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::lsp::{
+use crate::server::lsp::{
     rpc::{RequestMessage, ResponseMessage},
     textdocument::Position,
 };
@@ -174,11 +174,11 @@ enum InsertTextFormat {
 
 #[cfg(test)]
 mod tests {
-    use crate::lsp::{
+    use crate::server::lsp::{
         messages::utils::TextDocumentPositionParams,
         rpc::{BaseMessage, RequestMessage},
         textdocument::{Position, TextDocumentIdentifier},
-        CompletionContext, CompletionParams,
+        CompletionContext, CompletionParams, CompletionTriggerKind,
     };
 
     use super::{CompletionRequest, CompletionResponse};
@@ -206,7 +206,7 @@ mod tests {
                         position: Position::new(0, 0)
                     },
                     context: CompletionContext {
-                        trigger_kind: crate::lsp::CompletionTriggerKind::Invoked,
+                        trigger_kind: CompletionTriggerKind::Invoked,
                         trigger_character: None
                     }
                 }
