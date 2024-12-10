@@ -1,7 +1,11 @@
 name: GitHub Actions Demo
 run-name: ${{ github.actor }} is building, testing and publishing 🚀
 
-on: [push]
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
 
 jobs:
   build-and-test:
@@ -22,9 +26,10 @@ jobs:
       - name: test
         run: cargo test --release
   publish:
-    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
     needs: build-and-test
-    # if: 
+    name: 📦 Publish to crates.io
+    runs-on: ubuntu-latest
     steps:
       - name: Clone repository
         uses: actions/checkout@v3
