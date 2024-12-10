@@ -7,9 +7,10 @@ use crate::{
 };
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct ClientInfo {
-    pub name: String,
-    pub version: Option<String>,
+pub struct InitializeRequest {
+    #[serde(flatten)]
+    pub base: RequestMessage,
+    pub params: InitializeParams,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -20,10 +21,9 @@ pub struct InitializeParams {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct InitializeRequest {
-    #[serde(flatten)]
-    pub base: RequestMessage,
-    pub params: InitializeParams,
+pub struct ClientInfo {
+    pub name: String,
+    pub version: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]

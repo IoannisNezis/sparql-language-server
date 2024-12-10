@@ -1,5 +1,0 @@
-PREFIX page: <dings>
-SELECT * WHERE {
-  ?a page:doc ?doc ;
-     page:title ?title
-}
