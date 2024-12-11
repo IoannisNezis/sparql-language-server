@@ -72,6 +72,12 @@ impl Server {
         dispatch(self, &message)
     }
 
+    fn send_message(&self, message: String) {
+        info!("sending message: {}", message);
+        print!("Content-Length: {}\r\n\r\n{}", message.len(), message);
+        io::stdout().flush().expect("No IO errors or EOFs");
+    }
+
     pub fn publish_diagnostic(&self, uri: String) -> String {
         let notification = PublishDiagnosticsNotification {
             base: BaseMessage::new("textDocument/publishDiagnostics".to_string()),
@@ -143,8 +149,7 @@ impl Server {
                 }
                 match self.handle_message(buffer.clone()) {
                     Some(response) => {
-                        print!("Content-Length: {}\r\n\r\n{}", response.len(), response);
-                        io::stdout().flush().expect("No IO errors or EOFs");
+                        self.send_message(response);
                     }
                     _ => {}
                 }

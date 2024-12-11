@@ -8,6 +8,7 @@ mod textdocument_formatting;
 mod textdocument_hover;
 mod textdocument_publishdiagnostics;
 mod utils;
+mod window_showmessage;
 
 pub use initialize::*;
 pub use shutdown::*;
@@ -18,3 +19,4 @@ pub use textdocument_didopen::*;
 pub use textdocument_formatting::*;
 pub use textdocument_hover::*;
 pub use textdocument_publishdiagnostics::*;
+pub use window_showmessage::*;
