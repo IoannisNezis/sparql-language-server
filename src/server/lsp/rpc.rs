@@ -16,10 +16,10 @@ pub struct BaseMessage {
 }
 
 impl BaseMessage {
-    pub fn new(method: String) -> Self {
+    pub fn new(method: &str) -> Self {
         Self {
             jsonrpc: "2.0".to_string(),
-            method,
+            method: method.to_string(),
         }
     }
 }

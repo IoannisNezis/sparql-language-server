@@ -13,7 +13,7 @@ pub struct ShowMessageNotification {
 impl ShowMessageNotification {
     pub fn new(message: String, kind: MessageType) -> Self {
         Self {
-            base: BaseMessage::new("window/showMessage".to_string()),
+            base: BaseMessage::new("window/showMessage"),
             params: ShowMessageParams { kind, message },
         }
     }

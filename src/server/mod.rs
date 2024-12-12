@@ -80,13 +80,12 @@ impl Server {
 
     pub fn publish_diagnostic(&self, uri: String) -> String {
         let notification = PublishDiagnosticsNotification {
-            base: BaseMessage::new("textDocument/publishDiagnostics".to_string()),
+            base: BaseMessage::new("textDocument/publishDiagnostics"),
             params: PublishDiagnosticsPrarams {
                 uri: uri.clone(),
                 diagnostics: collect_diagnostics(&self.state, &uri).collect(),
             },
         };
-
         serde_json::to_string(&notification)
             .expect("Could not parse PublishDiagnosticsNotification")
     }

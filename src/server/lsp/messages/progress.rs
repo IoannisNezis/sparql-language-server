@@ -24,7 +24,7 @@ impl ProgressNotification {
         percentage: Option<u32>,
     ) -> Self {
         ProgressNotification {
-            base: BaseMessage::new("$/progress".to_string()),
+            base: BaseMessage::new("$/progress"),
             params: ProgressParams {
                 token,
                 value: ProgressValue::Begin(WorkDoneProgressBegin::new(
@@ -44,7 +44,7 @@ impl ProgressNotification {
         percentage: Option<u32>,
     ) -> Self {
         ProgressNotification {
-            base: BaseMessage::new("$/progress".to_string()),
+            base: BaseMessage::new("$/progress"),
             params: ProgressParams {
                 token,
                 value: ProgressValue::Report(WorkDoneProgressReport::new(
@@ -58,7 +58,7 @@ impl ProgressNotification {
 
     pub(crate) fn end_notification(token: ProgressToken, message: Option<&str>) -> Self {
         ProgressNotification {
-            base: BaseMessage::new("$/progress".to_string()),
+            base: BaseMessage::new("$/progress"),
             params: ProgressParams {
                 token,
                 value: ProgressValue::End(WorkDoneProgressEnd::new(message)),
