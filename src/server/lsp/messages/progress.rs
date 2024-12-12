@@ -77,7 +77,9 @@ pub struct ProgressParams<T> {
 mod tests {
     use crate::server::lsp::{
         rpc::BaseMessage,
-        workdoneprogress::{ProgressValue, WorkDoneProgressBegin, WorkDoneProgressReport},
+        workdoneprogress::{
+            ProgressValue, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport,
+        },
         ProgressNotification, ProgressParams,
     };
 
@@ -86,7 +88,7 @@ mod tests {
     #[test]
     fn serialize() {
         let progress_begin = ProgressNotification {
-            base: BaseMessage::new("$/progress".to_string()),
+            base: BaseMessage::new("$/progress"),
             params: ProgressParams {
                 token: ProgressToken::Integer(1),
                 value: ProgressValue::Begin(WorkDoneProgressBegin::new(
@@ -99,35 +101,33 @@ mod tests {
         };
         assert_eq!(
             serde_json::to_string(&progress_begin).unwrap(),
-            r#"{"base":{"jsonrpc":"2.0","method":"$/progress"},"params":{"token":1,"value":{"kind":"begin","title":"progress title","cancellable":false,"message":"progress message","percentage":0}}}"#
+            r#"{"jsonrpc":"2.0","method":"$/progress","params":{"token":1,"value":{"kind":"begin","title":"progress title","cancellable":false,"message":"progress message","percentage":0}}}"#
         );
         let progress_report = ProgressNotification {
-            base: BaseMessage::new("$/progress".to_string()),
+            base: BaseMessage::new("$/progress"),
             params: ProgressParams {
                 token: ProgressToken::Text("1337-42".to_string()),
                 value: ProgressValue::Report(WorkDoneProgressReport::new(
                     Some(false),
-                    Some("progress message".to_string()),
+                    Some("progress message"),
                     Some(50),
                 )),
             },
         };
         assert_eq!(
             serde_json::to_string(&progress_report).unwrap(),
-            r#"{"base":{"jsonrpc":"2.0","method":"$/progress"},"params":{"token":"1337-42","value":{"kind":"report","cancellable":false,"message":"progress message","percentage":50}}}"#
+            r#"{"jsonrpc":"2.0","method":"$/progress","params":{"token":"1337-42","value":{"kind":"report","cancellable":false,"message":"progress message","percentage":50}}}"#
         );
         let progress_end = ProgressNotification {
-            base: BaseMessage::new("$/progress".to_string()),
+            base: BaseMessage::new("$/progress"),
             params: ProgressParams {
                 token: ProgressToken::Text("1337-42".to_string()),
-                value: ProgressValue::End(WorkDoneProgressEnd::new(Some(
-                    "progress message".to_string(),
-                ))),
+                value: ProgressValue::End(WorkDoneProgressEnd::new(Some("progress message"))),
             },
         };
         assert_eq!(
             serde_json::to_string(&progress_end).unwrap(),
-            r#"{"base":{"jsonrpc":"2.0","method":"$/progress"},"params":{"token":"1337-42","value":{"kind":"end","message":"progress message"}}}"#
+            r#"{"jsonrpc":"2.0","method":"$/progress","params":{"token":"1337-42","value":{"kind":"end","message":"progress message"}}}"#
         );
     }
 }

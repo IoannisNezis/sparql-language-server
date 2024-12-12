@@ -70,7 +70,8 @@ impl InitializeResonse {
 mod tests {
     use crate::server::lsp::{
         rpc::{BaseMessage, RequestMessage},
-        ClientInfo, ProgressToken, WorkDoneProgressParams,
+        workdoneprogress::{ProgressToken, WorkDoneProgressParams},
+        ClientInfo,
     };
 
     use super::{InitializeParams, InitializeRequest};
