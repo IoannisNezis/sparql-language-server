@@ -1,4 +1,5 @@
 mod initialize;
+mod progress;
 mod shutdown;
 mod textdocument_completion;
 mod textdocument_diagnostic;
@@ -11,6 +12,7 @@ mod utils;
 mod window_showmessage;
 
 pub use initialize::*;
+pub use progress::*;
 pub use shutdown::*;
 pub use textdocument_completion::*;
 pub use textdocument_diagnostic::*;

@@ -1,6 +1,7 @@
 pub mod capabilities;
-pub mod messages;
+mod messages;
 pub mod rpc;
 pub mod textdocument;
+mod workdoneprogress;
 
 pub use messages::*;

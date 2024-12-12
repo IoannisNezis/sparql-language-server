@@ -4,6 +4,7 @@ use crate::server::{
     lsp::{
         capabilities::ServerCapabilities,
         rpc::{RequestMessage, ResponseMessage},
+        workdoneprogress::WorkDoneProgressParams,
     },
     Server,
 };
@@ -20,6 +21,8 @@ pub struct InitializeRequest {
 pub struct InitializeParams {
     // WARNING: This is not to Spec! It's optional
     pub client_info: ClientInfo,
+    #[serde(flatten)]
+    pub progress_params: WorkDoneProgressParams,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -67,14 +70,14 @@ impl InitializeResonse {
 mod tests {
     use crate::server::lsp::{
         rpc::{BaseMessage, RequestMessage},
-        ClientInfo,
+        ClientInfo, ProgressToken, WorkDoneProgressParams,
     };
 
     use super::{InitializeParams, InitializeRequest};
 
     #[test]
     fn deserialize() {
-        let message = b"{\"jsonrpc\": \"2.0\",\"id\": 1, \"method\": \"initialize\", \"params\": { \"clientInfo\": {\"name\": \"dings\", \"version\": \"42.1\"}}}";
+        let message = br#"{"jsonrpc":"2.0","id": 1,"method":"initialize","params":{"clientInfo":{"name":"dings","version":"42.1"},"workDoneToken":"1"}}"#;
         let init_request: InitializeRequest = serde_json::from_slice(message).unwrap();
         assert_eq!(
             init_request,
@@ -90,6 +93,9 @@ mod tests {
                     client_info: ClientInfo {
                         name: "dings".to_string(),
                         version: Some("42.1".to_string())
+                    },
+                    progress_params: WorkDoneProgressParams {
+                        work_done_token: Some(ProgressToken::Text("1".to_string()))
                     }
                 }
             }
