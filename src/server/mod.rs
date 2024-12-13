@@ -54,7 +54,9 @@ impl Server {
             },
             document_formatting_provider: capabilities::DocumentFormattingOptions {},
         };
+        let version = env!("CARGO_PKG_VERSION");
         info!("Started Language Server!!1!");
+        info!("version: {}", version);
         debug!("Capabilities: {:?}", capabilities);
         debug!("Settings:\n{:?}", settings);
         Self {
@@ -63,9 +65,16 @@ impl Server {
             capabilities,
             server_info: ServerInfo {
                 name: "fichu".to_string(),
-                version: Some("0.0.0.1".to_string()),
+                version: Some(version.to_string()),
             },
         }
+    }
+
+    pub fn get_version(&self) -> String {
+        self.server_info
+            .version
+            .clone()
+            .unwrap_or("not-specified".to_string())
     }
 
     pub fn handle_message(&mut self, message: Vec<u8>) -> Option<String> {
