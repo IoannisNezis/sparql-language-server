@@ -2,7 +2,7 @@ mod server;
 
 use std::{
     fs::{File, OpenOptions},
-    io::{BufRead, BufReader, Read, Seek, Write},
+    io::{self, BufRead, BufReader, Read, Seek, Write},
     path::PathBuf,
     sync::mpsc::channel,
 };
@@ -62,6 +62,11 @@ fn configure_logging() {
     log4rs::init_config(config).expect("Failed to configure logger");
 }
 
+fn send_message(message: String) {
+    print!("Content-Length: {}\r\n\r\n{}", message.len(), message);
+    io::stdout().flush().expect("No IO errors or EOFs");
+}
+
 fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     configure_logging();
@@ -70,7 +75,7 @@ fn main() {
     match cli.command {
         Command::Server => {
             // Start server and listen to stdio
-            let mut server = Server::new();
+            let mut server = Server::new(send_message);
             server.listen_stdio();
         }
         Command::Format { path } => {

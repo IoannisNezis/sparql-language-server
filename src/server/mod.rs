@@ -22,24 +22,20 @@ pub use message_handler::format_raw;
 use state::ServerState;
 
 use std::{
-    io::{self, BufReader, Read, Write},
+    io::{self, BufReader, Read},
     process::exit,
 };
 
-use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
 pub struct Server {
     pub(crate) state: ServerState,
     pub(crate) settings: Settings,
     pub(crate) capabilities: capabilities::ServerCapabilities,
     pub(crate) server_info: ServerInfo,
+    send_message_clusure: Box<dyn Fn(String)>,
 }
 
-#[wasm_bindgen]
 impl Server {
-    pub fn new() -> Self {
-        // Load configuration
+    pub fn new(write_function: impl Fn(String) -> () + 'static) -> Server {
         let config = config::Config::builder()
             .add_source(config::File::with_name("fichu").required(false))
             .build()
@@ -71,6 +67,7 @@ impl Server {
                 name: "fichu".to_string(),
                 version: Some(version.to_string()),
             },
+            send_message_clusure: Box::new(write_function),
         }
     }
 
@@ -81,14 +78,15 @@ impl Server {
             .unwrap_or("not-specified".to_string())
     }
 
-    pub fn handle_message(&mut self, message: Vec<u8>) -> Option<String> {
-        dispatch(self, &message)
+    pub fn handle_message(&mut self, message: String) {
+        match dispatch(self, message) {
+            Some(response) => self.send_message(response),
+            None => {}
+        }
     }
 
     fn send_message(&self, message: String) {
-        info!("sending message: {}", message);
-        print!("Content-Length: {}\r\n\r\n{}", message.len(), message);
-        io::stdout().flush().expect("No IO errors or EOFs");
+        (self.send_message_clusure)(message);
     }
 
     // NOTE: i will use this as soon as i master async workers in the web target
@@ -161,13 +159,7 @@ impl Server {
                         }
                     }
                 }
-                match self.handle_message(buffer.clone()) {
-                    Some(response) => {
-                        self.send_message(response);
-                    }
-                    _ => {}
-                }
-
+                self.handle_message(String::from_utf8(buffer.clone()).unwrap());
                 buffer.clear();
             }
         }

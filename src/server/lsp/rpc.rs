@@ -70,9 +70,8 @@ impl Header {
     }
 }
 
-pub fn decode_message(msg: &Vec<u8>) -> Result<BaseMessage, String> {
-    let msg_string = String::from_utf8(msg.to_vec()).unwrap();
-    let request: BaseMessage = serde_json::from_str(&msg_string).expect("A valid Message");
+pub fn decode_message(message: &String) -> Result<BaseMessage, String> {
+    let request: BaseMessage = serde_json::from_str(&message).expect("A valid Message");
     return Ok(request);
 }
 
@@ -97,8 +96,7 @@ mod tests {
     #[test]
     fn test_decode() {
         let maybe_request = decode_message(
-            &b"{\"jsonrpc\": \"2.0\",\"id\": 1, \"method\": \"initialize\", \"params\": {}}"
-                .to_vec(),
+            &r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#.to_string(),
         );
         assert_eq!(
             maybe_request,

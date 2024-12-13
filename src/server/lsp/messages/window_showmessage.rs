@@ -12,10 +12,13 @@ pub struct ShowMessageNotification {
 
 #[allow(dead_code)]
 impl ShowMessageNotification {
-    pub fn new(message: String, kind: MessageType) -> Self {
+    pub fn new(message: &str, kind: MessageType) -> Self {
         Self {
             base: BaseMessage::new("window/showMessage"),
-            params: ShowMessageParams { kind, message },
+            params: ShowMessageParams {
+                kind,
+                message: message.to_string(),
+            },
         }
     }
 }
