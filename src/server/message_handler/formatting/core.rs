@@ -24,8 +24,8 @@ pub(super) fn format_textdoument(
     // WARNING: ALWAYS maintain a newline at the end of a query as this is POSIX conform
     // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
     let range = document.get_full_range();
-    let indent_string = match settings.insert_spaces {
-        true => " ".repeat(settings.tab_size as usize),
+    let indent_string = match settings.insert_spaces.unwrap_or(options.insert_spaces) {
+        true => " ".repeat(settings.tab_size.unwrap_or(options.tab_size) as usize),
         false => "\t".to_string(),
     };
     let text = format_helper(
