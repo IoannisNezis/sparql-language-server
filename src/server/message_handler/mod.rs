@@ -27,10 +27,10 @@ use super::{
     Server,
 };
 
-pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
-    if let Ok(message) = rpc::decode_message(bytes) {
+pub fn dispatch(server: &mut Server, message_string: String) -> Option<String> {
+    if let Ok(message) = rpc::decode_message(&message_string) {
         match message.method.as_str() {
-            "initialize" => match serde_json::from_slice::<InitializeRequest>(bytes) {
+            "initialize" => match serde_json::from_str::<InitializeRequest>(&message_string) {
                 Ok(initialize_request) => {
                     let response = handle_initialize_request(&server, initialize_request);
                     return Some(serde_json::to_string(&response).unwrap());
@@ -45,7 +45,7 @@ pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
                 server.state.status = ServerStatus::Running;
                 return None;
             }
-            "shutdown" => match serde_json::from_slice::<RequestMessage>(bytes) {
+            "shutdown" => match serde_json::from_str::<RequestMessage>(&message_string) {
                 Ok(shutdown_request) => {
                     info!("recieved shutdown request, preparing to shut down");
                     let response = ShutdownResponse::new(shutdown_request.id);
@@ -62,7 +62,7 @@ pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
                 exit(0);
             }
             "textDocument/didOpen" => {
-                match serde_json::from_slice::<DidOpenTextDocumentNotification>(bytes) {
+                match serde_json::from_str::<DidOpenTextDocumentNotification>(&message_string) {
                     Ok(did_open_notification) => {
                         debug!(
                             "opened text document: \"{}\"\n{}",
@@ -81,7 +81,7 @@ pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
                 }
             }
             "textDocument/didChange" => {
-                match serde_json::from_slice::<DidChangeTextDocumentNotification>(bytes) {
+                match serde_json::from_str::<DidChangeTextDocumentNotification>(&message_string) {
                     Ok(did_change_notification) => {
                         debug!(
                             "text document changed: {}",
@@ -103,7 +103,7 @@ pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
                     }
                 }
             }
-            "textDocument/hover" => match serde_json::from_slice::<HoverRequest>(bytes) {
+            "textDocument/hover" => match serde_json::from_str::<HoverRequest>(&message_string) {
                 Ok(hover_request) => {
                     debug!(
                         "recieved hover request for {} {}",
@@ -119,64 +119,71 @@ pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
                     return None;
                 }
             },
-            "textDocument/completion" => match serde_json::from_slice::<CompletionRequest>(bytes) {
-                Ok(completion_request) => {
-                    debug!(
-                        "Received completion request for {} {}",
-                        completion_request.get_document_uri(),
-                        completion_request.get_position()
-                    );
-                    let response = handel_completion_request(completion_request, &mut server.state);
-                    return Some(serde_json::to_string(&response).unwrap());
+            "textDocument/completion" => {
+                match serde_json::from_str::<CompletionRequest>(&message_string) {
+                    Ok(completion_request) => {
+                        debug!(
+                            "Received completion request for {} {}",
+                            completion_request.get_document_uri(),
+                            completion_request.get_position()
+                        );
+                        let response =
+                            handel_completion_request(completion_request, &mut server.state);
+                        return Some(serde_json::to_string(&response).unwrap());
+                    }
+                    Err(error) => {
+                        error!(
+                            "Could not parse textDocument/completion request: {:?}",
+                            error
+                        );
+                        return None;
+                    }
                 }
-                Err(error) => {
-                    error!(
-                        "Could not parse textDocument/completion request: {:?}",
-                        error
-                    );
-                    return None;
+            }
+            "textDocument/formatting" => {
+                match serde_json::from_str::<FormattingRequest>(&message_string) {
+                    Ok(formatting_request) => {
+                        let response = handle_format_request(
+                            formatting_request,
+                            &mut server.state,
+                            &server.settings,
+                        );
+                        return Some(serde_json::to_string(&response).unwrap());
+                    }
+                    Err(error) => {
+                        error!(
+                            "Could not parse textDocument/formatting request: {:?}",
+                            error
+                        );
+                        return None;
+                    }
                 }
-            },
-            "textDocument/formatting" => match serde_json::from_slice::<FormattingRequest>(bytes) {
-                Ok(formatting_request) => {
-                    let response = handle_format_request(
-                        formatting_request,
-                        &mut server.state,
-                        &server.settings,
-                    );
-                    return Some(serde_json::to_string(&response).unwrap());
+            }
+            "textDocument/diagnostic" => {
+                match serde_json::from_str::<DiagnosticRequest>(&message_string) {
+                    Ok(diagnostic_request) => {
+                        let diagnostics: Vec<Diagnostic> = collect_diagnostics(
+                            &server.state,
+                            &diagnostic_request.params.text_document.uri,
+                        )
+                        .collect();
+                        let resonse =
+                            DiagnosticResponse::new(diagnostic_request.base.id, diagnostics);
+                        return Some(serde_json::to_string(&resonse).unwrap());
+                    }
+                    Err(error) => {
+                        error!(
+                            "Could not parse textDocument/diagnostic request: {:?}",
+                            error
+                        );
+                        return None;
+                    }
                 }
-                Err(error) => {
-                    error!(
-                        "Could not parse textDocument/formatting request: {:?}",
-                        error
-                    );
-                    return None;
-                }
-            },
-            "textDocument/diagnostic" => match serde_json::from_slice::<DiagnosticRequest>(bytes) {
-                Ok(diagnostic_request) => {
-                    let diagnostics: Vec<Diagnostic> = collect_diagnostics(
-                        &server.state,
-                        &diagnostic_request.params.text_document.uri,
-                    )
-                    .collect();
-                    let resonse = DiagnosticResponse::new(diagnostic_request.base.id, diagnostics);
-                    return Some(serde_json::to_string(&resonse).unwrap());
-                }
-                Err(error) => {
-                    error!(
-                        "Could not parse textDocument/diagnostic request: {:?}",
-                        error
-                    );
-                    return None;
-                }
-            },
+            }
             unknown_method => {
                 warn!(
                     "Received message with unknown method \"{}\": {:?}",
-                    unknown_method,
-                    String::from_utf8(bytes.to_vec()).unwrap()
+                    unknown_method, message_string
                 );
                 return None;
             }

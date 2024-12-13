@@ -6,11 +6,10 @@ mod state;
 mod message_handler;
 
 use configuration::Settings;
-use log::{debug, error, info};
+use log::{debug, info};
 use lsp::{
-    capabilities,
-    rpc::{BaseMessage, Header},
-    PublishDiagnosticsNotification, PublishDiagnosticsPrarams, ServerInfo,
+    capabilities, rpc::BaseMessage, PublishDiagnosticsNotification, PublishDiagnosticsPrarams,
+    ServerInfo,
 };
 use message_handler::{collect_diagnostics, dispatch};
 
@@ -21,25 +20,16 @@ pub use message_handler::format_raw;
 
 use state::ServerState;
 
-use std::{
-    io::{self, BufReader, Read, Write},
-    process::exit,
-};
-
-use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
 pub struct Server {
     pub(crate) state: ServerState,
     pub(crate) settings: Settings,
     pub(crate) capabilities: capabilities::ServerCapabilities,
     pub(crate) server_info: ServerInfo,
+    send_message_clusure: Box<dyn Fn(String)>,
 }
 
-#[wasm_bindgen]
 impl Server {
-    pub fn new() -> Self {
-        // Load configuration
+    pub fn new(write_function: impl Fn(String) -> () + 'static) -> Server {
         let config = config::Config::builder()
             .add_source(config::File::with_name("fichu").required(false))
             .build()
@@ -71,6 +61,7 @@ impl Server {
                 name: "fichu".to_string(),
                 version: Some(version.to_string()),
             },
+            send_message_clusure: Box::new(write_function),
         }
     }
 
@@ -81,14 +72,15 @@ impl Server {
             .unwrap_or("not-specified".to_string())
     }
 
-    pub fn handle_message(&mut self, message: Vec<u8>) -> Option<String> {
-        dispatch(self, &message)
+    pub fn handle_message(&mut self, message: String) {
+        match dispatch(self, message) {
+            Some(response) => self.send_message(response),
+            None => {}
+        }
     }
 
     fn send_message(&self, message: String) {
-        info!("sending message: {}", message);
-        print!("Content-Length: {}\r\n\r\n{}", message.len(), message);
-        io::stdout().flush().expect("No IO errors or EOFs");
+        (self.send_message_clusure)(message);
     }
 
     // NOTE: i will use this as soon as i master async workers in the web target
@@ -103,73 +95,5 @@ impl Server {
         };
         serde_json::to_string(&notification)
             .expect("Could not parse PublishDiagnosticsNotification")
-    }
-
-    pub fn listen_stdio(&mut self) {
-        let stdin = io::stdin();
-        let reader = BufReader::new(stdin);
-
-        let mut bytes = reader.bytes();
-        let mut buffer = vec![];
-
-        loop {
-            match bytes.next() {
-                Some(Ok(byte)) => {
-                    buffer.push(byte);
-                }
-                Some(Err(error)) => {
-                    error!("Error while reading byte: {}", error);
-                    panic!("{}", error);
-                }
-                None => {
-                    error!("Stream ended unexpected while waiting for header, shutting down");
-                    exit(1);
-                }
-            }
-            if buffer.ends_with(b"\r\n\r\n") {
-                let header = match Header::from_string(
-                    String::from_utf8(buffer.clone()).expect("valid utf8 bytes"),
-                ) {
-                    Ok(header) => header,
-                    Err(err) => {
-                        error!("Received error while parsing header: {err}, clearing buffer");
-                        buffer.clear();
-                        continue;
-                    }
-                };
-                buffer.clear();
-                for ele in 0..header.content_length {
-                    match bytes.next() {
-                        Some(Ok(byte)) => {
-                            buffer.push(byte);
-                        }
-                        Some(Err(err)) => {
-                            error!(
-                                "Error {} occured while reading byte {} of {}, clearing buffer",
-                                err, ele, header.content_length
-                            );
-                            buffer.clear();
-                            break;
-                        }
-                        None => {
-                            error!(
-                                "Byte stream endet after {} of {} bytes, clearing message buffer",
-                                ele, header.content_length
-                            );
-                            buffer.clear();
-                            break;
-                        }
-                    }
-                }
-                match self.handle_message(buffer.clone()) {
-                    Some(response) => {
-                        self.send_message(response);
-                    }
-                    _ => {}
-                }
-
-                buffer.clear();
-            }
-        }
     }
 }

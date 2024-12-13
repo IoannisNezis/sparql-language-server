@@ -1,8 +1,9 @@
 mod server;
+mod stdio_reader;
 
 use std::{
     fs::{File, OpenOptions},
-    io::{BufRead, BufReader, Read, Seek, Write},
+    io::{self, BufRead, BufReader, Read, Seek, Write},
     path::PathBuf,
     sync::mpsc::channel,
 };
@@ -19,6 +20,7 @@ use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use server::{format_raw, Server};
 
 use clap::{Parser, Subcommand};
+use stdio_reader::listen_stdio;
 
 /// fichu: An SPARQL language server and formatter
 #[derive(Debug, Parser)]
@@ -62,6 +64,11 @@ fn configure_logging() {
     log4rs::init_config(config).expect("Failed to configure logger");
 }
 
+fn send_message(message: String) {
+    print!("Content-Length: {}\r\n\r\n{}", message.len(), message);
+    io::stdout().flush().expect("No IO errors or EOFs");
+}
+
 fn main() {
     #[cfg(not(target_arch = "wasm32"))]
     configure_logging();
@@ -70,8 +77,8 @@ fn main() {
     match cli.command {
         Command::Server => {
             // Start server and listen to stdio
-            let mut server = Server::new();
-            server.listen_stdio();
+            let mut server = Server::new(send_message);
+            listen_stdio(|message| server.handle_message(message));
         }
         Command::Format { path } => {
             match File::open(path.clone()) {
