@@ -14,7 +14,11 @@ use lsp::{
 };
 use message_handler::{collect_diagnostics, dispatch};
 
+// WARNING: This is a temporary soloution to export the format function directly
+// will remove soon (12.12.24)
+#[allow(unused_imports)]
 pub use message_handler::format_raw;
+
 use state::ServerState;
 
 use std::{
@@ -87,6 +91,8 @@ impl Server {
         io::stdout().flush().expect("No IO errors or EOFs");
     }
 
+    // NOTE: i will use this as soon as i master async workers in the web target
+    #[allow(dead_code)]
     pub fn publish_diagnostic(&self, uri: String) -> String {
         let notification = PublishDiagnosticsNotification {
             base: BaseMessage::new("textDocument/publishDiagnostics"),

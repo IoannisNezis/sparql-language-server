@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use log::{error, info};
+use log::error;
 use tree_sitter::{Parser, Tree};
 
 use super::lsp::{
@@ -25,9 +25,7 @@ impl ServerState {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         match parser.set_language(&tree_sitter_sparql::LANGUAGE.into()) {
-            Ok(()) => {
-                info!("Successfully initialized Parser")
-            }
+            Ok(()) => {}
             Err(err) => error!("Error while initializing parser: {}", err),
         };
         ServerState {

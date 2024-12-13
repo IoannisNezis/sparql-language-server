@@ -10,6 +10,7 @@ pub struct ShowMessageNotification {
     params: ShowMessageParams,
 }
 
+#[allow(dead_code)]
 impl ShowMessageNotification {
     pub fn new(message: String, kind: MessageType) -> Self {
         Self {
