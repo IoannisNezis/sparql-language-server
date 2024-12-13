@@ -42,6 +42,7 @@ jobs:
 
   build-python:
     name: 🏗️ build python 🐍
+    if: github.event_name == 'release' && github.event.action == 'published'
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
