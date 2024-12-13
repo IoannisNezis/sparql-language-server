@@ -25,9 +25,7 @@ impl ServerState {
     pub fn new() -> Self {
         let mut parser = Parser::new();
         match parser.set_language(&tree_sitter_sparql::LANGUAGE.into()) {
-            Ok(()) => {
-                info!("Successfully initialized Parser")
-            }
+            Ok(()) => {}
             Err(err) => error!("Error while initializing parser: {}", err),
         };
         ServerState {

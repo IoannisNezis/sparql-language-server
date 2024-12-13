@@ -21,4 +21,3 @@ pub use textdocument_didopen::*;
 pub use textdocument_formatting::*;
 pub use textdocument_hover::*;
 pub use textdocument_publishdiagnostics::*;
-pub use window_showmessage::*;

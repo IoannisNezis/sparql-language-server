@@ -56,16 +56,17 @@ struct ResponseError {
     data: Option<String>,
 }
 
-fn parse_header(input: &str) -> IResult<&str, usize> {
-    let (input, _) = tag("Content-Length: ")(input)?;
-    let (input, number) = take_while(|c: char| c.is_digit(10))(input)?;
-    Ok((input, number.parse().unwrap()))
-}
-
 impl Header {
     pub fn from_string(string: String) -> Result<Header, String> {
-        let (_rest, content_length) = parse_header(string.as_str()).expect("Expected valid header");
+        let (_rest, content_length) =
+            Header::parse(string.as_str()).expect("Expected valid header");
         Ok(Header { content_length })
+    }
+
+    fn parse(input: &str) -> IResult<&str, usize> {
+        let (input, _) = tag("Content-Length: ")(input)?;
+        let (input, number) = take_while(|c: char| c.is_digit(10))(input)?;
+        Ok((input, number.parse().unwrap()))
     }
 }
 
