@@ -1,13 +1,4 @@
-use nom::{
-    bytes::complete::{tag, take_while},
-    IResult,
-};
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct Header {
-    pub content_length: usize,
-}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct BaseMessage {
@@ -56,20 +47,6 @@ struct ResponseError {
     data: Option<String>,
 }
 
-impl Header {
-    pub fn from_string(string: String) -> Result<Header, String> {
-        let (_rest, content_length) =
-            Header::parse(string.as_str()).expect("Expected valid header");
-        Ok(Header { content_length })
-    }
-
-    fn parse(input: &str) -> IResult<&str, usize> {
-        let (input, _) = tag("Content-Length: ")(input)?;
-        let (input, number) = take_while(|c: char| c.is_digit(10))(input)?;
-        Ok((input, number.parse().unwrap()))
-    }
-}
-
 pub fn decode_message(message: &String) -> Result<BaseMessage, String> {
     let request: BaseMessage = serde_json::from_str(&message).expect("A valid Message");
     return Ok(request);
@@ -78,20 +55,9 @@ pub fn decode_message(message: &String) -> Result<BaseMessage, String> {
 #[cfg(test)]
 mod tests {
 
-    use crate::server::lsp::rpc::{BaseMessage, Header};
+    use crate::server::lsp::rpc::BaseMessage;
 
     use super::decode_message;
-
-    #[test]
-    fn header_parses() {
-        let header_string: String = "Content-Length: 12345\r\n\r\n".to_owned();
-        assert_eq!(
-            Header::from_string(header_string),
-            Ok(Header {
-                content_length: 12345
-            })
-        );
-    }
 
     #[test]
     fn test_decode() {

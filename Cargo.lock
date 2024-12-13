@@ -483,7 +483,6 @@ dependencies = [
  "indoc",
  "log",
  "log4rs",
- "nom",
  "notify",
  "serde",
  "serde-wasm-bindgen",

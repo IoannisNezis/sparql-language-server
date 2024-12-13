@@ -21,7 +21,7 @@ use super::{
         textdocument::TextDocumentItem,
         CompletionRequest, Diagnostic, DiagnosticRequest, DiagnosticResponse,
         DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
-        HoverRequest, InitializeRequest, MessageType, ShowMessageNotification, ShutdownResponse,
+        HoverRequest, InitializeRequest, ShutdownResponse,
     },
     state::ServerStatus,
     Server,

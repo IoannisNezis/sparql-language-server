@@ -6,11 +6,10 @@ mod state;
 mod message_handler;
 
 use configuration::Settings;
-use log::{debug, error, info};
+use log::{debug, info};
 use lsp::{
-    capabilities,
-    rpc::{BaseMessage, Header},
-    PublishDiagnosticsNotification, PublishDiagnosticsPrarams, ServerInfo,
+    capabilities, rpc::BaseMessage, PublishDiagnosticsNotification, PublishDiagnosticsPrarams,
+    ServerInfo,
 };
 use message_handler::{collect_diagnostics, dispatch};
 
@@ -20,11 +19,6 @@ use message_handler::{collect_diagnostics, dispatch};
 pub use message_handler::format_raw;
 
 use state::ServerState;
-
-use std::{
-    io::{self, BufReader, Read},
-    process::exit,
-};
 
 pub struct Server {
     pub(crate) state: ServerState,
@@ -101,67 +95,5 @@ impl Server {
         };
         serde_json::to_string(&notification)
             .expect("Could not parse PublishDiagnosticsNotification")
-    }
-
-    pub fn listen_stdio(&mut self) {
-        let stdin = io::stdin();
-        let reader = BufReader::new(stdin);
-
-        let mut bytes = reader.bytes();
-        let mut buffer = vec![];
-
-        loop {
-            match bytes.next() {
-                Some(Ok(byte)) => {
-                    buffer.push(byte);
-                }
-                Some(Err(error)) => {
-                    error!("Error while reading byte: {}", error);
-                    panic!("{}", error);
-                }
-                None => {
-                    error!("Stream ended unexpected while waiting for header, shutting down");
-                    exit(1);
-                }
-            }
-            if buffer.ends_with(b"\r\n\r\n") {
-                let header = match Header::from_string(
-                    String::from_utf8(buffer.clone()).expect("valid utf8 bytes"),
-                ) {
-                    Ok(header) => header,
-                    Err(err) => {
-                        error!("Received error while parsing header: {err}, clearing buffer");
-                        buffer.clear();
-                        continue;
-                    }
-                };
-                buffer.clear();
-                for ele in 0..header.content_length {
-                    match bytes.next() {
-                        Some(Ok(byte)) => {
-                            buffer.push(byte);
-                        }
-                        Some(Err(err)) => {
-                            error!(
-                                "Error {} occured while reading byte {} of {}, clearing buffer",
-                                err, ele, header.content_length
-                            );
-                            buffer.clear();
-                            break;
-                        }
-                        None => {
-                            error!(
-                                "Byte stream endet after {} of {} bytes, clearing message buffer",
-                                ele, header.content_length
-                            );
-                            buffer.clear();
-                            break;
-                        }
-                    }
-                }
-                self.handle_message(String::from_utf8(buffer.clone()).unwrap());
-                buffer.clear();
-            }
-        }
     }
 }

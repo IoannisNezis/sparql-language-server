@@ -1,4 +1,5 @@
 mod server;
+mod stdio_reader;
 
 use std::{
     fs::{File, OpenOptions},
@@ -19,6 +20,7 @@ use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use server::{format_raw, Server};
 
 use clap::{Parser, Subcommand};
+use stdio_reader::listen_stdio;
 
 /// fichu: An SPARQL language server and formatter
 #[derive(Debug, Parser)]
@@ -76,7 +78,7 @@ fn main() {
         Command::Server => {
             // Start server and listen to stdio
             let mut server = Server::new(send_message);
-            server.listen_stdio();
+            listen_stdio(|message| server.handle_message(message));
         }
         Command::Format { path } => {
             match File::open(path.clone()) {
