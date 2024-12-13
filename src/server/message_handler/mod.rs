@@ -2,16 +2,16 @@ mod completion;
 mod diagnostic;
 mod formatting;
 mod hovering;
+mod initialize;
 use std::process::exit;
 
 use completion::handel_completion_request;
 use hovering::handle_hover_request;
+use initialize::handle_initialize_request;
 use log::{debug, error, info, warn};
 
 pub use diagnostic::*;
 pub use formatting::format_raw;
-
-use crate::server::lsp::ProgressNotification;
 
 use self::formatting::handle_format_request;
 
@@ -21,7 +21,7 @@ use super::{
         textdocument::TextDocumentItem,
         CompletionRequest, Diagnostic, DiagnosticRequest, DiagnosticResponse,
         DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
-        HoverRequest, InitializeRequest, InitializeResonse, ShutdownResponse,
+        HoverRequest, InitializeRequest, ShutdownResponse,
     },
     state::ServerStatus,
     Server,
@@ -32,63 +32,8 @@ pub fn dispatch(server: &mut Server, bytes: &Vec<u8>) -> Option<String> {
         match message.method.as_str() {
             "initialize" => match serde_json::from_slice::<InitializeRequest>(bytes) {
                 Ok(initialize_request) => {
-                    info!(
-                        "Connected to: {} {}",
-                        initialize_request.params.client_info.name,
-                        initialize_request
-                            .params
-                            .client_info
-                            .version
-                            .unwrap_or("no version specified".to_string())
-                    );
-                    info!(
-                        "wdtoken: {:?}",
-                        initialize_request.params.progress_params.work_done_token
-                    );
-                    if let Some(work_done_token) =
-                        initialize_request.params.progress_params.work_done_token
-                    {
-                        let init_progress_begin_notification =
-                            ProgressNotification::begin_notification(
-                                work_done_token.clone(),
-                                "initlializing fichu language server",
-                                Some(false),
-                                Some("init"),
-                                Some(0),
-                            );
-                        server.send_message(
-                            serde_json::to_string(&init_progress_begin_notification).unwrap(),
-                        );
-
-                        // TODO: implement server side requests
-                        let progress_report_1 = ProgressNotification::report_notification(
-                            work_done_token.clone(),
-                            Some(false),
-                            Some("testing availibility of endpoint"),
-                            Some(30),
-                        );
-                        server.send_message(serde_json::to_string(&progress_report_1).unwrap());
-
-                        let progress_report_2 = ProgressNotification::report_notification(
-                            work_done_token.clone(),
-                            Some(false),
-                            Some("request prefixes from endpoint"),
-                            Some(60),
-                        );
-                        server.send_message(serde_json::to_string(&progress_report_2).unwrap());
-
-                        let init_progress_end_notification = ProgressNotification::end_notification(
-                            work_done_token.clone(),
-                            Some("fichu initialized"),
-                        );
-
-                        server.send_message(
-                            serde_json::to_string(&init_progress_end_notification).unwrap(),
-                        );
-                    }
-                    let initialize_response =
-                        InitializeResonse::new(initialize_request.base.id, server);
-                    return Some(serde_json::to_string(&initialize_response).unwrap());
+                    let response = handle_initialize_request(&server, initialize_request);
+                    return Some(serde_json::to_string(&response).unwrap());
                 }
                 Err(error) => {
                     error!("Could not parse initialize request: {:?}", error);
