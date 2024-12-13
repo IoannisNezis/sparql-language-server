@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use log::{error, info};
+use log::error;
 use tree_sitter::{Parser, Tree};
 
 use super::lsp::{

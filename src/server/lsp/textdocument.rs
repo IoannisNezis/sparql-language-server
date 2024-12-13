@@ -16,6 +16,7 @@ pub struct TextDocumentItem {
 }
 
 impl TextDocumentItem {
+    #[cfg(test)]
     pub(crate) fn new(uri: &str, text: &str) -> TextDocumentItem {
         TextDocumentItem {
             uri: uri.to_string(),
