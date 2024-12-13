@@ -7,8 +7,8 @@ pub struct FormatSettings {
     pub align_prefixes: bool,
     pub separate_prolouge: bool,
     pub capitalize_keywords: bool,
-    pub insert_spaces: bool,
-    pub tab_size: u8,
+    pub insert_spaces: Option<bool>,
+    pub tab_size: Option<u8>,
     pub where_new_line: bool,
 }
 
@@ -19,8 +19,8 @@ impl Default for FormatSettings {
             align_predicates: true,
             separate_prolouge: false,
             capitalize_keywords: true,
-            insert_spaces: true,
-            tab_size: 2,
+            insert_spaces: None,
+            tab_size: None,
             where_new_line: false,
         }
     }
