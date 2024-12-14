@@ -6,25 +6,24 @@ A blazingly fast formatter and [language server](https://microsoft.github.io/lan
 
 ## Installation
 
-Fichu is availible on [PyPi](https://pypi.org/project/fichu/):
-
-```shell
-pipx install fichu
-```
-
-Or on [crate.io](https://crates.io/crates/fichu):
+Fichu is available on [crate.io](https://crates.io/crates/fichu):
 
 ```shell
 cargo install fichu
 ```
 
-You can also build it from source:
+And on [PyPi](https://pypi.org/project/fichu/):
 
+```shell
+pipx install fichu
+```
+
+You can also build it from source:
 
 ```shell
 git clone https://github.com/IoannisNezis/sparql-language-server.git
 cd sparql-language-server
-cargo build --release
+cargo build --release --bin fichu
 ```
 
 ## Usage
