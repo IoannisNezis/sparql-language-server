@@ -1,6 +1,11 @@
+> [!CAUTION]
+> This Project is still in an early stage.  
+> Only the format capability is production ready.  
+> The rest is experimental.
+
 # Fichu
 
-A blazingly fast formatter and [language server](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification) for [SPARQL](https://de.wikipedia.org/wiki/SPARQL), written in Rust :crab:.
+⚡A blazingly fast [language server](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification) for [SPARQL](https://de.wikipedia.org/wiki/SPARQL), written in Rust 🦀.
 
 # Getting Started
 
