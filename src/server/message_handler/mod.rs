@@ -21,7 +21,7 @@ use super::{
         textdocument::TextDocumentItem,
         CompletionRequest, Diagnostic, DiagnosticRequest, DiagnosticResponse,
         DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
-        HoverRequest, InitializeRequest, ShutdownResponse,
+        HoverRequest, InitializeRequest, SetTraceNotification, ShutdownResponse,
     },
     state::ServerStatus,
     Server,
@@ -47,7 +47,7 @@ pub fn dispatch(server: &mut Server, message_string: String) -> Option<String> {
             }
             "shutdown" => match serde_json::from_str::<RequestMessage>(&message_string) {
                 Ok(shutdown_request) => {
-                    info!("recieved shutdown request, preparing to shut down");
+                    info!("Recieved shutdown request, preparing to shut down");
                     let response = ShutdownResponse::new(shutdown_request.id);
                     server.state.status = ServerStatus::ShuttingDown;
                     return Some(serde_json::to_string(&response).unwrap());
@@ -58,9 +58,23 @@ pub fn dispatch(server: &mut Server, message_string: String) -> Option<String> {
                 }
             },
             "exit" => {
-                info!("recieved exit notification, shutting down!");
+                info!("Recieved exit notification, shutting down!");
                 exit(0);
             }
+            "$/setTrace" => match serde_json::from_str::<SetTraceNotification>(&message_string) {
+                Ok(set_trace_notification) => {
+                    info!(
+                        "Setting trace value to: {:?}",
+                        set_trace_notification.params.value
+                    );
+                    server.state.trace_value = set_trace_notification.params.value;
+                    return None;
+                }
+                Err(error) => {
+                    error!("Could not parse setTrace Notification: {:?}", error);
+                    return None;
+                }
+            },
             "textDocument/didOpen" => {
                 match serde_json::from_str::<DidOpenTextDocumentNotification>(&message_string) {
                     Ok(did_open_notification) => {

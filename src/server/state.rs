@@ -5,7 +5,7 @@ use tree_sitter::{Parser, Tree};
 
 use super::lsp::{
     textdocument::{TextDocumentItem, TextEdit},
-    TextDocumentContentChangeEvent,
+    TextDocumentContentChangeEvent, TraceValue,
 };
 
 #[derive(Debug)]
@@ -17,6 +17,7 @@ pub enum ServerStatus {
 
 pub struct ServerState {
     pub status: ServerStatus,
+    pub trace_value: TraceValue,
     documents: HashMap<String, (TextDocumentItem, Option<Tree>)>,
     parser: Parser,
 }
@@ -30,6 +31,7 @@ impl ServerState {
         };
         ServerState {
             status: ServerStatus::Initializing,
+            trace_value: TraceValue::Off,
             documents: HashMap::new(),
             parser,
         }
