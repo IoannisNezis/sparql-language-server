@@ -36,7 +36,7 @@ pub(super) fn format_textdoument(
         "",
         settings,
     ) + "\n";
-    vec![TextEdit::new(range, text)]
+    vec![TextEdit::new(range, &text)]
 }
 
 pub(super) fn format_helper(
