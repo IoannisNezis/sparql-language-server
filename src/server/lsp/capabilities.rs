@@ -9,6 +9,7 @@ pub struct ServerCapabilities {
     pub completion_provider: CompletionOptions,
     pub document_formatting_provider: DocumentFormattingOptions,
     pub diagnostic_provider: DiagnosticOptions,
+    pub code_action_provider: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -62,13 +63,14 @@ mod tests {
                 inter_file_dependencies: false,
                 workspace_diagnostics: false,
             },
+            code_action_provider: true,
         };
 
         let serialized = serde_json::to_string(&server_capabilities).unwrap();
 
         assert_eq!(
             serialized,
-            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{\"triggerCharacters\":[\"?\"]},\"documentFormattingProvider\":{},\"diagnosticProvider\":{\"identifier\":\"my-ls\",\"inter_file_dependencies\":false,\"workspace_diagnostics\":false}}"
+            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{\"triggerCharacters\":[\"?\"]},\"documentFormattingProvider\":{},\"diagnosticProvider\":{\"identifier\":\"my-ls\",\"inter_file_dependencies\":false,\"workspace_diagnostics\":false},\"codeActionProvider\":true}"
         );
     }
 }
