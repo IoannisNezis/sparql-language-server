@@ -6,10 +6,12 @@ use tree_sitter::{Node, Point};
 
 use super::TextDocumentContentChangeEvent;
 
+pub type DocumentUri = String;
+
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct TextDocumentItem {
-    pub uri: String,
+    pub uri: DocumentUri,
     language_id: String,
     version: u32,
     pub text: String,
@@ -181,7 +183,7 @@ impl Range {
         }
     }
 
-    fn to_byte_index_range(&self, text: &String) -> Option<std::ops::Range<usize>> {
+    pub fn to_byte_index_range(&self, text: &String) -> Option<std::ops::Range<usize>> {
         match (self.start.to_byte_index(text), self.end.to_byte_index(text)) {
             (Some(from), Some(to)) => Some(from..to),
             _ => None,
@@ -189,7 +191,7 @@ impl Range {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TextEdit {
     range: Range,
@@ -197,8 +199,11 @@ pub struct TextEdit {
 }
 
 impl TextEdit {
-    pub fn new(range: Range, new_text: String) -> Self {
-        Self { range, new_text }
+    pub fn new(range: Range, new_text: &str) -> Self {
+        Self {
+            range,
+            new_text: new_text.to_string(),
+        }
     }
 
     pub fn from_text_document_content_change_event(

@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn serialize() {
-        let text_edits = vec![TextEdit::new(Range::new(0, 1, 2, 3), "dings".to_string())];
+        let text_edits = vec![TextEdit::new(Range::new(0, 1, 2, 3), "dings")];
         let formatting_response = FormattingResponse::new(42, text_edits);
         let expected_message = r#"{"jsonrpc":"2.0","id":42,"result":[{"range":{"start":{"line":0,"character":1},"end":{"line":2,"character":3}},"newText":"dings"}]}"#;
         assert_eq!(

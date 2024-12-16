@@ -37,6 +37,7 @@ impl Server {
         let settings: Settings = config.try_deserialize().expect("could not load Settings");
         let capabilities = capabilities::ServerCapabilities {
             text_document_sync: capabilities::TextDocumentSyncKind::Incremental,
+            code_action_provider: true,
             hover_provider: true,
             diagnostic_provider: capabilities::DiagnosticOptions {
                 identifier: "fichu".to_string(),
