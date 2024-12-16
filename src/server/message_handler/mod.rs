@@ -1,14 +1,16 @@
+mod code_action;
 mod completion;
 mod diagnostic;
 mod formatting;
 mod hovering;
 mod initialize;
-use std::process::exit;
 
+use code_action::generate_code_actions;
 use completion::handel_completion_request;
 use hovering::handle_hover_request;
 use initialize::handle_initialize_request;
 use log::{debug, error, info, warn};
+use std::process::exit;
 
 pub use diagnostic::*;
 pub use formatting::format_raw;
@@ -19,9 +21,9 @@ use super::{
     lsp::{
         rpc::{self, RequestMessage},
         textdocument::TextDocumentItem,
-        CompletionRequest, Diagnostic, DiagnosticRequest, DiagnosticResponse,
-        DidChangeTextDocumentNotification, DidOpenTextDocumentNotification, FormattingRequest,
-        HoverRequest, InitializeRequest, SetTraceNotification, ShutdownResponse,
+        CodeActionRequest, CodeActionResponse, CompletionRequest, Diagnostic, DiagnosticRequest,
+        DiagnosticResponse, DidChangeTextDocumentNotification, DidOpenTextDocumentNotification,
+        FormattingRequest, HoverRequest, InitializeRequest, SetTraceNotification, ShutdownResponse,
     },
     state::ServerStatus,
     Server,
@@ -188,6 +190,27 @@ pub fn dispatch(server: &mut Server, message_string: String) -> Option<String> {
                     Err(error) => {
                         error!(
                             "Could not parse textDocument/diagnostic request: {:?}",
+                            error
+                        );
+                        return None;
+                    }
+                }
+            }
+            "textDocument/codeAction" => {
+                match serde_json::from_str::<CodeActionRequest>(&message_string) {
+                    Ok(codeaction_request) => {
+                        let mut code_action_response =
+                            CodeActionResponse::new(codeaction_request.base.id);
+                        let code_actions =
+                            generate_code_actions(server, &codeaction_request.params)
+                                .unwrap_or(vec![]);
+                        code_action_response.add_code_actions(code_actions);
+                        let response = serde_json::to_string(&code_action_response).unwrap();
+                        return Some(response);
+                    }
+                    Err(error) => {
+                        error!(
+                            "Could not parse textDocument/codeAction request: {:?}",
                             error
                         );
                         return None;

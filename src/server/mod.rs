@@ -6,6 +6,7 @@ mod state;
 mod message_handler;
 
 use configuration::Settings;
+use curies::{Converter, Record};
 use log::{debug, info};
 use lsp::{
     capabilities, rpc::BaseMessage, PublishDiagnosticsNotification, PublishDiagnosticsPrarams,
@@ -25,6 +26,7 @@ pub struct Server {
     pub(crate) settings: Settings,
     pub(crate) capabilities: capabilities::ServerCapabilities,
     pub(crate) server_info: ServerInfo,
+    uri_converter: Converter,
     send_message_clusure: Box<dyn Fn(String)>,
 }
 
@@ -37,8 +39,8 @@ impl Server {
         let settings: Settings = config.try_deserialize().expect("could not load Settings");
         let capabilities = capabilities::ServerCapabilities {
             text_document_sync: capabilities::TextDocumentSyncKind::Incremental,
-            code_action_provider: true,
             hover_provider: true,
+            code_action_provider: true,
             diagnostic_provider: capabilities::DiagnosticOptions {
                 identifier: "fichu".to_string(),
                 inter_file_dependencies: false,
@@ -49,6 +51,24 @@ impl Server {
             },
             document_formatting_provider: capabilities::DocumentFormattingOptions {},
         };
+        let mut uri_converter = Converter::new(":");
+        uri_converter.add_record(Record::new("schema", "http://schema.org/"));
+        uri_converter.add_record(Record::new(
+            "envTopic",
+            "https://environment.ld.admin.ch/foen/nfi/Topic/",
+        ));
+        uri_converter.add_record(Record::new(
+            "envCube",
+            "https://environment.ld.admin.ch/foen/nfi/nfi_C-20/cube/",
+        ));
+
+        uri_converter.add_record(Record::new("cube", "https://cube.link/"));
+        uri_converter.add_record(Record::new(
+            "env",
+            "https://environment.ld.admin.ch/foen/nfi/",
+        ));
+        uri_converter.add_record(Record::new("country", "https://ld.admin.ch/country/"));
+
         let version = env!("CARGO_PKG_VERSION");
         info!("Started Language Server!!1!");
         info!("version: {}", version);
@@ -62,6 +82,7 @@ impl Server {
                 name: "fichu".to_string(),
                 version: Some(version.to_string()),
             },
+            uri_converter,
             send_message_clusure: Box::new(write_function),
         }
     }
@@ -82,6 +103,12 @@ impl Server {
 
     fn send_message(&self, message: String) {
         (self.send_message_clusure)(message);
+    }
+
+    pub(crate) fn compress_uri(&self, uri: &str) -> Option<(String, String, String)> {
+        let record = self.uri_converter.find_by_uri(uri).ok()?;
+        let curie = self.uri_converter.compress(uri).ok()?;
+        Some((record.prefix.clone(), record.uri_prefix.clone(), curie))
     }
 
     // NOTE: i will use this as soon as i master async workers in the web target
