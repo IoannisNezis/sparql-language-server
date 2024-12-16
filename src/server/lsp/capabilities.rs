@@ -10,9 +10,24 @@ pub struct ServerCapabilities {
     pub document_formatting_provider: DocumentFormattingOptions,
     pub diagnostic_provider: DiagnosticOptions,
     pub code_action_provider: bool,
+    pub execute_command_provider: ExecuteCommandOptions,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct ExecuteCommandOptions {
+    #[serde(flatten)]
+    pub work_done_progress_options: WorkDoneProgressOptions,
+    pub commands: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkDoneProgressOptions {
+    pub work_done_progress: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct DiagnosticOptions {
     pub identifier: String,
     pub inter_file_dependencies: bool,
@@ -44,7 +59,8 @@ pub struct DocumentFormattingOptions {
 mod tests {
 
     use crate::server::lsp::capabilities::{
-        CompletionOptions, DiagnosticOptions, DocumentFormattingOptions, TextDocumentSyncKind,
+        CompletionOptions, DiagnosticOptions, DocumentFormattingOptions, ExecuteCommandOptions,
+        TextDocumentSyncKind, WorkDoneProgressOptions,
     };
 
     use super::ServerCapabilities;
@@ -64,13 +80,19 @@ mod tests {
                 workspace_diagnostics: false,
             },
             code_action_provider: true,
+            execute_command_provider: ExecuteCommandOptions {
+                work_done_progress_options: WorkDoneProgressOptions {
+                    work_done_progress: true,
+                },
+                commands: vec!["foo".to_string()],
+            },
         };
 
         let serialized = serde_json::to_string(&server_capabilities).unwrap();
 
         assert_eq!(
             serialized,
-            "{\"textDocumentSync\":1,\"hoverProvider\":true,\"completionProvider\":{\"triggerCharacters\":[\"?\"]},\"documentFormattingProvider\":{},\"diagnosticProvider\":{\"identifier\":\"my-ls\",\"inter_file_dependencies\":false,\"workspace_diagnostics\":false},\"codeActionProvider\":true}"
+            r#"{"textDocumentSync":1,"hoverProvider":true,"completionProvider":{"triggerCharacters":["?"]},"documentFormattingProvider":{},"diagnosticProvider":{"identifier":"my-ls","interFileDependencies":false,"workspaceDiagnostics":false},"codeActionProvider":true,"executeCommandProvider":{"workDoneProgress":true,"commands":["foo"]}}"#
         );
     }
 }

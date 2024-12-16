@@ -8,7 +8,7 @@ use super::lsp::{
     TextDocumentContentChangeEvent, TraceValue,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ServerStatus {
     Initializing,
     Running,
@@ -74,5 +74,9 @@ impl ServerState {
 
     pub(crate) fn get_tree(&self, uri: &str) -> Option<&Tree> {
         self.documents.get(uri)?.1.as_ref()
+    }
+
+    pub(crate) fn get_document(&self, uri: &str) -> Option<&TextDocumentItem> {
+        Some(&self.documents.get(uri)?.0)
     }
 }

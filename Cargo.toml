@@ -4,13 +4,13 @@ version = "0.1.16"
 edition = "2021"
 authors = ["Ioannis Nezis <ioannis@nezis.de>"]
 description = "A formatter for SPARQL queries"
-repository = "https://github.com/IoannisNezis/sparql-language-server"
+repository = "https://github.com/IoannisNezis/qlue-ls"
 license = "MIT"
 license-file = "LICENSE"
-keywords = ["SPARQL", "formatter", "lsp", "wasm"]
+keywords = ["SPARQL", "rdf", "lsp", "lsp-server", "wasm"]
 
 [lib]
-name = "sparql_language_server_web"
+name = "qlue_ls"
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 
