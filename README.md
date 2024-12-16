@@ -4,25 +4,25 @@
 > The rest is experimental.
 
 <h1 align="center">
-  Fichu 🦀
+  Qlue-ls 🦀
 </h1>
 
-⚡A blazingly fast [language server](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification) for [SPARQL](https://de.wikipedia.org/wiki/SPARQL), written in Rust 🦀.
+⚡Qlue-ls (pronounced "clueless") is a blazingly fast [language server](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification) for [SPARQL](https://de.wikipedia.org/wiki/SPARQL), written in Rust 🦀.
 
 # Getting Started
 
 ## Installation
 
-Fichu is available on [crate.io](https://crates.io/crates/fichu):
+Qlue-ls is available on [crate.io](https://crates.io/crates/qlue-ls):
 
 ```shell
-cargo install fichu
+cargo install qlue-ls
 ```
 
-And on [PyPi](https://pypi.org/project/fichu/):
+And on [PyPi](https://pypi.org/project/qlue-ls/):
 
 ```shell
-pipx install fichu
+pipx install qlue-ls
 ```
 
 You can also build it from source:
@@ -30,21 +30,21 @@ You can also build it from source:
 ```shell
 git clone https://github.com/IoannisNezis/sparql-language-server.git
 cd sparql-language-server
-cargo build --release --bin fichu
+cargo build --release --bin qlue-ls
 ```
 
 ## Usage
 
-To run Fichu as **formatter** run:
+To run qlue-ls as **formatter** run:
 
 ```shell
-fichu format <PATH>
+qlue-ls format <PATH>
 ```
 
-To run Fichu as **lanugage server** run:
+To run qlue-ls as **lanugage server** run:
 
 ```shell
-fichu server
+qlue-ls server
 ```
 
 This will create a language server listening on stdio.
@@ -59,8 +59,8 @@ vim.api.nvim_create_autocmd({ 'FileType' }, {
   pattern = { 'sparql' },
   callback = function()
     vim.lsp.start {
-      name = 'fichu',
-      cmd = { 'fichu', 'server' },
+      name = 'qlue-ls',
+      cmd = { 'qlue-ls', 'server' },
       root_dir = vim.fn.getcwd(),
       on_attach = function(client, bufnr)
         vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, { buffer = bufnr, desc = 'LSP: ' .. '[F]ormat' })
@@ -124,7 +124,7 @@ Future support for code actions, such as quick fixes and refactoring suggestions
 
 # Configuration
 
-Fichu can be configured through a `fichu.toml` or `fichu.yml` file.
+qlue-ls can be configured through a `qlue-ls.toml` or `qlue-ls.yml` file.
 
 Here is the full default configuration
 ```toml

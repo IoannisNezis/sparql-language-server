@@ -569,36 +569,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
-name = "fichu"
-version = "0.1.16"
-dependencies = [
- "camino",
- "cc",
- "clap",
- "config",
- "console_error_panic_hook",
- "curies",
- "dirs-next",
- "env_logger",
- "getrandom",
- "indoc",
- "log",
- "log4rs",
- "notify",
- "serde",
- "serde-wasm-bindgen",
- "serde_json",
- "serde_repr",
- "streaming-iterator",
- "tree-sitter-c2rust",
- "tree-sitter-sparql",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-logger",
- "web-sys",
-]
-
-[[package]]
 name = "filetime"
 version = "0.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1547,6 +1517,36 @@ name = "ptrie"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4debfffbf1669869b4bea1bab297f8e9ec11900a9ff2dcf659c2a1c4918c811a"
+
+[[package]]
+name = "qlue-ls"
+version = "0.1.16"
+dependencies = [
+ "camino",
+ "cc",
+ "clap",
+ "config",
+ "console_error_panic_hook",
+ "curies",
+ "dirs-next",
+ "env_logger",
+ "getrandom",
+ "indoc",
+ "log",
+ "log4rs",
+ "notify",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "serde_repr",
+ "streaming-iterator",
+ "tree-sitter-c2rust",
+ "tree-sitter-sparql",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-logger",
+ "web-sys",
+]
 
 [[package]]
 name = "quinn"

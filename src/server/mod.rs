@@ -33,7 +33,7 @@ pub struct Server {
 impl Server {
     pub fn new(write_function: impl Fn(String) -> () + 'static) -> Server {
         let config = config::Config::builder()
-            .add_source(config::File::with_name("fichu").required(false))
+            .add_source(config::File::with_name("qlue-ls").required(false))
             .build()
             .unwrap();
         let settings: Settings = config.try_deserialize().expect("could not load Settings");
@@ -42,7 +42,7 @@ impl Server {
             hover_provider: true,
             code_action_provider: true,
             diagnostic_provider: capabilities::DiagnosticOptions {
-                identifier: "fichu".to_string(),
+                identifier: "qlue-ls".to_string(),
                 inter_file_dependencies: false,
                 workspace_diagnostics: false,
             },
@@ -79,7 +79,7 @@ impl Server {
             settings,
             capabilities,
             server_info: ServerInfo {
-                name: "fichu".to_string(),
+                name: "qlue-ls".to_string(),
                 version: Some(version.to_string()),
             },
             uri_converter,

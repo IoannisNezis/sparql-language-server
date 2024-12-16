@@ -1,5 +1,5 @@
 [package]
-name = "fichu"
+name = "qlue-ls"
 version = "0.1.16"
 edition = "2021"
 authors = ["Ioannis Nezis <ioannis@nezis.de>"]
@@ -15,7 +15,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [[bin]]
-name = "fichu"
+name = "qlue-ls"
 path = "src/main.rs"
 
 [features]

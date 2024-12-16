@@ -23,7 +23,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       - name: cargo build
-        run: cargo build --release --bin fichu
+        run: cargo build --release --bin qlue-ls
 
   test-native:
     name: 🔍 run tests
@@ -38,7 +38,7 @@ jobs:
           path: target/
           key: target-${{  github.run_number }}-${{ github.run_attempt }}
       - name: cargo test
-        run: cargo test --release --bin fichu
+        run: cargo test --release --bin qlue-ls
 
   build-python:
     name: 🏗️ build python 🐍

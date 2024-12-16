@@ -22,7 +22,7 @@ use server::{format_raw, Server};
 use clap::{Parser, Subcommand};
 use stdio_reader::listen_stdio;
 
-/// fichu: An SPARQL language server and formatter
+/// qlue-ls: An SPARQL language server and formatter
 #[derive(Debug, Parser)]
 #[command(version, about, long_about= None)]
 struct Cli {
@@ -42,11 +42,11 @@ enum Command {
 
 fn get_logfile_path() -> PathBuf {
     let mut app_dir = dirs_next::data_dir().expect("Failed to find data directory");
-    app_dir.push("fichu");
+    app_dir.push("qlue-ls");
     if !app_dir.exists() {
         std::fs::create_dir_all(&app_dir).expect("Failed to create app directory");
     }
-    app_dir.join("fichu.log")
+    app_dir.join("qlue-ls.log")
 }
 
 fn configure_logging() {

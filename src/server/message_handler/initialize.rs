@@ -21,7 +21,7 @@ pub(super) fn handle_initialize_request(
     if let Some(work_done_token) = initialize_request.params.progress_params.work_done_token {
         let init_progress_begin_notification = ProgressNotification::begin_notification(
             work_done_token.clone(),
-            &format!("setup fichu-ls v{}", server.get_version()),
+            &format!("setup qlue-ls v{}", server.get_version()),
             Some(false),
             Some("init"),
             Some(0),
@@ -47,7 +47,7 @@ pub(super) fn handle_initialize_request(
 
         let init_progress_end_notification = ProgressNotification::end_notification(
             work_done_token.clone(),
-            Some("fichu initialized"),
+            Some("qlue-ls initialized"),
         );
 
         server.send_message(serde_json::to_string(&init_progress_end_notification).unwrap());
