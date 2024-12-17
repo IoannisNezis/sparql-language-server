@@ -39,6 +39,8 @@ pub enum CodeActionKind {
     #[serde(rename = "refactor.rewrite")]
     RefactorRewrite,
     Source,
+    #[serde(rename = "source.compressUris")]
+    SourceCompressUris,
     #[serde(rename = "source.organizeImports")]
     SourceOrganizeImports,
     #[serde(rename = "source.fixAll")]
@@ -87,22 +89,25 @@ impl CodeActionResponse {
 pub struct CodeAction {
     pub title: String,
     pub edit: WorkspaceEdit,
-    // NOTE: there are more optional options:
-    // kind: Option<CodeActionKind>,
-    // diagnostics: Vec<Diagnostic>
-    // isPreferred: boolean
-    // disabled: { reason }
-    // command: Command
-    // data: LSPAny
+    #[serde(skip_serializing_if = "Option::is_none")]
+    kind: Option<CodeActionKind>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    diagnostics: Vec<Diagnostic>, // NOTE: there are more optional options:
+                                  // isPreferred: boolean
+                                  // disabled: { reason }
+                                  // command: Command
+                                  // data: LSPAny
 }
 
 impl CodeAction {
-    pub fn new(title: &str) -> Self {
+    pub fn new(title: &str, kind: Option<CodeActionKind>) -> Self {
         Self {
             title: title.to_string(),
+            kind,
             edit: WorkspaceEdit {
                 changes: HashMap::new(),
             },
+            diagnostics: vec![],
         }
     }
 
@@ -113,6 +118,10 @@ impl CodeAction {
             .and_modify(|e| e.push(change.clone()))
             .or_insert(vec![change]);
     }
+
+    pub(crate) fn add_diagnostic(&mut self, diagnostic: Diagnostic) {
+        self.diagnostics.push(diagnostic);
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -120,6 +129,7 @@ pub struct WorkspaceEdit {
     pub changes: HashMap<DocumentUri, Vec<TextEdit>>,
 }
 
+#[cfg(test)]
 mod test {
     use crate::server::lsp::{
         textdocument::{Range, TextEdit},
@@ -136,6 +146,8 @@ mod test {
         )]);
         let code_action = CodeAction {
             title: "test-action".to_string(),
+            kind: None,
+            diagnostics: vec![],
             edit: WorkspaceEdit { changes },
         };
         code_action_response.add_code_action(code_action);

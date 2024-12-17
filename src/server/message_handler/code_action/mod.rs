@@ -6,16 +6,22 @@ use crate::server::{
     anaysis::{get_all_uncompressed_uris, get_declared_namespaces, namespace_is_declared},
     lsp::{
         textdocument::{Range, TextDocumentItem, TextEdit},
-        CodeAction, CodeActionParams,
+        CodeAction, CodeActionKind, CodeActionParams, Diagnostic, DiagnosticSeverity,
     },
     Server,
 };
 
 fn compress_uri(server: &Server, range: Range, document: &TextDocumentItem) -> Option<CodeAction> {
-    let mut code_action = CodeAction::new("Compress URI");
+    let mut code_action = CodeAction::new("Compress URI", Some(CodeActionKind::Refactor));
     let mut uri = &document.text[range.to_byte_index_range(&document.text)?];
     uri = &uri[1..uri.len() - 1];
     if let Some((prefix, uri_prefix, curie)) = server.compress_uri(uri) {
+        code_action.add_diagnostic(Diagnostic {
+            message: "You might want to compress this uri".to_string(),
+            range: range.clone(),
+            source: "code action".to_string(),
+            severity: DiagnosticSeverity::Hint,
+        });
         code_action.add_edit(&document.uri, TextEdit::new(range, &curie));
         if !namespace_is_declared(&server.state, &document.uri, &prefix) {
             code_action.add_edit(
@@ -32,7 +38,7 @@ fn compress_uri(server: &Server, range: Range, document: &TextDocumentItem) -> O
 }
 
 fn compress_all_uris(server: &Server, document: &TextDocumentItem) -> Option<CodeAction> {
-    let mut code_action = CodeAction::new("Compress all URI");
+    let mut code_action = CodeAction::new("Compress all URI", Some(CodeActionKind::Refactor));
     let uncompressed_uris = get_all_uncompressed_uris(server, &document.uri);
     let declared_uri_prefix = get_declared_namespaces(&server.state, &document.uri);
     let mut set: HashSet<String> = HashSet::from_iter(

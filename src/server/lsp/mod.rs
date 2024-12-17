@@ -1,3 +1,4 @@
+pub mod base_types;
 pub mod capabilities;
 mod messages;
 pub mod rpc;

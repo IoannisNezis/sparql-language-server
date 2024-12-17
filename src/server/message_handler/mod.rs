@@ -1,4 +1,5 @@
 mod code_action;
+mod commands;
 mod completion;
 mod diagnostic;
 mod formatting;
@@ -6,6 +7,7 @@ mod hovering;
 mod initialize;
 
 use code_action::generate_code_actions;
+use commands::handle_command;
 use completion::handel_completion_request;
 use hovering::handle_hover_request;
 use initialize::handle_initialize_request;
@@ -19,11 +21,12 @@ use self::formatting::handle_format_request;
 
 use super::{
     lsp::{
-        rpc::{self, RequestMessage},
+        rpc::{self, RequestMessage, ResponseMessage},
         textdocument::TextDocumentItem,
-        CodeActionRequest, CodeActionResponse, CompletionRequest, Diagnostic, DiagnosticRequest,
+        CodeActionRequest, CodeActionResponse, CompletionRequest, DiagnosticRequest,
         DiagnosticResponse, DidChangeTextDocumentNotification, DidOpenTextDocumentNotification,
-        FormattingRequest, HoverRequest, InitializeRequest, SetTraceNotification, ShutdownResponse,
+        ExecuteCommandRequest, ExecuteCommandResponse, FormattingRequest, HoverRequest,
+        InitializeRequest, SetTraceNotification, ShutdownResponse,
     },
     state::ServerStatus,
     Server,
@@ -80,10 +83,9 @@ pub fn dispatch(server: &mut Server, message_string: String) -> Option<String> {
             "textDocument/didOpen" => {
                 match serde_json::from_str::<DidOpenTextDocumentNotification>(&message_string) {
                     Ok(did_open_notification) => {
-                        debug!(
-                            "opened text document: \"{}\"\n{}",
-                            did_open_notification.params.text_document.uri,
-                            did_open_notification.params.text_document.text
+                        info!(
+                            "opened text document: \"{}\"",
+                            did_open_notification.params.text_document.uri
                         );
                         let text_document: TextDocumentItem =
                             did_open_notification.get_text_document();
@@ -99,10 +101,6 @@ pub fn dispatch(server: &mut Server, message_string: String) -> Option<String> {
             "textDocument/didChange" => {
                 match serde_json::from_str::<DidChangeTextDocumentNotification>(&message_string) {
                     Ok(did_change_notification) => {
-                        debug!(
-                            "text document changed: {}",
-                            did_change_notification.params.text_document.base.uri
-                        );
                         server.state.change_document(
                             did_change_notification.params.text_document.base.uri,
                             did_change_notification.params.content_changes,
@@ -178,14 +176,18 @@ pub fn dispatch(server: &mut Server, message_string: String) -> Option<String> {
             "textDocument/diagnostic" => {
                 match serde_json::from_str::<DiagnosticRequest>(&message_string) {
                     Ok(diagnostic_request) => {
-                        let diagnostics: Vec<Diagnostic> = collect_diagnostics(
-                            &server.state,
+                        info!("Recieved diagnostic request");
+                        if let Some(diagnostics) = collect_diagnostics(
+                            &server,
                             &diagnostic_request.params.text_document.uri,
-                        )
-                        .collect();
-                        let resonse =
-                            DiagnosticResponse::new(diagnostic_request.base.id, diagnostics);
-                        return Some(serde_json::to_string(&resonse).unwrap());
+                        ) {
+                            let resonse = DiagnosticResponse::new(
+                                diagnostic_request.base.id,
+                                diagnostics.collect(),
+                            );
+                            return Some(serde_json::to_string(&resonse).unwrap());
+                        }
+                        return None;
                     }
                     Err(error) => {
                         error!(
@@ -211,6 +213,26 @@ pub fn dispatch(server: &mut Server, message_string: String) -> Option<String> {
                     Err(error) => {
                         error!(
                             "Could not parse textDocument/codeAction request: {:?}",
+                            error
+                        );
+                        return None;
+                    }
+                }
+            }
+            "workspace/executeCommand" => {
+                match serde_json::from_str::<ExecuteCommandRequest>(&message_string) {
+                    Ok(execute_command_request) => {
+                        let execute_command_response = ExecuteCommandResponse {
+                            base: ResponseMessage::new(execute_command_request.base.id),
+                            result: handle_command(server, execute_command_request.params).unwrap(),
+                        };
+                        // TODO: unifi this next two lines & remove unwrap
+                        let response = serde_json::to_string(&execute_command_response).unwrap();
+                        return Some(response);
+                    }
+                    Err(error) => {
+                        error!(
+                            "Could not parse workspace/executeCommand request: {:?}",
                             error
                         );
                         return None;
