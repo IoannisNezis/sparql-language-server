@@ -1,13 +1,13 @@
-> [!CAUTION]
-> This Project is still in an early stage.  
-> Only the format capability is production ready.  
-> The rest is experimental.
-
 <h1 align="center">
   Qlue-ls 🦀
 </h1>
 
-⚡Qlue-ls (pronounced "clueless") is a blazingly fast [language server](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification) for [SPARQL](https://de.wikipedia.org/wiki/SPARQL), written in Rust 🦀.
+⚡Qlue-ls (pronounced "clueless") is a *blazingly fast* [language server](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification) for [SPARQL](https://de.wikipedia.org/wiki/SPARQL), written in Rust 🦀.
+
+> [!CAUTION]
+> This Project is still in an early stage.  
+> Only the format capability is production ready.  
+> The rest is experimental.
 
 # Getting Started
 
