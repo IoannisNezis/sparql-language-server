@@ -8,7 +8,7 @@ mod message_handler;
 
 use configuration::Settings;
 use curies::{Converter, Record};
-use log::{debug, error, info};
+use log::info;
 use lsp::{
     capabilities::{self, ExecuteCommandOptions, WorkDoneProgressOptions},
     ServerInfo,

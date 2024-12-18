@@ -16,9 +16,10 @@ pub(super) fn handle_initialize_request(
             .params
             .client_info
             .version
+            .clone()
             .unwrap_or("no version specified".to_string())
     );
-    if let Some(work_done_token) = initialize_request.params.progress_params.work_done_token {
+    if let Some(ref work_done_token) = initialize_request.params.progress_params.work_done_token {
         let init_progress_begin_notification = ProgressNotification::begin_notification(
             work_done_token.clone(),
             &format!("setup qlue-ls v{}", server.get_version()),
@@ -52,5 +53,5 @@ pub(super) fn handle_initialize_request(
 
         server.send_message(serde_json::to_string(&init_progress_end_notification).unwrap());
     }
-    InitializeResonse::new(initialize_request.base.id, server)
+    InitializeResonse::new(initialize_request.get_id(), server)
 }

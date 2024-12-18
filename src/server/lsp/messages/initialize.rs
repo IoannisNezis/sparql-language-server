@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::server::{
     lsp::{
         capabilities::ServerCapabilities,
-        rpc::{RequestMessage, ResponseMessage},
+        rpc::{RequestId, RequestMessage, ResponseMessage},
         workdoneprogress::WorkDoneProgressParams,
     },
     Server,
@@ -14,6 +14,12 @@ pub struct InitializeRequest {
     #[serde(flatten)]
     pub base: RequestMessage,
     pub params: InitializeParams,
+}
+
+impl InitializeRequest {
+    pub(crate) fn get_id(&self) -> &RequestId {
+        &self.base.id
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -52,12 +58,9 @@ pub struct InitializeResonse {
 }
 
 impl InitializeResonse {
-    pub fn new(id: u32, server: &Server) -> Self {
+    pub fn new(id: &RequestId, server: &Server) -> Self {
         InitializeResonse {
-            base: ResponseMessage {
-                jsonrpc: "2.0".to_string(),
-                id,
-            },
+            base: ResponseMessage::success(id),
             result: InitializeResult {
                 capabilities: server.capabilities.clone(),
                 server_info: Some(server.server_info.clone()),
@@ -69,7 +72,7 @@ impl InitializeResonse {
 #[cfg(test)]
 mod tests {
     use crate::server::lsp::{
-        rpc::{BaseMessage, RequestMessage},
+        rpc::{Message, RequestId, RequestMessage},
         workdoneprogress::{ProgressToken, WorkDoneProgressParams},
         ClientInfo,
     };
@@ -84,11 +87,11 @@ mod tests {
             init_request,
             InitializeRequest {
                 base: RequestMessage {
-                    base: BaseMessage {
+                    base: Message {
                         jsonrpc: "2.0".to_string(),
-                        method: "initialize".to_string()
                     },
-                    id: 1,
+                    method: "initialize".to_string(),
+                    id: RequestId::Integer(1),
                 },
                 params: InitializeParams {
                     client_info: ClientInfo {

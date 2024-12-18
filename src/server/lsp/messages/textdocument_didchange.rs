@@ -3,14 +3,14 @@ use core::fmt;
 use serde::{Deserialize, Serialize};
 
 use crate::server::lsp::{
-    rpc::BaseMessage,
+    rpc::NotificationMessage,
     textdocument::{Range, VersionedTextDocumentIdentifier},
 };
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct DidChangeTextDocumentNotification {
     #[serde(flatten)]
-    base: BaseMessage,
+    base: NotificationMessage,
     pub params: DidChangeTextDocumentParams,
 }
 
