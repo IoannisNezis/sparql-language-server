@@ -96,8 +96,7 @@ pub fn dispatch(server: &mut Server, message_string: String) -> Option<String> {
                                 serde_json::to_string(&response).unwrap()
                             }
                         };
-                        // TODO: Fix format response
-                        return Some(serde_json::to_string(&response).unwrap());
+                        return Some(response);
                     }
                     Err(error) => {
                         error!(
