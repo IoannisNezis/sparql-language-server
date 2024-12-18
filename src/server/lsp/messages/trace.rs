@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::server::lsp::rpc::BaseMessage;
+use crate::server::lsp::rpc::NotificationMessage;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SetTraceNotification {
     #[serde(flatten)]
-    pub base: BaseMessage,
+    pub base: NotificationMessage,
     pub params: SetTraceParams,
 }
 
@@ -24,14 +24,15 @@ pub enum TraceValue {
 
 #[cfg(test)]
 mod test {
-    use crate::server::lsp::rpc::BaseMessage;
+
+    use crate::server::lsp::rpc::NotificationMessage;
 
     use super::{SetTraceNotification, TraceValue};
 
     #[test]
     fn serialize() {
         let set_trace_notification = SetTraceNotification {
-            base: BaseMessage::new("$/setTrace"),
+            base: NotificationMessage::new("$/setTrace"),
             params: super::SetTraceParams {
                 value: TraceValue::Off,
             },

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::server::lsp::rpc::{RequestMessage, ResponseMessage};
+use crate::server::lsp::rpc::{RequestId, RequestMessage, ResponseMessage};
 use crate::server::lsp::textdocument::TextDocumentIdentifier;
 
 use super::Diagnostic;
@@ -10,6 +10,12 @@ pub struct DiagnosticRequest {
     #[serde(flatten)]
     pub base: RequestMessage,
     pub params: DocumentDiagnosticParams,
+}
+
+impl DiagnosticRequest {
+    pub fn get_id(&self) -> &RequestId {
+        &self.base.id
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -26,9 +32,9 @@ pub struct DiagnosticResponse {
 }
 
 impl DiagnosticResponse {
-    pub fn new(id: u32, items: Vec<Diagnostic>) -> Self {
+    pub fn new(id: &RequestId, items: Vec<Diagnostic>) -> Self {
         Self {
-            base: ResponseMessage::new(id),
+            base: ResponseMessage::success(id),
             result: DocumentDiagnosticReport {
                 kind: DocumentDiagnosticReportKind::Full,
                 items,

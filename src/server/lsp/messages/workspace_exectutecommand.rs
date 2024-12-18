@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::server::lsp::{
     base_types::LSPAny,
-    rpc::{RequestMessage, ResponseMessage},
+    rpc::{RequestId, RequestMessage, ResponseMessage},
 };
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -10,6 +10,11 @@ pub struct ExecuteCommandRequest {
     #[serde(flatten)]
     pub base: RequestMessage,
     pub params: ExecuteCommandParams,
+}
+impl ExecuteCommandRequest {
+    pub(crate) fn get_id(&self) -> &RequestId {
+        &self.base.id
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

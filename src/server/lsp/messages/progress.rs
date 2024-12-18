@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::server::lsp::{
-    rpc::BaseMessage,
+    rpc::NotificationMessage,
     workdoneprogress::{
         ProgressToken, ProgressValue, WorkDoneProgressBegin, WorkDoneProgressEnd,
         WorkDoneProgressReport,
@@ -11,7 +11,7 @@ use crate::server::lsp::{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProgressNotification {
     #[serde(flatten)]
-    pub base: BaseMessage,
+    pub base: NotificationMessage,
     pub params: ProgressParams<ProgressValue>,
 }
 
@@ -24,7 +24,7 @@ impl ProgressNotification {
         percentage: Option<u32>,
     ) -> Self {
         ProgressNotification {
-            base: BaseMessage::new("$/progress"),
+            base: NotificationMessage::new("$/progress"),
             params: ProgressParams {
                 token,
                 value: ProgressValue::Begin(WorkDoneProgressBegin::new(
@@ -44,7 +44,7 @@ impl ProgressNotification {
         percentage: Option<u32>,
     ) -> Self {
         ProgressNotification {
-            base: BaseMessage::new("$/progress"),
+            base: NotificationMessage::new("$/progress"),
             params: ProgressParams {
                 token,
                 value: ProgressValue::Report(WorkDoneProgressReport::new(
@@ -58,7 +58,7 @@ impl ProgressNotification {
 
     pub(crate) fn end_notification(token: ProgressToken, message: Option<&str>) -> Self {
         ProgressNotification {
-            base: BaseMessage::new("$/progress"),
+            base: NotificationMessage::new("$/progress"),
             params: ProgressParams {
                 token,
                 value: ProgressValue::End(WorkDoneProgressEnd::new(message)),
@@ -76,7 +76,7 @@ pub struct ProgressParams<T> {
 #[cfg(test)]
 mod tests {
     use crate::server::lsp::{
-        rpc::BaseMessage,
+        rpc::NotificationMessage,
         workdoneprogress::{
             ProgressValue, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport,
         },
@@ -88,7 +88,7 @@ mod tests {
     #[test]
     fn serialize() {
         let progress_begin = ProgressNotification {
-            base: BaseMessage::new("$/progress"),
+            base: NotificationMessage::new("$/progress"),
             params: ProgressParams {
                 token: ProgressToken::Integer(1),
                 value: ProgressValue::Begin(WorkDoneProgressBegin::new(
@@ -104,7 +104,7 @@ mod tests {
             r#"{"jsonrpc":"2.0","method":"$/progress","params":{"token":1,"value":{"kind":"begin","title":"progress title","cancellable":false,"message":"progress message","percentage":0}}}"#
         );
         let progress_report = ProgressNotification {
-            base: BaseMessage::new("$/progress"),
+            base: NotificationMessage::new("$/progress"),
             params: ProgressParams {
                 token: ProgressToken::Text("1337-42".to_string()),
                 value: ProgressValue::Report(WorkDoneProgressReport::new(
@@ -119,7 +119,7 @@ mod tests {
             r#"{"jsonrpc":"2.0","method":"$/progress","params":{"token":"1337-42","value":{"kind":"report","cancellable":false,"message":"progress message","percentage":50}}}"#
         );
         let progress_end = ProgressNotification {
-            base: BaseMessage::new("$/progress"),
+            base: NotificationMessage::new("$/progress"),
             params: ProgressParams {
                 token: ProgressToken::Text("1337-42".to_string()),
                 value: ProgressValue::End(WorkDoneProgressEnd::new(Some("progress message"))),

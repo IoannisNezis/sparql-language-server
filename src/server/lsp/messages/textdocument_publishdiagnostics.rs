@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::server::lsp::{rpc::BaseMessage, textdocument::Range};
+use crate::server::lsp::{rpc::NotificationMessage, textdocument::Range};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct PublishDiagnosticsNotification {
     #[serde(flatten)]
-    pub base: BaseMessage,
+    pub base: NotificationMessage,
     pub params: PublishDiagnosticsPrarams,
 }
 

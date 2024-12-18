@@ -1,13 +1,13 @@
 use std::any::type_name;
 
-use log::{error, warn};
+use log::warn;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::server::{
     commands::PublishDiagnosticsCommandAruments,
     lsp::{
-        base_types::LSPAny, rpc::BaseMessage, ExecuteCommandParams, PublishDiagnosticsNotification,
-        PublishDiagnosticsPrarams,
+        base_types::LSPAny, rpc::NotificationMessage, ExecuteCommandParams,
+        PublishDiagnosticsNotification, PublishDiagnosticsPrarams,
     },
     message_handler::collect_diagnostics,
     state::ServerStatus,
@@ -50,7 +50,7 @@ fn publish_diagnostic(server: &Server, args: &PublishDiagnosticsCommandAruments)
     if server.state.status == ServerStatus::Running {
         if let Some(diagnostics) = collect_diagnostics(server, uri) {
             let diagnostic_notification = PublishDiagnosticsNotification {
-                base: BaseMessage::new("textDocument/publishDiagnostics"),
+                base: NotificationMessage::new("textDocument/publishDiagnistics"),
                 params: PublishDiagnosticsPrarams {
                     uri: uri.to_string(),
                     diagnostics: diagnostics.collect(),
