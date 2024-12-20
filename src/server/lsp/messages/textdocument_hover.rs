@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::server::lsp::{
-    rpc::{RequestId, RequestMessage, ResponseMessage},
+    rpc::{RequestId, RequestMessageBase, ResponseMessageBase},
     textdocument::Position,
 };
 
@@ -10,7 +10,7 @@ use super::utils::TextDocumentPositionParams;
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct HoverRequest {
     #[serde(flatten)]
-    base: RequestMessage,
+    base: RequestMessageBase,
     params: HoverParams,
 }
 
@@ -37,14 +37,14 @@ struct HoverParams {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct HoverResponse {
     #[serde(flatten)]
-    base: ResponseMessage,
+    base: ResponseMessageBase,
     result: HoverResult,
 }
 
 impl HoverResponse {
     pub fn new(id: &RequestId, content: String) -> Self {
         HoverResponse {
-            base: ResponseMessage::success(id),
+            base: ResponseMessageBase::success(id),
             result: HoverResult {
                 contents: HoverResultContents::MarkupContent(MarkupContent::Content {
                     kind: Markupkind::Markdown,
@@ -94,7 +94,7 @@ mod tests {
 
     use crate::server::lsp::{
         messages::{textdocument_hover::HoverParams, utils::TextDocumentPositionParams},
-        rpc::{Message, RequestId, RequestMessage},
+        rpc::{Message, RequestId, RequestMessageBase},
         textdocument::{Position, TextDocumentIdentifier},
     };
 
@@ -108,7 +108,7 @@ mod tests {
         assert_eq!(
             hover_request,
             HoverRequest {
-                base: RequestMessage {
+                base: RequestMessageBase {
                     base: Message {
                         jsonrpc: "2.0".to_string(),
                     },

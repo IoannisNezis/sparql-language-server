@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::server::lsp::{
-    rpc::{RequestId, RequestMessage, ResponseMessage},
+    rpc::{RequestId, RequestMessageBase, ResponseMessageBase},
     textdocument::Position,
 };
 
@@ -11,7 +11,7 @@ use super::utils::TextDocumentPositionParams;
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct CompletionRequest {
     #[serde(flatten)]
-    base: RequestMessage,
+    base: RequestMessageBase,
     params: CompletionParams,
 }
 
@@ -58,14 +58,14 @@ pub enum CompletionTriggerKind {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct CompletionResponse {
     #[serde(flatten)]
-    base: ResponseMessage,
+    base: ResponseMessageBase,
     result: CompletionResult,
 }
 
 impl CompletionResponse {
     pub fn new(id: &RequestId) -> Self {
         CompletionResponse {
-            base: ResponseMessage::success(id),
+            base: ResponseMessageBase::success(id),
             result: CompletionResult {
                 items: vec![
                     CompletionItem {
@@ -103,7 +103,7 @@ impl CompletionResponse {
 
     pub(crate) fn from_variables(id: &RequestId, variables: Vec<String>) -> Self {
         CompletionResponse {
-            base: ResponseMessage::success(id),
+            base: ResponseMessageBase::success(id),
             result: CompletionResult {
                 items: variables
                     .iter()
@@ -176,7 +176,7 @@ enum InsertTextFormat {
 mod tests {
     use crate::server::lsp::{
         messages::utils::TextDocumentPositionParams,
-        rpc::{Message, RequestId, RequestMessage},
+        rpc::{Message, RequestId, RequestMessageBase},
         textdocument::{Position, TextDocumentIdentifier},
         CompletionContext, CompletionParams, CompletionTriggerKind,
     };
@@ -191,7 +191,7 @@ mod tests {
         assert_eq!(
             completion_request,
             CompletionRequest {
-                base: RequestMessage {
+                base: RequestMessageBase {
                     base: Message {
                         jsonrpc: "2.0".to_string()
                     },

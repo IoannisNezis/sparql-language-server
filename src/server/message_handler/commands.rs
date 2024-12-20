@@ -1,32 +1,67 @@
+use core::fmt;
 use std::any::type_name;
 
-use log::warn;
+use log::error;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::server::{
     commands::PublishDiagnosticsCommandAruments,
     lsp::{
-        base_types::LSPAny, rpc::NotificationMessage, ExecuteCommandParams,
-        PublishDiagnosticsNotification, PublishDiagnosticsPrarams,
+        errors::{ErrorCode, ResponseError},
+        rpc::NotificationMessageBase,
+        ExecuteCommandRequest, ExecuteCommandResponse, PublishDiagnosticsNotification,
+        PublishDiagnosticsPrarams,
     },
     message_handler::collect_diagnostics,
     state::ServerStatus,
     Server,
 };
 
-pub fn handle_command(server: &Server, params: ExecuteCommandParams) -> Result<LSPAny, String> {
-    match params.command.as_str() {
+pub fn handle_execute_command_request(
+    server: &mut Server,
+    request: ExecuteCommandRequest,
+) -> Result<ExecuteCommandResponse, ResponseError> {
+    match request.params.command.as_str() {
         "publishDiagnostics" => {
-            let arguments = parse_command_arguments(&params.arguments)
-                .map_err(to_parse_error::<PublishDiagnosticsCommandAruments>)?;
+            let arguments = parse_command_arguments(&request.params.arguments)?;
             publish_diagnostic(server, &arguments);
+            Ok(ExecuteCommandResponse::new(request.get_id()))
         }
         unknown_command => {
-            warn!("Received unknown Command: {}", unknown_command);
+            error!("Received unknown Command request: {}", unknown_command);
+            Err(ResponseError::new(
+                ErrorCode::InvalidRequest,
+                &format!("Received unknown Command request: {}", unknown_command),
+            ))
         }
     }
-    // TODO: Return LSP ERROR
-    return Ok(LSPAny::Null);
+}
+
+fn parse_command_arguments<T, O>(rpc_message: O) -> Result<T, ResponseError>
+where
+    T: Serialize + DeserializeOwned,
+    O: Serialize + fmt::Debug,
+{
+    match serde_json::to_string(&rpc_message) {
+        Ok(serialized_message) => serde_json::from_str(&serialized_message).map_err(|error| {
+            error!(
+                "Error while deserializing message:\n{}-----------------------\n{:?}",
+                error, rpc_message,
+            );
+            ResponseError::new(
+                ErrorCode::ParseError,
+                &format!(
+                    "Could not deserialize RPC-message \"{}\"\n\n{}",
+                    type_name::<T>(),
+                    error
+                ),
+            )
+        }),
+        Err(error) => Err(ResponseError::new(
+            ErrorCode::ParseError,
+            &format!("Could not serialize RPC-message\n\n{}", error),
+        )),
+    }
 }
 
 fn to_parse_error<T>(error: serde_json::Error) -> String {
@@ -37,27 +72,27 @@ fn to_parse_error<T>(error: serde_json::Error) -> String {
     )
 }
 
-fn parse_command_arguments<T>(arguments: &Option<Vec<LSPAny>>) -> Result<T, serde_json::Error>
-where
-    T: Serialize + DeserializeOwned,
-{
-    let serialized_arguments = serde_json::to_string(&arguments)?;
-    serde_json::from_str(&serialized_arguments)
-}
-
 fn publish_diagnostic(server: &Server, args: &PublishDiagnosticsCommandAruments) {
     let uri = &args.0 .0;
     if server.state.status == ServerStatus::Running {
-        if let Some(diagnostics) = collect_diagnostics(server, uri) {
-            let diagnostic_notification = PublishDiagnosticsNotification {
-                base: NotificationMessage::new("textDocument/publishDiagnistics"),
-                params: PublishDiagnosticsPrarams {
-                    uri: uri.to_string(),
-                    diagnostics: diagnostics.collect(),
-                },
-            };
-            let message = serde_json::to_string(&diagnostic_notification).unwrap();
-            server.send_message(message);
+        match collect_diagnostics(server, uri) {
+            Ok(diagnostics) => {
+                let diagnostic_notification = PublishDiagnosticsNotification {
+                    base: NotificationMessageBase::new("textDocument/publishDiagnistics"),
+                    params: PublishDiagnosticsPrarams {
+                        uri: uri.to_string(),
+                        diagnostics: diagnostics.collect(),
+                    },
+                };
+                let message = serde_json::to_string(&diagnostic_notification).unwrap();
+                server.send_message(message);
+            }
+            Err(error) => {
+                error!(
+                    "Error occured while publishing diagnostics:\n\n{}",
+                    error.message
+                )
+            }
         }
     }
 }

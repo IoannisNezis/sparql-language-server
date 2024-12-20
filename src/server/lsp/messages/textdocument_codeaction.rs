@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::server::lsp::{
-    rpc::{RequestId, RequestMessage, ResponseMessage},
+    rpc::{RequestId, RequestMessageBase, ResponseMessageBase},
     textdocument::{DocumentUri, Range, TextDocumentIdentifier, TextEdit},
 };
 
@@ -13,7 +13,7 @@ use super::Diagnostic;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CodeActionRequest {
     #[serde(flatten)]
-    pub base: RequestMessage,
+    pub base: RequestMessageBase,
     pub params: CodeActionParams,
 }
 impl CodeActionRequest {
@@ -69,14 +69,14 @@ pub enum CodeActionTriggerKind {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CodeActionResponse {
     #[serde(flatten)]
-    base: ResponseMessage,
+    base: ResponseMessageBase,
     result: Vec<CodeAction>,
 }
 
 impl CodeActionResponse {
     pub fn new(id: &RequestId) -> Self {
         Self {
-            base: ResponseMessage::success(id),
+            base: ResponseMessageBase::success(id),
             result: vec![],
         }
     }

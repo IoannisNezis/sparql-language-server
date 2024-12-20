@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 use crate::server::lsp::{
-    rpc::{RequestId, RequestMessage, ResponseMessage},
+    rpc::{RequestId, RequestMessageBase, ResponseMessageBase},
     textdocument::{TextDocumentIdentifier, TextEdit},
 };
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct FormattingRequest {
     #[serde(flatten)]
-    base: RequestMessage,
+    base: RequestMessageBase,
     params: DocumentFormattingParams,
 }
 impl FormattingRequest {
@@ -43,14 +43,14 @@ pub struct FormattingOptions {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct FormattingResponse {
     #[serde(flatten)]
-    base: ResponseMessage,
+    base: ResponseMessageBase,
     result: Vec<TextEdit>,
 }
 
 impl FormattingResponse {
     pub(crate) fn new(id: &RequestId, text_edits: Vec<TextEdit>) -> Self {
         Self {
-            base: ResponseMessage::success(id),
+            base: ResponseMessageBase::success(id),
             result: text_edits,
         }
     }
@@ -60,7 +60,7 @@ impl FormattingResponse {
 mod tests {
     use crate::server::lsp::{
         messages::textdocument_formatting::{DocumentFormattingParams, FormattingOptions},
-        rpc::{Message, RequestId, RequestMessage},
+        rpc::{Message, RequestId, RequestMessageBase},
         textdocument::{Range, TextDocumentIdentifier, TextEdit},
         FormattingResponse,
     };
@@ -75,7 +75,7 @@ mod tests {
         assert_eq!(
             request,
             FormattingRequest {
-                base: RequestMessage {
+                base: RequestMessageBase {
                     base: Message {
                         jsonrpc: "2.0".to_string(),
                     },

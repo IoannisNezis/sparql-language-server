@@ -7,12 +7,12 @@ pub struct ResponseError {
     /**
      * A number indicating the error type that occurred.
      */
-    code: ErrorCode,
+    pub code: ErrorCode,
 
     /**
      * A string providing a short description of the error.
      */
-    message: String,
+    pub message: String,
 
     /**
      * A primitive or structured value that contains additional
