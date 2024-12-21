@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::{any::type_name, collections::HashMap};
 
 use log::error;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use super::{
     base_types::LSPAny,
@@ -22,6 +22,28 @@ impl RPCMessage {
             RPCMessage::Notification(notification) => Some(&notification.method),
             RPCMessage::Request(request) => Some(&request.method),
             RPCMessage::Response(_) => None,
+        }
+    }
+
+    pub fn parse<T>(&self) -> Result<T, ResponseError>
+    where
+        T: Serialize + DeserializeOwned,
+    {
+        match serde_json::to_string(self) {
+            Ok(serialized_message) => serde_json::from_str(&serialized_message).map_err(|error| {
+                ResponseError::new(
+                    ErrorCode::ParseError,
+                    &format!(
+                        "Could not deserialize RPC-message \"{}\"\n\n{}",
+                        type_name::<T>(),
+                        error
+                    ),
+                )
+            }),
+            Err(error) => Err(ResponseError::new(
+                ErrorCode::ParseError,
+                &format!("Could not serialize RPC-message\n\n{}", error),
+            )),
         }
     }
 }

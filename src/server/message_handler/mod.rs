@@ -35,29 +35,6 @@ use super::{
     Server,
 };
 
-fn parse_rpc_message<T, O>(rpc_message: O) -> Result<T, ResponseError>
-where
-    T: Serialize + DeserializeOwned,
-    O: Serialize,
-{
-    match serde_json::to_string(&rpc_message) {
-        Ok(serialized_message) => serde_json::from_str(&serialized_message).map_err(|error| {
-            ResponseError::new(
-                ErrorCode::ParseError,
-                &format!(
-                    "Could not deserialize RPC-message \"{}\"\n\n{}",
-                    type_name::<T>(),
-                    error
-                ),
-            )
-        }),
-        Err(error) => Err(ResponseError::new(
-            ErrorCode::ParseError,
-            &format!("Could not serialize RPC-message\n\n{}", error),
-        )),
-    }
-}
-
 fn handle_request<T, R>(
     server: &mut Server,
     request: RPCMessage,
@@ -67,7 +44,7 @@ where
     T: Serialize + DeserializeOwned,
     R: Serialize,
 {
-    let response = handler(server, parse_rpc_message::<T, RPCMessage>(request)?)?;
+    let response = handler(server, request.parse::<T>()?)?;
     match type_name::<R>() {
         "()" => Ok(None),
         _ => Ok(Some(serde_json::to_string(&response).map_err(|error| {
