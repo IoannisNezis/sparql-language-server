@@ -180,14 +180,6 @@ impl ResponseMessageBase {
             error: None,
         }
     }
-
-    pub(crate) fn error(id: &RequestId, error_code: ErrorCode, message: &str) -> Self {
-        Self {
-            base: Message::new(),
-            id: RequestIdOrNull::RequestId(id.clone()),
-            error: Some(ResponseError::new(error_code, message)),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

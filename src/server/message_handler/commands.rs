@@ -64,14 +64,6 @@ where
     }
 }
 
-fn to_parse_error<T>(error: serde_json::Error) -> String {
-    format!(
-        "Could not parse Command arguments \"{}\"\n\n{}",
-        type_name::<T>(),
-        error
-    )
-}
-
 fn publish_diagnostic(server: &Server, args: &PublishDiagnosticsCommandAruments) {
     let uri = &args.0 .0;
     if server.state.status == ServerStatus::Running {

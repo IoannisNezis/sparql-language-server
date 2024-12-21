@@ -124,7 +124,7 @@ fn get_all_uris(
 
 pub fn get_declared_namespaces(
     analyis_state: &ServerState,
-    document_uri: &String,
+    document_uri: &str,
 ) -> Result<Vec<(String, Range)>, ResponseError> {
     let (document, tree) = analyis_state.get_state(document_uri)?;
     let query = build_query("(PrefixDecl (PNAME_NS) @namespace)")?;
@@ -223,6 +223,8 @@ pub(crate) fn get_undeclared_prefixes(
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
+    use tree_sitter::Parser;
+    use tree_sitter_sparql::LANGUAGE;
 
     use crate::server::{
         anaysis::{
@@ -233,20 +235,26 @@ mod tests {
         state::ServerState,
     };
 
+    fn setup_state(text: &str) -> ServerState {
+        let mut state = ServerState::new();
+        let mut parser = Parser::new();
+        parser.set_language(&LANGUAGE.into()).unwrap();
+        let document = TextDocumentItem::new("uri", text);
+        let tree = parser.parse(&document.text, None);
+        state.add_document(document, tree);
+        return state;
+    }
+
     #[test]
     fn declared_namespaces() {
-        let mut state = ServerState::new();
-        state.add_document(TextDocumentItem::new(
-            "uri",
-            indoc!(
-                "PREFIX wdt: <iri>
+        let state = setup_state(indoc!(
+            "PREFIX wdt: <iri>
                  PREFIX wd: <iri>
                  PREFIX wdt: <iri>
 
                  SELECT * {}"
-            ),
         ));
-        let declared_namesapces = get_declared_namespaces(&state, &"uri".to_string()).unwrap();
+        let declared_namesapces = get_declared_namespaces(&state, "uri").unwrap();
         assert_eq!(
             declared_namesapces
                 .iter()
@@ -258,10 +266,8 @@ mod tests {
 
     #[test]
     fn used_namespaces() {
-        let mut state = ServerState::new();
-        state.add_document(TextDocumentItem::new(
-            "uri",
-            indoc!("SELECT * {?a wdt:P32 ?b. ?a wd:p32 ?b. ?a wdt:P31 ?b}"),
+        let state = setup_state(indoc!(
+            "SELECT * {?a wdt:P32 ?b. ?a wd:p32 ?b. ?a wdt:P31 ?b}"
         ));
         let declared_namesapces = get_used_namspaces(&state, &"uri".to_string()).unwrap();
         assert_eq!(
@@ -275,11 +281,7 @@ mod tests {
 
     #[test]
     fn undeclared_namespaces() {
-        let mut state = ServerState::new();
-        state.add_document(TextDocumentItem::new(
-            "uri",
-            indoc!("SELECT * {x:y y:p x:x}"),
-        ));
+        let state = setup_state(indoc!("SELECT * {x:y y:p x:x}"));
         let declared_namesapces: Vec<String> = get_undeclared_prefixes(&state, &"uri".to_string())
             .unwrap()
             .map(|(namespace, _range)| namespace)
@@ -288,15 +290,10 @@ mod tests {
     }
     #[test]
     fn unused_namespaces() {
-        let mut state = ServerState::new();
-        state.add_document(TextDocumentItem::new(
-            "uri",
-            indoc!(
-                "PREFIX wdt: <>
-                 PREFIX wdt: <>
-
-                 SELECT * {}"
-            ),
+        let state = setup_state(indoc!(
+            "PREFIX wdt: <>
+             PREFIX wdt: <>
+             SELECT * {}"
         ));
         let declared_namesapces: Vec<String> = get_unused_prefixes(&state, &"uri".to_string())
             .unwrap()

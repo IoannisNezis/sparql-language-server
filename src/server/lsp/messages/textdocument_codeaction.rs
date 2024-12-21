@@ -81,6 +81,7 @@ impl CodeActionResponse {
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn add_code_action(&mut self, code_action: CodeAction) {
         self.result.push(code_action);
     }
@@ -122,10 +123,6 @@ impl CodeAction {
             .entry(document_uri.to_string())
             .and_modify(|e| e.push(change.clone()))
             .or_insert(vec![change]);
-    }
-
-    pub(crate) fn add_diagnostic(&mut self, diagnostic: Diagnostic) {
-        self.diagnostics.push(diagnostic);
     }
 }
 

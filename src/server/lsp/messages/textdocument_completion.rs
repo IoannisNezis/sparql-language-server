@@ -1,10 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::server::lsp::{
-    rpc::{RequestId, RequestMessageBase, ResponseMessageBase},
-    textdocument::Position,
-};
+use crate::server::lsp::rpc::{RequestId, RequestMessageBase, ResponseMessageBase};
 
 use super::utils::TextDocumentPositionParams;
 
@@ -16,10 +13,6 @@ pub struct CompletionRequest {
 }
 
 impl CompletionRequest {
-    pub(crate) fn get_position(&self) -> &Position {
-        &self.params.base.position
-    }
-
     pub(crate) fn get_document_uri(&self) -> &String {
         &self.params.base.text_document.uri
     }

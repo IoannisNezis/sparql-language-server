@@ -5,6 +5,7 @@ mod diagnostic;
 mod formatting;
 mod hovering;
 mod lifecycle;
+mod misc;
 mod textdocument_syncronization;
 
 use code_action::handle_codeaction_request;
@@ -16,6 +17,7 @@ use lifecycle::{
     handle_shutdown_request,
 };
 use log::warn;
+use misc::handle_set_trace_notifcation;
 use serde::{de::DeserializeOwned, Serialize};
 use std::any::type_name;
 use textdocument_syncronization::{handle_did_change_notification, handle_did_open_notification};
@@ -86,6 +88,7 @@ pub fn dispatch(
         "exit" => link!(handle_exit_notifcation),
         "textDocument/didOpen" => link!(handle_did_open_notification),
         "textDocument/didChange" => link!(handle_did_change_notification),
+        "$/setTrace" => link!(handle_set_trace_notifcation),
         unknown_method => {
             warn!(
                 "Received message with unknown method \"{}\"",
