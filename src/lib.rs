@@ -1,6 +1,6 @@
 mod server;
 
-use log::{error, info};
+use log::error;
 use server::Server;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;

@@ -1,16 +1,17 @@
 mod anaysis;
+mod capabilities;
 mod commands;
 mod configuration;
 mod lsp;
 mod state;
+mod tools;
 
 mod message_handler;
 
+use capabilities::create_capabilities;
 use configuration::Settings;
-use curies::{Converter, Record};
 use log::{error, info};
 use lsp::{
-    capabilities::{self, ExecuteCommandOptions, WorkDoneProgressOptions},
     rpc::{RecoverId, RequestIdOrNull, ResponseMessage},
     ServerInfo,
 };
@@ -22,15 +23,16 @@ use message_handler::dispatch;
 pub use message_handler::format_raw;
 
 use state::ServerState;
+use tools::Tools;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
 pub struct Server {
     pub(crate) state: ServerState,
     pub(crate) settings: Settings,
-    pub(crate) capabilities: capabilities::ServerCapabilities,
+    pub(crate) capabilities: lsp::capabilities::ServerCapabilities,
     pub(crate) server_info: ServerInfo,
-    uri_converter: Converter,
+    tools: Tools,
     send_message_clusure: Box<dyn Fn(String)>,
 }
 
@@ -41,55 +43,17 @@ impl Server {
             .build()
             .unwrap();
         let settings: Settings = config.try_deserialize().expect("could not load Settings");
-        let capabilities = capabilities::ServerCapabilities {
-            text_document_sync: capabilities::TextDocumentSyncKind::Incremental,
-            hover_provider: true,
-            code_action_provider: true,
-            execute_command_provider: ExecuteCommandOptions {
-                work_done_progress_options: WorkDoneProgressOptions {
-                    work_done_progress: true,
-                },
-                commands: vec!["publish diagnostics".to_string()],
-            },
-            diagnostic_provider: capabilities::DiagnosticOptions {
-                identifier: "qlue-ls".to_string(),
-                inter_file_dependencies: false,
-                workspace_diagnostics: false,
-            },
-            completion_provider: capabilities::CompletionOptions {
-                trigger_characters: vec!["?".to_string()],
-            },
-            document_formatting_provider: capabilities::DocumentFormattingOptions {},
-        };
-        let mut uri_converter = Converter::new(":");
-        uri_converter.add_record(Record::new("schema", "http://schema.org/"));
-        uri_converter.add_record(Record::new(
-            "envTopic",
-            "https://environment.ld.admin.ch/foen/nfi/Topic/",
-        ));
-        uri_converter.add_record(Record::new(
-            "envCube",
-            "https://environment.ld.admin.ch/foen/nfi/nfi_C-20/cube/",
-        ));
-
-        uri_converter.add_record(Record::new("cube", "https://cube.link/"));
-        uri_converter.add_record(Record::new(
-            "env",
-            "https://environment.ld.admin.ch/foen/nfi/",
-        ));
-        uri_converter.add_record(Record::new("country", "https://ld.admin.ch/country/"));
-
         let version = env!("CARGO_PKG_VERSION");
         info!("Started Language Server: Qlue-ls - version: {}", version);
         Self {
             state: ServerState::new(),
             settings,
-            capabilities,
+            capabilities: create_capabilities(),
             server_info: ServerInfo {
                 name: "Qlue-ls".to_string(),
                 version: Some(version.to_string()),
             },
-            uri_converter,
+            tools: Tools::initiate(),
             send_message_clusure: Box::new(write_function),
         }
     }
@@ -169,8 +133,8 @@ impl Server {
     /// - The `uri_converter` fails to find a record associated with the URI.
     /// - The `uri_converter` fails to compress the URI into a CURIE.
     pub(crate) fn compress_uri(&self, uri: &str) -> Option<(String, String, String)> {
-        let record = self.uri_converter.find_by_uri(uri).ok()?;
-        let curie = self.uri_converter.compress(uri).ok()?;
+        let record = self.tools.uri_converter.find_by_uri(uri).ok()?;
+        let curie = self.tools.uri_converter.compress(uri).ok()?;
         Some((record.prefix.clone(), record.uri_prefix.clone(), curie))
     }
 }

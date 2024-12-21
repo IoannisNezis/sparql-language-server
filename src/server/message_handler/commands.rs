@@ -1,7 +1,7 @@
 use core::fmt;
 use std::any::type_name;
 
-use log::error;
+use log::{error, info};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::server::{
@@ -62,14 +62,6 @@ where
             &format!("Could not serialize RPC-message\n\n{}", error),
         )),
     }
-}
-
-fn to_parse_error<T>(error: serde_json::Error) -> String {
-    format!(
-        "Could not parse Command arguments \"{}\"\n\n{}",
-        type_name::<T>(),
-        error
-    )
 }
 
 fn publish_diagnostic(server: &Server, args: &PublishDiagnosticsCommandAruments) {
