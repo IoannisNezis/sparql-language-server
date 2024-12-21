@@ -2,9 +2,24 @@ use indoc::indoc;
 
 use crate::server::{
     anaysis::get_kind_at_position,
-    lsp::{HoverRequest, HoverResponse},
-    ServerState,
+    lsp::{errors::ResponseError, HoverRequest, HoverResponse},
+    Server,
 };
+
+pub fn handle_hover_request(
+    server: &mut Server,
+    request: HoverRequest,
+) -> Result<HoverResponse, ResponseError> {
+    let node_kind = get_kind_at_position(
+        &server.state,
+        request.get_document_uri(),
+        request.get_position(),
+    );
+    Ok(HoverResponse::new(
+        request.get_id(),
+        documentation(node_kind.unwrap_or("")),
+    ))
+}
 
 fn documentation(kind: &str) -> String {
     match kind {
@@ -48,10 +63,4 @@ WHERE {
         _ => kind,
     }
     .to_string()
-}
-
-pub fn handle_hover_request(request: &HoverRequest, state: &ServerState) -> HoverResponse {
-    let node_kind =
-        get_kind_at_position(&state, request.get_document_uri(), request.get_position());
-    HoverResponse::new(request.get_id(), documentation(node_kind.unwrap_or("")))
 }

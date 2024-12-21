@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 
 use crate::server::lsp::{
-    rpc::{RequestMessage, ResponseMessage},
+    rpc::{RequestId, RequestMessageBase, ResponseMessageBase},
     textdocument::{TextDocumentIdentifier, TextEdit},
 };
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct FormattingRequest {
     #[serde(flatten)]
-    base: RequestMessage,
+    base: RequestMessageBase,
     params: DocumentFormattingParams,
 }
 impl FormattingRequest {
-    pub(crate) fn get_id(&self) -> u32 {
-        self.base.id
+    pub(crate) fn get_id(&self) -> &RequestId {
+        &self.base.id
     }
 
     pub fn get_document_uri(&self) -> &String {
@@ -43,13 +43,14 @@ pub struct FormattingOptions {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct FormattingResponse {
     #[serde(flatten)]
-    base: ResponseMessage,
+    base: ResponseMessageBase,
     result: Vec<TextEdit>,
 }
+
 impl FormattingResponse {
-    pub(crate) fn new(id: u32, text_edits: Vec<TextEdit>) -> Self {
+    pub(crate) fn new(id: &RequestId, text_edits: Vec<TextEdit>) -> Self {
         Self {
-            base: ResponseMessage::new(id),
+            base: ResponseMessageBase::success(id),
             result: text_edits,
         }
     }
@@ -59,7 +60,7 @@ impl FormattingResponse {
 mod tests {
     use crate::server::lsp::{
         messages::textdocument_formatting::{DocumentFormattingParams, FormattingOptions},
-        rpc::{BaseMessage, RequestMessage},
+        rpc::{Message, RequestId, RequestMessageBase},
         textdocument::{Range, TextDocumentIdentifier, TextEdit},
         FormattingResponse,
     };
@@ -74,12 +75,12 @@ mod tests {
         assert_eq!(
             request,
             FormattingRequest {
-                base: RequestMessage {
-                    base: BaseMessage {
+                base: RequestMessageBase {
+                    base: Message {
                         jsonrpc: "2.0".to_string(),
-                        method: "textDocument/formatting".to_string()
                     },
-                    id: 2
+                    method: "textDocument/formatting".to_string(),
+                    id: RequestId::Integer(2)
                 },
                 params: DocumentFormattingParams {
                     text_document: TextDocumentIdentifier {
@@ -97,7 +98,7 @@ mod tests {
     #[test]
     fn serialize() {
         let text_edits = vec![TextEdit::new(Range::new(0, 1, 2, 3), "dings")];
-        let formatting_response = FormattingResponse::new(42, text_edits);
+        let formatting_response = FormattingResponse::new(&RequestId::Integer(42), text_edits);
         let expected_message = r#"{"jsonrpc":"2.0","id":42,"result":[{"range":{"start":{"line":0,"character":1},"end":{"line":2,"character":3}},"newText":"dings"}]}"#;
         assert_eq!(
             serde_json::to_string(&formatting_response).unwrap(),

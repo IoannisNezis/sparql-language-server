@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::server::lsp::{rpc::BaseMessage, textdocument::TextDocumentItem};
+use crate::server::lsp::{rpc::NotificationMessage, textdocument::TextDocumentItem};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct DidOpenTextDocumentNotification {
     #[serde(flatten)]
-    base: BaseMessage,
+    base: NotificationMessage,
     pub params: DidOpenTextDocumentPrams,
 }
 

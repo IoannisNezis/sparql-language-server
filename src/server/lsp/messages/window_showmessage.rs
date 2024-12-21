@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::server::lsp::rpc::BaseMessage;
+use crate::server::lsp::rpc::NotificationMessageBase;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct ShowMessageNotification {
     #[serde(flatten)]
-    base: BaseMessage,
+    base: NotificationMessageBase,
     params: ShowMessageParams,
 }
 
@@ -14,7 +14,7 @@ pub struct ShowMessageNotification {
 impl ShowMessageNotification {
     pub fn new(message: &str, kind: MessageType) -> Self {
         Self {
-            base: BaseMessage::new("window/showMessage"),
+            base: NotificationMessageBase::new("window/showMessage"),
             params: ShowMessageParams {
                 kind,
                 message: message.to_string(),

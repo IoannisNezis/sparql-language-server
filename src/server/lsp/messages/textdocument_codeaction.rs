@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::server::lsp::{
-    rpc::{RequestMessage, ResponseMessage},
+    rpc::{RequestId, RequestMessageBase, ResponseMessageBase},
     textdocument::{DocumentUri, Range, TextDocumentIdentifier, TextEdit},
 };
 
@@ -13,8 +13,13 @@ use super::Diagnostic;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CodeActionRequest {
     #[serde(flatten)]
-    pub base: RequestMessage,
+    pub base: RequestMessageBase,
     pub params: CodeActionParams,
+}
+impl CodeActionRequest {
+    pub(crate) fn get_id(&self) -> &RequestId {
+        &self.base.id
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -64,14 +69,14 @@ pub enum CodeActionTriggerKind {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CodeActionResponse {
     #[serde(flatten)]
-    base: ResponseMessage,
+    base: ResponseMessageBase,
     result: Vec<CodeAction>,
 }
 
 impl CodeActionResponse {
-    pub fn new(id: u32) -> Self {
+    pub fn new(id: &RequestId) -> Self {
         Self {
-            base: ResponseMessage::new(id),
+            base: ResponseMessageBase::success(id),
             result: vec![],
         }
     }
@@ -132,6 +137,7 @@ pub struct WorkspaceEdit {
 #[cfg(test)]
 mod test {
     use crate::server::lsp::{
+        rpc::RequestId,
         textdocument::{Range, TextEdit},
         CodeAction, CodeActionResponse, WorkspaceEdit,
     };
@@ -139,7 +145,7 @@ mod test {
 
     #[test]
     fn serialize() {
-        let mut code_action_response = CodeActionResponse::new(42);
+        let mut code_action_response = CodeActionResponse::new(&RequestId::Integer(42));
         let changes = HashMap::from([(
             "file:///test.rq".to_string(),
             vec![TextEdit::new(Range::new(0, 0, 0, 0), "test")],

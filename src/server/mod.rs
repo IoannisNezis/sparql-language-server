@@ -8,9 +8,10 @@ mod message_handler;
 
 use configuration::Settings;
 use curies::{Converter, Record};
-use log::{debug, error, info};
+use log::{error, info};
 use lsp::{
     capabilities::{self, ExecuteCommandOptions, WorkDoneProgressOptions},
+    rpc::{RecoverId, RequestIdOrNull, ResponseMessage},
     ServerInfo,
 };
 use message_handler::dispatch;
@@ -101,9 +102,30 @@ impl Server {
     }
 
     pub fn handle_message(&mut self, message: String) {
-        match dispatch(self, message) {
-            Some(response) => self.send_message(response),
-            None => {}
+        match dispatch(self, &message) {
+            Ok(None) => {
+                // NOTE: message was a notification -> Nothing to do
+            }
+            Ok(Some(response)) => self.send_message(response),
+            Err(error) => {
+                if let Some(id) = serde_json::from_str::<RecoverId>(&message)
+                    .map(|msg| RequestIdOrNull::RequestId(msg.id))
+                    .ok()
+                {
+                    let response = ResponseMessage::error(id, error);
+                    match serde_json::to_string(&response) {
+                        Ok(response_string) => {
+                            self.send_message(response_string);
+                        }
+                        Err(error) => {
+                            error!(
+                            "CRITICAL: could not serialize error message (this very bad):\n{:?}\n{}",
+                            response, error
+                        )
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -150,5 +172,28 @@ impl Server {
         let record = self.uri_converter.find_by_uri(uri).ok()?;
         let curie = self.uri_converter.compress(uri).ok()?;
         Some((record.prefix.clone(), record.uri_prefix.clone(), curie))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Server;
+
+    use super::message_handler::dispatch;
+
+    #[test]
+    fn initialize() {
+        let mut server = Server::new(|_message| {});
+        assert!(dbg!(dispatch(
+            &mut server,
+            &r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId":1}}"#
+                .to_string(),
+        ))
+        .is_ok());
+        assert!(dbg!(dispatch(
+            &mut server,
+            &r#"{"jsonrpc":"2.0","method":"initialized"}"#.to_string(),
+        )
+        .is_ok()));
     }
 }

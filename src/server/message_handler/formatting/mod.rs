@@ -1,41 +1,30 @@
 mod core;
 mod utils;
 use core::*;
-use log::{error, info};
 
 use tree_sitter::Parser;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::server::{
-    configuration::{FormatSettings, Settings},
-    lsp::{FormattingRequest, FormattingResponse},
-    ServerState,
+    configuration::FormatSettings,
+    lsp::{errors::ResponseError, FormattingRequest, FormattingResponse},
+    Server,
 };
 
 pub fn handle_format_request(
+    server: &mut Server,
     request: FormattingRequest,
-    state: &mut ServerState,
-    settings: &Settings,
-) -> FormattingResponse {
-    let uri = request.get_document_uri();
-    info!("Received formatting request for: {}", uri);
-    match state.get_state(uri) {
-        Some((document, Some(tree))) => {
-            let options = request.get_options();
-            let text_edits = format_textdoument(document, tree, &settings.format, options);
-            FormattingResponse::new(request.get_id(), text_edits)
-        }
-        _ => {
-            error!("Requested formatting for unknown document: {}", uri);
-            todo!()
-        }
-    }
+) -> Result<FormattingResponse, ResponseError> {
+    let (document, tree) = server.state.get_state(request.get_document_uri())?;
+    let options = request.get_options();
+    let text_edits = format_textdoument(document, tree, &server.settings.format_settings, options);
+    Ok(FormattingResponse::new(request.get_id(), text_edits))
 }
 
 #[wasm_bindgen]
 pub fn format_raw(text: String) -> String {
     let mut parser = Parser::new();
-    // TODO: look for user configuration
+    // TODO: use user configuration
     let format_settings = FormatSettings::default();
     match parser.set_language(&tree_sitter_sparql::LANGUAGE.into()) {
         Ok(()) => {

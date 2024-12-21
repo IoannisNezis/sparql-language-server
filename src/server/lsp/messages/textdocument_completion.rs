@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::server::lsp::{
-    rpc::{RequestMessage, ResponseMessage},
+    rpc::{RequestId, RequestMessageBase, ResponseMessageBase},
     textdocument::Position,
 };
 
@@ -11,7 +11,7 @@ use super::utils::TextDocumentPositionParams;
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct CompletionRequest {
     #[serde(flatten)]
-    base: RequestMessage,
+    base: RequestMessageBase,
     params: CompletionParams,
 }
 
@@ -24,8 +24,8 @@ impl CompletionRequest {
         &self.params.base.text_document.uri
     }
 
-    pub(crate) fn get_id(&self) -> u32 {
-        self.base.id
+    pub(crate) fn get_id(&self) -> &RequestId {
+        &self.base.id
     }
 
     pub(crate) fn get_completion_context(&self) -> &CompletionContext {
@@ -58,14 +58,14 @@ pub enum CompletionTriggerKind {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct CompletionResponse {
     #[serde(flatten)]
-    base: ResponseMessage,
+    base: ResponseMessageBase,
     result: CompletionResult,
 }
 
 impl CompletionResponse {
-    pub fn new(id: u32) -> Self {
+    pub fn new(id: &RequestId) -> Self {
         CompletionResponse {
-            base: ResponseMessage::new(id),
+            base: ResponseMessageBase::success(id),
             result: CompletionResult {
                 items: vec![
                     CompletionItem {
@@ -101,9 +101,9 @@ impl CompletionResponse {
         }
     }
 
-    pub(crate) fn from_variables(id: u32, variables: Vec<String>) -> Self {
+    pub(crate) fn from_variables(id: &RequestId, variables: Vec<String>) -> Self {
         CompletionResponse {
-            base: ResponseMessage::new(id),
+            base: ResponseMessageBase::success(id),
             result: CompletionResult {
                 items: variables
                     .iter()
@@ -176,7 +176,7 @@ enum InsertTextFormat {
 mod tests {
     use crate::server::lsp::{
         messages::utils::TextDocumentPositionParams,
-        rpc::{BaseMessage, RequestMessage},
+        rpc::{Message, RequestId, RequestMessageBase},
         textdocument::{Position, TextDocumentIdentifier},
         CompletionContext, CompletionParams, CompletionTriggerKind,
     };
@@ -191,12 +191,12 @@ mod tests {
         assert_eq!(
             completion_request,
             CompletionRequest {
-                base: RequestMessage {
-                    base: BaseMessage {
-                        jsonrpc: "2.0".to_string(),
-                        method: "textDocument/completion".to_string()
+                base: RequestMessageBase {
+                    base: Message {
+                        jsonrpc: "2.0".to_string()
                     },
-                    id: 4
+                    method: "textDocument/completion".to_string(),
+                    id: RequestId::Integer(4)
                 },
                 params: CompletionParams {
                     base: TextDocumentPositionParams {
@@ -216,7 +216,7 @@ mod tests {
 
     #[test]
     fn serialize() {
-        let completion_response = CompletionResponse::new(1337);
+        let completion_response = CompletionResponse::new(&RequestId::Integer(1337));
         let expected_message = r#"{"jsonrpc":"2.0","id":1337,"result":{"items":[{"label":"SELECT","kind":15,"detail":"Select query","insertText":"SELECT ${1:*} WHERE {\n  $0\n}","insertTextFormat":2},{"label":"PREFIX","kind":15,"detail":"Declare a namespace","insertText":"PREFIX ${1:namespace}: <${0:iri}>","insertTextFormat":2},{"label":"FILTER","kind":15,"detail":"Filter the results","insertText":"FILTER ( $0 )","insertTextFormat":2},{"label":"ORDER BY","kind":15,"detail":"Sort the results","insertText":"ORDER BY ${1|ASC,DESC|} ( $0 )","insertTextFormat":2}]}}"#;
         let actual_message = serde_json::to_string(&completion_response).unwrap();
         assert_eq!(actual_message, expected_message);

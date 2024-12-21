@@ -29,13 +29,13 @@ impl Default for FormatSettings {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
-    pub format: FormatSettings,
+    pub format_settings: FormatSettings,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            format: Default::default(),
+            format_settings: Default::default(),
         }
     }
 }

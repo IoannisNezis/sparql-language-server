@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::server::lsp::{
-    rpc::{RequestMessage, ResponseMessage},
+    rpc::{RequestId, RequestMessageBase, ResponseMessageBase},
     textdocument::Position,
 };
 
@@ -10,7 +10,7 @@ use super::utils::TextDocumentPositionParams;
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct HoverRequest {
     #[serde(flatten)]
-    base: RequestMessage,
+    base: RequestMessageBase,
     params: HoverParams,
 }
 
@@ -23,8 +23,8 @@ impl HoverRequest {
         &self.params.text_document_position.text_document.uri
     }
 
-    pub(crate) fn get_id(&self) -> u32 {
-        self.base.id
+    pub(crate) fn get_id(&self) -> &RequestId {
+        &self.base.id
     }
 }
 
@@ -37,14 +37,14 @@ struct HoverParams {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct HoverResponse {
     #[serde(flatten)]
-    base: ResponseMessage,
+    base: ResponseMessageBase,
     result: HoverResult,
 }
 
 impl HoverResponse {
-    pub fn new(id: u32, content: String) -> Self {
+    pub fn new(id: &RequestId, content: String) -> Self {
         HoverResponse {
-            base: ResponseMessage::new(id),
+            base: ResponseMessageBase::success(id),
             result: HoverResult {
                 contents: HoverResultContents::MarkupContent(MarkupContent::Content {
                     kind: Markupkind::Markdown,
@@ -65,8 +65,9 @@ struct HoverResult {
 enum HoverResultContents {
     SingleMarkedString(MarkedString),
     MultipleMarkedString(Vec<MarkedString>),
-    MarkupContent(MarkupContent), //WARNING: This is not to spec, the hover.contents also support markup content
-                                  //see: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
+    MarkupContent(MarkupContent),
+    //WARNING: This is not to spec, the hover.contents also support markup content
+    //see: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -93,7 +94,7 @@ mod tests {
 
     use crate::server::lsp::{
         messages::{textdocument_hover::HoverParams, utils::TextDocumentPositionParams},
-        rpc::{BaseMessage, RequestMessage},
+        rpc::{Message, RequestId, RequestMessageBase},
         textdocument::{Position, TextDocumentIdentifier},
     };
 
@@ -107,12 +108,12 @@ mod tests {
         assert_eq!(
             hover_request,
             HoverRequest {
-                base: RequestMessage {
-                    base: BaseMessage {
+                base: RequestMessageBase {
+                    base: Message {
                         jsonrpc: "2.0".to_string(),
-                        method: "textDocument/hover".to_string()
                     },
-                    id: 2
+                    method: "textDocument/hover".to_string(),
+                    id: RequestId::Integer(2)
                 },
                 params: HoverParams {
                     text_document_position: TextDocumentPositionParams {
@@ -128,7 +129,8 @@ mod tests {
 
     #[test]
     fn serialize() {
-        let hover_response = HoverResponse::new(42, "hover content".to_string());
+        let hover_response =
+            HoverResponse::new(&RequestId::Integer(42), "hover content".to_string());
         let expected_message = r#"{"jsonrpc":"2.0","id":42,"result":{"contents":{"kind":"markdown","value":"hover content"}}}"#;
         assert_eq!(
             serde_json::to_string(&hover_response).unwrap(),
