@@ -16,6 +16,16 @@ pub enum RPCMessage {
     Notification(NotificationMessage),
 }
 
+impl RPCMessage {
+    pub fn get_method(&self) -> Option<&str> {
+        match self {
+            RPCMessage::Notification(notification) => Some(&notification.method),
+            RPCMessage::Request(request) => Some(&request.method),
+            RPCMessage::Response(_) => None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Message {
     pub jsonrpc: String,

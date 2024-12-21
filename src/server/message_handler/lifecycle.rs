@@ -1,9 +1,11 @@
+use std::process::exit;
+
 use log::info;
 
 use crate::server::{
     lsp::{
         errors::{ErrorCode, ResponseError},
-        rpc::RequestMessage,
+        rpc::{NotificationMessage, RequestMessage},
         InitializeRequest, InitializeResonse, ProgressNotification, ShutdownResponse,
     },
     state::ServerStatus,
@@ -93,4 +95,21 @@ pub(super) fn handle_initialize_request(
             "The Server is already initialized",
         )),
     }
+}
+
+pub(super) fn handle_initialized_notifcation(
+    server: &mut Server,
+    _initialized_notification: NotificationMessage,
+) -> Result<(), ResponseError> {
+    info!("initialization completed");
+    server.state.status = ServerStatus::Running;
+    Ok(())
+}
+
+pub(super) fn handle_exit_notifcation(
+    _server: &mut Server,
+    _initialized_notification: NotificationMessage,
+) -> Result<(), ResponseError> {
+    info!("Recieved exit notification, shutting down!");
+    exit(0);
 }

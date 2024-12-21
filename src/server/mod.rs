@@ -103,25 +103,26 @@ impl Server {
 
     pub fn handle_message(&mut self, message: String) {
         match dispatch(self, &message) {
-            Ok(Some(response)) => self.send_message(response),
             Ok(None) => {
                 // NOTE: message was a notification -> Nothing to do
             }
+            Ok(Some(response)) => self.send_message(response),
             Err(error) => {
-                info!("ERROR: {:?}", error);
-                let id = serde_json::from_str::<RecoverId>(&message)
+                if let Some(id) = serde_json::from_str::<RecoverId>(&message)
                     .map(|msg| RequestIdOrNull::RequestId(msg.id))
-                    .unwrap_or(RequestIdOrNull::Null);
-                let response = ResponseMessage::error(id, error);
-                match serde_json::to_string(&response) {
-                    Ok(response_string) => {
-                        self.send_message(response_string);
-                    }
-                    Err(error) => {
-                        error!(
+                    .ok()
+                {
+                    let response = ResponseMessage::error(id, error);
+                    match serde_json::to_string(&response) {
+                        Ok(response_string) => {
+                            self.send_message(response_string);
+                        }
+                        Err(error) => {
+                            error!(
                             "CRITICAL: could not serialize error message (this very bad):\n{:?}\n{}",
                             response, error
                         )
+                        }
                     }
                 }
             }
