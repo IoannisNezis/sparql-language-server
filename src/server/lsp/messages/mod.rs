@@ -1,3 +1,4 @@
+pub mod diagnostic;
 mod initialize;
 mod progress;
 mod shutdown;

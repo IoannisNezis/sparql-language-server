@@ -33,8 +33,8 @@ impl Tools {
         let records = [
             Record::new("schema", "http://schema.org/"),
             Record::new(
-                "envCube",
-                "https://environment.ld.admin.ch/foen/nfi/nfi_C-20/cube/",
+                "envCube2023",
+                "https://environment.ld.admin.ch/foen/nfi/nfi_C-20/cube/2023-",
             ),
             Record::new(
                 "envTopic",
@@ -42,6 +42,22 @@ impl Tools {
             ),
             Record::new("cube", "https://cube.link/"),
             Record::new("env", "https://environment.ld.admin.ch/foen/nfi/"),
+            Record::new(
+                "envClasificationUnit",
+                "https://environment.ld.admin.ch/foen/nfi/ClassificationUnit/",
+            ),
+            Record::new(
+                "envInventory",
+                "https://environment.ld.admin.ch/foen/nfi/Inventory/",
+            ),
+            Record::new(
+                "envUnitOfEvaluation",
+                "https://environment.ld.admin.ch/foen/nfi/UnitOfEvaluation/",
+            ),
+            Record::new(
+                "envUnitOfEvaluationType",
+                "https://environment.ld.admin.ch/foen/nfi/EvaluationType/",
+            ),
             Record::new("country", "https://ld.admin.ch/country/"),
         ];
         records.into_iter().for_each(|record| {

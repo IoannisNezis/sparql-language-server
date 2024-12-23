@@ -1,8 +1,10 @@
 use crate::server::{
     anaysis::{get_all_uncompressed_uris, get_undeclared_prefixes, get_unused_prefixes},
     lsp::{
-        errors::ResponseError, textdocument::TextDocumentItem, Diagnostic, DiagnosticRequest,
-        DiagnosticResponse, DiagnosticSeverity,
+        diagnostic::{Diagnostic, DiagnosticSeverity},
+        errors::ResponseError,
+        textdocument::TextDocumentItem,
+        DiagnosticRequest, DiagnosticResponse,
     },
     Server,
 };
@@ -36,7 +38,8 @@ fn unused_prefix<'a>(
     Ok(ununsed_prefixes.map(|(prefix, range)| Diagnostic {
         range: range.clone(),
         severity: DiagnosticSeverity::Warning,
-        source: "qlue-ls (unused_prefix)".to_string(),
+        source: Some("qlue-ls (unused_prefix)".to_string()),
+        code: None,
         message: format!("'{}' is declared here, but was never used\n", prefix),
     }))
 }
@@ -49,7 +52,8 @@ fn undeclared_prefix(
     Ok(undeclared_prefixes.map(|(prefix, range)| Diagnostic {
         range: range.clone(),
         severity: DiagnosticSeverity::Error,
-        source: "qlue-ls (undeclared_prefix)".to_string(),
+        source: Some("qlue-ls (undeclared_prefix)".to_string()),
+        code: None,
         message: format!("'{}' is used here, but was never delared\n", prefix),
     }))
 }
@@ -62,7 +66,8 @@ fn uncompressed_uris<'a>(
     let diagnostics = uncompressed_uris.into_iter().filter_map(|(uri, range)| {
         match server.compress_uri(&uri[1..uri.len() - 1]) {
             Some((_prefix, _namespace, curie)) => Some(Diagnostic {
-                source: "dings".to_string(),
+                source: Some("dings".to_string()),
+                code: None,
                 range,
                 severity: DiagnosticSeverity::Information,
                 message: format!("You might want to compress this Uri\n{} -> {}", uri, curie),

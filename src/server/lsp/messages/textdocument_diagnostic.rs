@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::server::lsp::rpc::{RequestId, RequestMessageBase, ResponseMessageBase};
 use crate::server::lsp::textdocument::TextDocumentIdentifier;
 
-use super::Diagnostic;
+use super::diagnostic::Diagnostic;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct DiagnosticRequest {

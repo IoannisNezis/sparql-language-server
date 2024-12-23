@@ -8,7 +8,7 @@ use crate::server::lsp::{
     textdocument::{DocumentUri, Range, TextDocumentIdentifier, TextEdit},
 };
 
-use super::Diagnostic;
+use super::diagnostic::Diagnostic;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CodeActionRequest {
