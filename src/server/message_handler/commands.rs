@@ -1,7 +1,7 @@
 use core::fmt;
 use std::any::type_name;
 
-use log::{error, info};
+use log::error;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::server::{
