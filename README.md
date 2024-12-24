@@ -28,8 +28,8 @@ pipx install qlue-ls
 You can also build it from source:
 
 ```shell
-git clone https://github.com/IoannisNezis/sparql-language-server.git
-cd sparql-language-server
+git clone https://github.com/IoannisNezis/Qlue-ls.git
+cd Qlue-ls
 cargo build --release --bin qlue-ls
 ```
 
@@ -55,7 +55,7 @@ After you installed the language server, add this to your `init.lua`:
 
 ```lua
 vim.api.nvim_create_autocmd({ 'FileType' }, {
-  desc = 'Connect to sparql-language-server',
+  desc = 'Connect to qlue-ls',
   pattern = { 'sparql' },
   callback = function()
     vim.lsp.start {

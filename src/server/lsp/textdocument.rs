@@ -1,5 +1,9 @@
-use std::{fmt, usize};
+use std::{
+    fmt::{self, Display},
+    usize,
+};
 
+use log::error;
 use serde::{Deserialize, Serialize};
 
 use tree_sitter::{Node, Point};
@@ -32,14 +36,8 @@ impl TextDocumentItem {
         match text_edit.range.to_byte_index_range(&self.text) {
             Some(range) => self.text.replace_range(range, &text_edit.new_text),
             None => {
-                panic!("Received textdocument content change event that requested a change for a out ouf bounds byte-range")
+                error!("Received textdocument/didChange notification with a TextEdit thats out ouf bounds:\nedit: {}\ndocument range: {}",text_edit, self.get_full_range())
             }
-        }
-    }
-
-    pub(crate) fn apply_text_edits(&mut self, text_edits: Vec<TextEdit>) {
-        for text_edit in text_edits {
-            self.apply_text_edit(text_edit);
         }
         // WARNING: Always keep one newline at the end of a document to stay POSIX conform!
         // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
@@ -47,6 +45,12 @@ impl TextDocumentItem {
             Some('\n') => {}
             _ => self.text.push('\n'),
         };
+    }
+
+    pub(crate) fn apply_text_edits(&mut self, text_edits: Vec<TextEdit>) {
+        for text_edit in text_edits {
+            self.apply_text_edit(text_edit);
+        }
     }
 
     pub fn get_full_range(&self) -> Range {
@@ -191,6 +195,12 @@ impl Range {
     }
 }
 
+impl Display for Range {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&format!("{}-{}", self.start, self.end))
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TextEdit {
@@ -214,6 +224,12 @@ impl TextEdit {
             range: change_event.range,
             new_text: change_event.text,
         }
+    }
+}
+
+impl Display for TextEdit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&format!("{} \"{}\"", self.range, self.new_text))
     }
 }
 
@@ -267,11 +283,13 @@ mod tests {
             version: 1,
             text: "".to_string(),
         };
+        assert_eq!(document.text, "");
+        document.apply_text_edit(TextEdit {
+            new_text: "S".to_string(),
+            range: Range::new(0, 0, 0, 0),
+        });
+        assert_eq!(document.text, "S\n");
         document.apply_text_edits(vec![
-            TextEdit {
-                new_text: "S".to_string(),
-                range: Range::new(0, 0, 0, 0),
-            },
             TextEdit {
                 new_text: "E".to_string(),
                 range: Range::new(0, 1, 0, 1),
@@ -297,7 +315,7 @@ mod tests {
                 range: Range::new(0, 6, 0, 6),
             },
             TextEdit {
-                new_text: "* WHERE{\n  ?s ?p ?o\n}\n".to_string(),
+                new_text: "* WHERE{\n  ?s ?p ?o\n}".to_string(),
                 range: Range::new(0, 7, 0, 7),
             },
         ]);
