@@ -129,13 +129,13 @@ qlue-ls can be configured through a `qlue-ls.toml` or `qlue-ls.yml` file.
 Here is the full default configuration
 ```toml
 [format]
-align_predicates = false
+align_predicates = true
 align_prefixes = false
-separate_prolouge = true
+separate_prolouge = false
 capitalize_keywords = true
 insert_spaces = true
 tab_size = 2
-where_new_line = true
+where_new_line = false
 ```
 
 # use in web

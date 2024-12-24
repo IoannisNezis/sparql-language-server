@@ -17,8 +17,8 @@ pub struct FormatSettings {
 impl Default for FormatSettings {
     fn default() -> Self {
         Self {
-            align_prefixes: false,
             align_predicates: true,
+            align_prefixes: false,
             separate_prolouge: false,
             capitalize_keywords: true,
             insert_spaces: None,
