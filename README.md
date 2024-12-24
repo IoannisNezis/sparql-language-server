@@ -145,12 +145,15 @@ For this purpouse this can be compiled to wasm and is availible on [npm](https:/
 
 
 ```shell
-npm i @ioannisnezis/sparql-language-server
+npm i qlue-ls
 ```
 
 You will have to wrap this in a Web Worker and provide a language server client.
 There will be more documentation on this in the future...
 
-## Demo
+# Special Thanks
 
-In the mean time, check out the [demo](https://sparql.nezis.de).
+* [TJ DeVries](https://github.com/tjdevries) for the inspiration and great tutorials
+* [Chris Biscardi](https://github.com/christopherbiscardi) for teaching me Rust
+* [GordianDziwis](https://github.com/GordianDziwis) for providing a sparql-tree-sitter grammar
+
