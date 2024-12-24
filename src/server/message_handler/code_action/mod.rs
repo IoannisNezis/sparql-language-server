@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::server::{
-    anaysis::{get_all_uncompressed_uris, get_declared_prefixes, namespace_is_declared},
+    anaysis::{get_all_uncompressed_uris, get_declared_uri_prefixes, namespace_is_declared},
     lsp::{
         errors::ResponseError,
         textdocument::{Range, TextDocumentItem, TextEdit},
@@ -74,18 +74,17 @@ fn compress_uri(server: &Server, range: Range, document: &TextDocumentItem) -> O
 fn compress_all_uris(server: &Server, document: &TextDocumentItem) -> Option<CodeAction> {
     let mut code_action = CodeAction::new("Compress all URI", Some(CodeActionKind::Refactor));
     let uncompressed_uris = get_all_uncompressed_uris(server, &document.uri).ok()?;
-    let declared_uri_prefix = get_declared_prefixes(&server.state, &document.uri).ok()?;
-    let mut set: HashSet<String> = HashSet::from_iter(
-        declared_uri_prefix
+    let mut declared_uri_prefix_set: HashSet<String> =
+        get_declared_uri_prefixes(&server.state, &document.uri)
+            .ok()?
             .into_iter()
-            .map(|(namespace, _range)| namespace[..namespace.len() - 1].to_string()),
-    );
+            .map(|(uri, _range)| uri[1..uri.len() - 1].to_string())
+            .collect();
 
     uncompressed_uris.iter().for_each(|(uri, range)| {
         if let Some((prefix, uri_prefix, curie)) = server.compress_uri(&uri[1..uri.len() - 1]) {
             code_action.add_edit(&document.uri, TextEdit::new(range.clone(), &curie));
-
-            if !set.contains(&prefix) {
+            if !declared_uri_prefix_set.contains(&uri_prefix) {
                 code_action.add_edit(
                     &document.uri,
                     TextEdit::new(
@@ -93,7 +92,7 @@ fn compress_all_uris(server: &Server, document: &TextDocumentItem) -> Option<Cod
                         &format!("PREFIX {}: <{}>\n", prefix, uri_prefix),
                     ),
                 );
-                set.insert(prefix);
+                declared_uri_prefix_set.insert(uri_prefix);
             }
         }
     });
@@ -132,19 +131,18 @@ mod test {
     }
 
     #[test]
-    fn compress_uri_code_action() {
+    fn compress_uri_undeclared() {
         let mut server = Server::new(|_message| {});
         let state = setup_state(indoc!(
             "SELECT * {
                ?a <http://schema.org/name> ?b .
-               ?c <http://schema.org/name> ?d
              }"
         ));
         server.state = state;
         let document = server.state.get_document("uri").unwrap();
-        let code_action1 = dbg!(compress_uri(&server, Range::new(1, 5, 1, 29), document).unwrap());
+        let code_action = compress_uri(&server, Range::new(1, 5, 1, 29), document).unwrap();
         assert_eq!(
-            code_action1.edit.changes.get("uri").unwrap(),
+            code_action.edit.changes.get("uri").unwrap(),
             &vec![
                 TextEdit::new(Range::new(1, 5, 1, 29), "schema:name"),
                 TextEdit::new(
@@ -153,16 +151,29 @@ mod test {
                 ),
             ]
         );
+    }
 
-        let code_action2 = compress_uri(&server, Range::new(2, 5, 2, 29), document).unwrap();
+    #[test]
+    fn compress_uri_declared() {
+        let mut server = Server::new(|_message| {});
+        let state = setup_state(indoc!(
+            "PREFIX schema: <http://schema.org/>
+             SELECT * {
+               ?a <http://schema.org/name> ?b .
+             }"
+        ));
+        server.state = state;
+        let document = server.state.get_document("uri").unwrap();
+
+        let code_action = compress_uri(&server, Range::new(2, 5, 2, 29), document).unwrap();
         assert_eq!(
-            code_action2.edit.changes.get("uri").unwrap(),
-            &vec![TextEdit::new(Range::new(1, 5, 1, 29), "schema:name"),]
+            code_action.edit.changes.get("uri").unwrap(),
+            &vec![TextEdit::new(Range::new(2, 5, 2, 29), "schema:name"),]
         );
     }
 
     #[test]
-    fn compress_all_uris_code_action() {
+    fn compress_all_uris_undeclared() {
         let mut server = Server::new(|_message| {});
         let state = setup_state(indoc!(
             "SELECT * {
@@ -187,10 +198,10 @@ mod test {
     }
 
     #[test]
-    fn compress_all_uris_code_action_declared_prefix() {
+    fn compress_all_uris_declared() {
         let mut server = Server::new(|_message| {});
         let state = setup_state(indoc!(
-            "PREFIX schema: http://schema.org/>
+            "PREFIX schema: <http://schema.org/>
              SELECT * {
                ?a <http://schema.org/name> ?b .
                ?c <http://schema.org/name> ?d
@@ -202,8 +213,8 @@ mod test {
         assert_eq!(
             code_action.edit.changes.get("uri").unwrap(),
             &vec![
-                TextEdit::new(Range::new(1, 5, 1, 29), "schema:name"),
                 TextEdit::new(Range::new(2, 5, 2, 29), "schema:name"),
+                TextEdit::new(Range::new(3, 5, 3, 29), "schema:name"),
             ]
         );
     }

@@ -73,13 +73,11 @@ pub fn namespace_is_declared(
     document_uri: &String,
     namespace: &str,
 ) -> Result<bool, ResponseError> {
-    let declared_namespaces = get_declared_prefixes(server_state, document_uri)?;
-    let set: HashSet<String> = HashSet::from_iter(
-        declared_namespaces
-            .into_iter()
-            .map(|(namespace, _range)| namespace),
-    );
-    Ok(set.contains(&(namespace.to_string() + ":")))
+    let declared_namespaces: HashSet<String> = get_declared_prefixes(server_state, document_uri)?
+        .into_iter()
+        .map(|(namespace, _range)| namespace)
+        .collect();
+    Ok(declared_namespaces.contains(namespace))
 }
 
 pub fn get_all_uncompressed_uris(
@@ -191,6 +189,27 @@ pub(crate) fn get_declared_prefixes(
 ) -> Result<Vec<(String, Range)>, ResponseError> {
     let (document, tree) = server_state.get_state(document_uri)?;
     let query = build_query("(PrefixDecl (PNAME_NS (PN_PREFIX) @prefix))")?;
+    let mut query_cursor = QueryCursor::new();
+    let mut captures = query_cursor.captures(&query, tree.root_node(), document.text.as_bytes());
+    let mut namespaces: Vec<(String, Range)> = Vec::new();
+    while let Some((mat, capture_index)) = captures.next() {
+        let node = mat.captures[*capture_index].node;
+        namespaces.push((
+            node.utf8_text(document.text.as_bytes())
+                .unwrap()
+                .to_string(),
+            Range::from_node(node),
+        ));
+    }
+    Ok(namespaces)
+}
+
+pub(crate) fn get_declared_uri_prefixes(
+    server_state: &ServerState,
+    document_uri: &str,
+) -> Result<Vec<(String, Range)>, ResponseError> {
+    let (document, tree) = server_state.get_state(document_uri)?;
+    let query = build_query("(PrefixDecl (PNAME_NS (PN_PREFIX)) (IRIREF) @uri)")?;
     let mut query_cursor = QueryCursor::new();
     let mut captures = query_cursor.captures(&query, tree.root_node(), document.text.as_bytes());
     let mut namespaces: Vec<(String, Range)> = Vec::new();
