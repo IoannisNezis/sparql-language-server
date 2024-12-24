@@ -73,7 +73,7 @@ pub fn namespace_is_declared(
     document_uri: &String,
     namespace: &str,
 ) -> Result<bool, ResponseError> {
-    let declared_namespaces = get_declared_namespaces(server_state, document_uri)?;
+    let declared_namespaces = get_declared_prefixes(server_state, document_uri)?;
     let set: HashSet<String> = HashSet::from_iter(
         declared_namespaces
             .into_iter()
@@ -122,12 +122,75 @@ fn get_all_uris(
     Ok(namespaces)
 }
 
-pub fn get_declared_namespaces(
-    analyis_state: &ServerState,
+/// Extracts the declared namespaces from a SPARQL document.
+///
+/// This function parses the specified document to identify namespace declarations
+/// (`PrefixDecl`) and returns a list of tuples, each containing the namespace prefix
+/// and its corresponding range within the document.
+///
+/// # Arguments
+///
+/// * `analysis_state` - A reference to the `ServerState` object, which provides access
+///   to the document and its syntax tree.
+/// * `document_uri` - A string slice representing the URI of the document to analyze.
+///
+/// # Returns
+///
+/// * `Ok(Vec<(String, Range)>)` - A vector of tuples where each tuple consists of:
+///   - A `String` representing the namespace prefix.
+///   - A `Range` specifying the location of the prefix in the document.
+/// * `Err(ResponseError)` - An error if the document or its syntax tree cannot be
+///   retrieved, or if the query for namespace declarations fails.
+///
+/// # Errors
+///
+/// This function can return a `ResponseError` if:
+/// * The document specified by `document_uri` cannot be found or loaded.
+/// * The syntax tree for the document cannot be accessed.
+/// * The query for extracting `PrefixDecl` fails to build or execute.
+///
+/// # Example
+///
+/// Given the following SPARQL query in the document located at `file://example.sparql`:
+///
+/// ```sparql
+/// PREFIX ex: <http://example.org/>
+/// PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+///
+/// SELECT ?name WHERE {
+///   ?person a foaf:Person .
+///   ?person foaf:name ?name .
+/// }
+/// ```
+///
+/// Calling the function:
+///
+/// ```rust
+/// let namespaces = get_declared_namespaces(&analysis_state, "file://example.sparql")?;
+/// for (prefix, range) in namespaces {
+///     println!("Found prefix: {} at range: {:?}", prefix, range);
+/// }
+/// ```
+///
+/// Would return:
+///
+/// ```text
+/// Ok(vec![
+///     ("ex".to_string(), Range { start: Position { line: 0, character: 7 }, end: Position { line: 0, character: 9 } }),
+///     ("foaf".to_string(), Range { start: Position { line: 1, character: 7 }, end: Position { line: 1, character: 11 } }),
+/// ])
+/// ```
+///
+/// # Notes
+///
+/// The function assumes that the document is written in SPARQL syntax and uses
+/// Tree-sitter for syntax tree traversal to locate namespace declarations.
+pub(crate) fn get_declared_prefixes(
+    server_state: &ServerState,
     document_uri: &str,
 ) -> Result<Vec<(String, Range)>, ResponseError> {
-    let (document, tree) = analyis_state.get_state(document_uri)?;
-    let query = build_query("(PrefixDecl (PNAME_NS) @namespace)")?;
+    let (document, tree) = server_state.get_state(document_uri)?;
+    let query = build_query("(PrefixDecl (PNAME_NS (PN_PREFIX) @prefix))")?;
     let mut query_cursor = QueryCursor::new();
     let mut captures = query_cursor.captures(&query, tree.root_node(), document.text.as_bytes());
     let mut namespaces: Vec<(String, Range)> = Vec::new();
@@ -143,12 +206,12 @@ pub fn get_declared_namespaces(
     Ok(namespaces)
 }
 
-pub fn get_used_namspaces(
+pub fn get_used_prefixes(
     analyis_state: &ServerState,
     uri: &String,
 ) -> Result<Vec<(String, Range)>, ResponseError> {
     let (document, tree) = analyis_state.get_state(uri)?;
-    let query = build_query("(PrefixedName (PNAME_NS) @namespace)")?;
+    let query = build_query("(PrefixedName (PNAME_NS (PN_PREFIX) @prefix))")?;
     let mut query_cursor = QueryCursor::new();
     let mut captures = query_cursor.captures(&query, tree.root_node(), document.text.as_bytes());
     let mut namespaces: Vec<(String, Range)> = Vec::new();
@@ -168,23 +231,23 @@ pub(crate) fn get_unused_prefixes(
     analysis_state: &ServerState,
     uri: &String,
 ) -> Result<impl Iterator<Item = (String, Range)>, ResponseError> {
-    let declared_namespaces = get_declared_namespaces(analysis_state, uri)?;
+    let declared_namespaces = get_declared_prefixes(analysis_state, uri)?;
     let declared_namespaces_set: HashSet<String> = declared_namespaces
         .iter()
         .map(|(namespace, _range)| namespace)
         .cloned()
         .collect();
-    let used_namespaces = get_used_namspaces(analysis_state, uri)?;
-    let used_namespaces_set: HashSet<String> = used_namespaces
+    let used_namespaces_set: HashSet<String> = get_used_prefixes(analysis_state, uri)?
         .iter()
         .map(|(namespace, _range)| namespace)
         .cloned()
         .collect();
+    let unused_prefixes = &declared_namespaces_set - &used_namespaces_set;
 
     Ok(declared_namespaces
         .iter()
         .filter_map(move |(declared_namespace, range)| {
-            (&declared_namespaces_set - &used_namespaces_set)
+            unused_prefixes
                 .contains(declared_namespace)
                 .then_some((declared_namespace.clone(), range.clone()))
         })
@@ -196,23 +259,23 @@ pub(crate) fn get_undeclared_prefixes(
     analysis_state: &ServerState,
     uri: &String,
 ) -> Result<impl Iterator<Item = (String, Range)>, ResponseError> {
-    let declared_namespaces = get_declared_namespaces(analysis_state, uri)?;
-    let declared_namespaces_set: HashSet<String> = declared_namespaces
+    let declared_namespaces_set: HashSet<String> = get_declared_prefixes(analysis_state, uri)?
         .iter()
         .map(|(namespace, _range)| namespace)
         .cloned()
         .collect();
-    let used_namespaces = get_used_namspaces(analysis_state, uri)?;
+    let used_namespaces = get_used_prefixes(analysis_state, uri)?;
     let used_namespaces_set: HashSet<String> = used_namespaces
         .iter()
         .map(|(namespace, _range)| namespace)
         .cloned()
         .collect();
+    let undelclared_prefixes_set = &used_namespaces_set - &declared_namespaces_set;
 
     Ok(used_namespaces
         .iter()
         .filter_map(|(declared_namespace, range)| {
-            (&used_namespaces_set - &declared_namespaces_set)
+            undelclared_prefixes_set
                 .contains(declared_namespace)
                 .then_some((declared_namespace.clone(), range.clone()))
         })
@@ -228,8 +291,7 @@ mod tests {
 
     use crate::server::{
         anaysis::{
-            get_declared_namespaces, get_undeclared_prefixes, get_unused_prefixes,
-            get_used_namspaces,
+            get_declared_prefixes, get_undeclared_prefixes, get_unused_prefixes, get_used_prefixes,
         },
         lsp::textdocument::TextDocumentItem,
         state::ServerState,
@@ -238,7 +300,9 @@ mod tests {
     fn setup_state(text: &str) -> ServerState {
         let mut state = ServerState::new();
         let mut parser = Parser::new();
-        parser.set_language(&LANGUAGE.into()).unwrap();
+        if let Err(err) = parser.set_language(&LANGUAGE.into()) {
+            log::error!("Could not initialize parser:\n{}", err)
+        }
         let document = TextDocumentItem::new("uri", text);
         let tree = parser.parse(&document.text, None);
         state.add_document(document, tree);
@@ -254,13 +318,13 @@ mod tests {
 
                  SELECT * {}"
         ));
-        let declared_namesapces = get_declared_namespaces(&state, "uri").unwrap();
+        let declared_namesapces = get_declared_prefixes(&state, "uri").unwrap();
         assert_eq!(
             declared_namesapces
                 .iter()
                 .map(|(namespace, _range)| namespace)
                 .collect::<Vec<&String>>(),
-            vec!["wdt:", "wd:", "wdt:"]
+            vec!["wdt", "wd", "wdt"]
         );
     }
 
@@ -269,24 +333,24 @@ mod tests {
         let state = setup_state(indoc!(
             "SELECT * {?a wdt:P32 ?b. ?a wd:p32 ?b. ?a wdt:P31 ?b}"
         ));
-        let declared_namesapces = get_used_namspaces(&state, &"uri".to_string()).unwrap();
+        let declared_namesapces = get_used_prefixes(&state, &"uri".to_string()).unwrap();
         assert_eq!(
             declared_namesapces
                 .iter()
                 .map(|(namespace, _range)| namespace)
                 .collect::<Vec<&String>>(),
-            vec!["wdt:", "wd:", "wdt:"]
+            vec!["wdt", "wd", "wdt"]
         );
     }
 
     #[test]
     fn undeclared_namespaces() {
-        let state = setup_state(indoc!("SELECT * {x:y y:p x:x}"));
+        let state = setup_state(indoc!("PREFIX x: <> SELECT * {x:y y:p x:x}"));
         let declared_namesapces: Vec<String> = get_undeclared_prefixes(&state, &"uri".to_string())
             .unwrap()
             .map(|(namespace, _range)| namespace)
             .collect();
-        assert_eq!(declared_namesapces, vec!["x:", "y:", "x:"]);
+        assert_eq!(declared_namesapces, vec!["y"]);
     }
     #[test]
     fn unused_namespaces() {
@@ -299,6 +363,6 @@ mod tests {
             .unwrap()
             .map(|(namespace, _range)| namespace)
             .collect();
-        assert_eq!(declared_namesapces, vec!["wdt:", "wdt:"]);
+        assert_eq!(declared_namesapces, vec!["wdt", "wdt"]);
     }
 }

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::server::{
-    anaysis::{get_all_uncompressed_uris, get_declared_namespaces, namespace_is_declared},
+    anaysis::{get_all_uncompressed_uris, get_declared_prefixes, namespace_is_declared},
     lsp::{
         errors::ResponseError,
         textdocument::{Range, TextDocumentItem, TextEdit},
@@ -74,7 +74,7 @@ fn compress_uri(server: &Server, range: Range, document: &TextDocumentItem) -> O
 fn compress_all_uris(server: &Server, document: &TextDocumentItem) -> Option<CodeAction> {
     let mut code_action = CodeAction::new("Compress all URI", Some(CodeActionKind::Refactor));
     let uncompressed_uris = get_all_uncompressed_uris(server, &document.uri).ok()?;
-    let declared_uri_prefix = get_declared_namespaces(&server.state, &document.uri).ok()?;
+    let declared_uri_prefix = get_declared_prefixes(&server.state, &document.uri).ok()?;
     let mut set: HashSet<String> = HashSet::from_iter(
         declared_uri_prefix
             .into_iter()
@@ -102,4 +102,109 @@ fn compress_all_uris(server: &Server, document: &TextDocumentItem) -> Option<Cod
     }
 
     None
+}
+
+#[cfg(test)]
+mod test {
+    use indoc::indoc;
+    use tree_sitter::Parser;
+    use tree_sitter_sparql::LANGUAGE;
+
+    use crate::server::{
+        lsp::textdocument::{Range, TextDocumentItem, TextEdit},
+        message_handler::code_action::compress_all_uris,
+        state::ServerState,
+        Server,
+    };
+
+    use super::compress_uri;
+
+    fn setup_state(text: &str) -> ServerState {
+        let mut state = ServerState::new();
+        let mut parser = Parser::new();
+        if let Err(err) = parser.set_language(&LANGUAGE.into()) {
+            log::error!("Could not initialize parser:\n{}", err)
+        }
+        let document = TextDocumentItem::new("uri", text);
+        let tree = parser.parse(&document.text, None);
+        state.add_document(document, tree);
+        return state;
+    }
+
+    #[test]
+    fn compress_uri_code_action() {
+        let mut server = Server::new(|_message| {});
+        let state = setup_state(indoc!(
+            "SELECT * {
+               ?a <http://schema.org/name> ?b .
+               ?c <http://schema.org/name> ?d
+             }"
+        ));
+        server.state = state;
+        let document = server.state.get_document("uri").unwrap();
+        let code_action1 = dbg!(compress_uri(&server, Range::new(1, 5, 1, 29), document).unwrap());
+        assert_eq!(
+            code_action1.edit.changes.get("uri").unwrap(),
+            &vec![
+                TextEdit::new(Range::new(1, 5, 1, 29), "schema:name"),
+                TextEdit::new(
+                    Range::new(0, 0, 0, 0),
+                    "PREFIX schema: <http://schema.org/>\n"
+                ),
+            ]
+        );
+
+        let code_action2 = compress_uri(&server, Range::new(2, 5, 2, 29), document).unwrap();
+        assert_eq!(
+            code_action2.edit.changes.get("uri").unwrap(),
+            &vec![TextEdit::new(Range::new(1, 5, 1, 29), "schema:name"),]
+        );
+    }
+
+    #[test]
+    fn compress_all_uris_code_action() {
+        let mut server = Server::new(|_message| {});
+        let state = setup_state(indoc!(
+            "SELECT * {
+               ?a <http://schema.org/name> ?b .
+               ?c <http://schema.org/name> ?d
+             }"
+        ));
+        server.state = state;
+        let document = server.state.get_document("uri").unwrap();
+        let code_action = compress_all_uris(&server, document).unwrap();
+        assert_eq!(
+            code_action.edit.changes.get("uri").unwrap(),
+            &vec![
+                TextEdit::new(Range::new(1, 5, 1, 29), "schema:name"),
+                TextEdit::new(
+                    Range::new(0, 0, 0, 0),
+                    "PREFIX schema: <http://schema.org/>\n"
+                ),
+                TextEdit::new(Range::new(2, 5, 2, 29), "schema:name"),
+            ]
+        );
+    }
+
+    #[test]
+    fn compress_all_uris_code_action_declared_prefix() {
+        let mut server = Server::new(|_message| {});
+        let state = setup_state(indoc!(
+            "PREFIX schema: http://schema.org/>
+             SELECT * {
+               ?a <http://schema.org/name> ?b .
+               ?c <http://schema.org/name> ?d
+             }"
+        ));
+        server.state = state;
+        let document = server.state.get_document("uri").unwrap();
+        let code_action = compress_all_uris(&server, document).unwrap();
+        assert_eq!(
+            code_action.edit.changes.get("uri").unwrap(),
+            &vec![
+                TextEdit::new(Range::new(1, 5, 1, 29), "schema:name"),
+                TextEdit::new(Range::new(2, 5, 2, 29), "schema:name"),
+            ]
+        );
+    }
 }
