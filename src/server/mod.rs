@@ -38,16 +38,11 @@ pub struct Server {
 
 impl Server {
     pub fn new(write_function: impl Fn(String) -> () + 'static) -> Server {
-        let config = config::Config::builder()
-            .add_source(config::File::with_name("qlue-ls").required(false))
-            .build()
-            .unwrap();
-        let settings: Settings = config.try_deserialize().expect("could not load Settings");
         let version = env!("CARGO_PKG_VERSION");
         info!("Started Language Server: Qlue-ls - version: {}", version);
         Self {
             state: ServerState::new(),
-            settings,
+            settings: Settings::new(),
             capabilities: create_capabilities(),
             server_info: ServerInfo {
                 name: "Qlue-ls".to_string(),

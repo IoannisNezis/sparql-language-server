@@ -1,3 +1,5 @@
+use config::{Config, ConfigError};
+use log::info;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,15 +29,39 @@ impl Default for FormatSettings {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(default)]
 pub struct Settings {
-    pub format_settings: FormatSettings,
+    pub format: FormatSettings,
+}
+
+fn load_user_configuration() -> Result<Settings, ConfigError> {
+    Config::builder()
+        .add_source(config::File::with_name("qlue-ls"))
+        .build()?
+        .try_deserialize::<Settings>()
+}
+
+impl Settings {
+    pub fn new() -> Self {
+        match load_user_configuration() {
+            Ok(settings) => {
+                info!("Loaded user configuration\n{:?}", settings);
+                settings
+            }
+            Err(error) => {
+                info!(
+                    "Did not load user-configuration:\n{}\n falling back to default values",
+                    error
+                );
+                Settings::default()
+            }
+        }
+    }
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            format_settings: Default::default(),
+            format: Default::default(),
         }
     }
 }

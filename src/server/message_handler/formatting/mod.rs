@@ -17,7 +17,7 @@ pub fn handle_format_request(
 ) -> Result<FormattingResponse, ResponseError> {
     let (document, tree) = server.state.get_state(request.get_document_uri())?;
     let options = request.get_options();
-    let text_edits = format_textdoument(document, tree, &server.settings.format_settings, options);
+    let text_edits = format_textdoument(document, tree, &server.settings.format, options);
     Ok(FormattingResponse::new(request.get_id(), text_edits))
 }
 
