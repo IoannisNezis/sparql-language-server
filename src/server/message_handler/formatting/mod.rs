@@ -28,7 +28,9 @@ pub fn format_raw(text: String) -> String {
     let format_settings = FormatSettings::default();
     match parser.set_language(&tree_sitter_sparql::LANGUAGE.into()) {
         Ok(()) => {
-            let tree = parser.parse(text.clone(), None).expect("could not parse");
+            let tree = parser
+                .parse(text.as_bytes(), None)
+                .expect("could not parse");
             let formatted_text =
                 format_helper(&text, &mut tree.walk(), 0, "  ", "", &format_settings);
             return formatted_text;
