@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::server::{
-    anaysis::{get_all_uncompressed_uris, get_declared_uri_prefixes, namespace_is_declared},
+    anaysis::{get_all_uncompacted_uris, get_declared_uri_prefixes, namespace_is_declared},
     lsp::{
         errors::ResponseError,
         textdocument::{Range, TextDocumentItem, TextEdit},
@@ -36,10 +36,10 @@ pub fn generate_code_actions(
                 && parent.kind() != "BaseDecl"
             {
                 let mut code_actions = vec![];
-                if let Some(code_action) = compress_uri(server, Range::from_node(node), &document) {
+                if let Some(code_action) = shorten_uri(server, Range::from_node(node), &document) {
                     code_actions.push(code_action);
                 }
-                if let Some(code_action) = compress_all_uris(server, &document) {
+                if let Some(code_action) = shorten_all_uris(server, &document) {
                     code_actions.push(code_action);
                 }
                 return Ok(code_actions);
@@ -50,11 +50,11 @@ pub fn generate_code_actions(
 }
 
 // TODO: Handle errors properly.
-fn compress_uri(server: &Server, range: Range, document: &TextDocumentItem) -> Option<CodeAction> {
-    let mut code_action = CodeAction::new("Compress URI", Some(CodeActionKind::Refactor));
+fn shorten_uri(server: &Server, range: Range, document: &TextDocumentItem) -> Option<CodeAction> {
+    let mut code_action = CodeAction::new("Shorten URI", Some(CodeActionKind::Refactor));
     let mut uri = &document.text[range.to_byte_index_range(&document.text)?];
     uri = &uri[1..uri.len() - 1];
-    if let Some((prefix, uri_prefix, curie)) = server.compress_uri(uri) {
+    if let Some((prefix, uri_prefix, curie)) = server.shorten_uri(uri) {
         code_action.add_edit(&document.uri, TextEdit::new(range, &curie));
         if !namespace_is_declared(&server.state, &document.uri, &prefix).ok()? {
             code_action.add_edit(
@@ -71,9 +71,9 @@ fn compress_uri(server: &Server, range: Range, document: &TextDocumentItem) -> O
 }
 
 // TODO: Handle errors properly.
-fn compress_all_uris(server: &Server, document: &TextDocumentItem) -> Option<CodeAction> {
-    let mut code_action = CodeAction::new("Compress all URI", Some(CodeActionKind::Refactor));
-    let uncompressed_uris = get_all_uncompressed_uris(server, &document.uri).ok()?;
+fn shorten_all_uris(server: &Server, document: &TextDocumentItem) -> Option<CodeAction> {
+    let mut code_action = CodeAction::new("Shorten all URI's", Some(CodeActionKind::Refactor));
+    let uncompacted_uris = get_all_uncompacted_uris(server, &document.uri).ok()?;
     let mut declared_uri_prefix_set: HashSet<String> =
         get_declared_uri_prefixes(&server.state, &document.uri)
             .ok()?
@@ -81,8 +81,8 @@ fn compress_all_uris(server: &Server, document: &TextDocumentItem) -> Option<Cod
             .map(|(uri, _range)| uri[1..uri.len() - 1].to_string())
             .collect();
 
-    uncompressed_uris.iter().for_each(|(uri, range)| {
-        if let Some((prefix, uri_prefix, curie)) = server.compress_uri(&uri[1..uri.len() - 1]) {
+    uncompacted_uris.iter().for_each(|(uri, range)| {
+        if let Some((prefix, uri_prefix, curie)) = server.shorten_uri(&uri[1..uri.len() - 1]) {
             code_action.add_edit(&document.uri, TextEdit::new(range.clone(), &curie));
             if !declared_uri_prefix_set.contains(&uri_prefix) {
                 code_action.add_edit(
@@ -96,7 +96,7 @@ fn compress_all_uris(server: &Server, document: &TextDocumentItem) -> Option<Cod
             }
         }
     });
-    if !uncompressed_uris.is_empty() {
+    if !uncompacted_uris.is_empty() {
         return Some(code_action);
     }
 
@@ -111,12 +111,12 @@ mod test {
 
     use crate::server::{
         lsp::textdocument::{Range, TextDocumentItem, TextEdit},
-        message_handler::code_action::compress_all_uris,
+        message_handler::code_action::shorten_all_uris,
         state::ServerState,
         Server,
     };
 
-    use super::compress_uri;
+    use super::shorten_uri;
 
     fn setup_state(text: &str) -> ServerState {
         let mut state = ServerState::new();
@@ -131,7 +131,7 @@ mod test {
     }
 
     #[test]
-    fn compress_uri_undeclared() {
+    fn shorten_uri_undeclared() {
         let mut server = Server::new(|_message| {});
         let state = setup_state(indoc!(
             "SELECT * {
@@ -140,7 +140,7 @@ mod test {
         ));
         server.state = state;
         let document = server.state.get_document("uri").unwrap();
-        let code_action = compress_uri(&server, Range::new(1, 5, 1, 29), document).unwrap();
+        let code_action = shorten_uri(&server, Range::new(1, 5, 1, 29), document).unwrap();
         assert_eq!(
             code_action.edit.changes.get("uri").unwrap(),
             &vec![
@@ -154,7 +154,7 @@ mod test {
     }
 
     #[test]
-    fn compress_uri_declared() {
+    fn shorten_uri_declared() {
         let mut server = Server::new(|_message| {});
         let state = setup_state(indoc!(
             "PREFIX schema: <http://schema.org/>
@@ -165,7 +165,7 @@ mod test {
         server.state = state;
         let document = server.state.get_document("uri").unwrap();
 
-        let code_action = compress_uri(&server, Range::new(2, 5, 2, 29), document).unwrap();
+        let code_action = shorten_uri(&server, Range::new(2, 5, 2, 29), document).unwrap();
         assert_eq!(
             code_action.edit.changes.get("uri").unwrap(),
             &vec![TextEdit::new(Range::new(2, 5, 2, 29), "schema:name"),]
@@ -173,7 +173,7 @@ mod test {
     }
 
     #[test]
-    fn compress_all_uris_undeclared() {
+    fn shorten_all_uris_undeclared() {
         let mut server = Server::new(|_message| {});
         let state = setup_state(indoc!(
             "SELECT * {
@@ -183,7 +183,7 @@ mod test {
         ));
         server.state = state;
         let document = server.state.get_document("uri").unwrap();
-        let code_action = compress_all_uris(&server, document).unwrap();
+        let code_action = shorten_all_uris(&server, document).unwrap();
         assert_eq!(
             code_action.edit.changes.get("uri").unwrap(),
             &vec![
@@ -198,7 +198,7 @@ mod test {
     }
 
     #[test]
-    fn compress_all_uris_declared() {
+    fn shorten_all_uris_declared() {
         let mut server = Server::new(|_message| {});
         let state = setup_state(indoc!(
             "PREFIX schema: <http://schema.org/>
@@ -209,7 +209,7 @@ mod test {
         ));
         server.state = state;
         let document = server.state.get_document("uri").unwrap();
-        let code_action = compress_all_uris(&server, document).unwrap();
+        let code_action = shorten_all_uris(&server, document).unwrap();
         assert_eq!(
             code_action.edit.changes.get("uri").unwrap(),
             &vec![

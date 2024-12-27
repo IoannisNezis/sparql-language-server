@@ -44,8 +44,8 @@ pub enum CodeActionKind {
     #[serde(rename = "refactor.rewrite")]
     RefactorRewrite,
     Source,
-    #[serde(rename = "source.compressUris")]
-    SourceCompressUris,
+    #[serde(rename = "source.shortenUris")]
+    SourceShortenURIs,
     #[serde(rename = "source.organizeImports")]
     SourceOrganizeImports,
     #[serde(rename = "source.fixAll")]

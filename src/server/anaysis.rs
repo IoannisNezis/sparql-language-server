@@ -80,7 +80,7 @@ pub fn namespace_is_declared(
     Ok(declared_namespaces.contains(namespace))
 }
 
-pub fn get_all_uncompressed_uris(
+pub fn get_all_uncompacted_uris(
     server: &Server,
     document_uri: &String,
 ) -> Result<Vec<(String, Range)>, ResponseError> {

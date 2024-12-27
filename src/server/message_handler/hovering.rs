@@ -1,5 +1,3 @@
-use indoc::indoc;
-
 use crate::server::{
     anaysis::get_kind_at_position,
     lsp::{errors::ResponseError, HoverRequest, HoverResponse},
@@ -23,8 +21,8 @@ pub fn handle_hover_request(
 
 fn documentation(kind: &str) -> String {
     match kind {
-        "FILTER" => indoc!(
-            "
+        "FILTER" => {
+            r#"
 ### **FILTER**
 
 The `FILTER` keyword is used to restrict the results by applying a boolean condition.
@@ -39,10 +37,10 @@ SELECT ?name WHERE {
   ?person foaf:age ?age .
   FILTER (?age > 20)
 }
-```"
-        ),
-        "PREFIX" => indoc!(
-            "
+```"#
+        }
+        "PREFIX" => {
+            r#"
 ### **PREFIX**
 
 The `PREFIX` keyword defines a namespace prefix to simplify the use of URIs in the query.
@@ -58,8 +56,8 @@ SELECT ?name
 WHERE {
   ?person foaf:name ?name .
 }
-```"
-        ),
+```"#
+        }
         _ => kind,
     }
     .to_string()

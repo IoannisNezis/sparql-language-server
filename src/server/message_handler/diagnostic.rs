@@ -1,5 +1,5 @@
 use crate::server::{
-    anaysis::{get_all_uncompressed_uris, get_undeclared_prefixes, get_unused_prefixes},
+    anaysis::{get_all_uncompacted_uris, get_undeclared_prefixes, get_unused_prefixes},
     lsp::{
         diagnostic::{Diagnostic, DiagnosticSeverity},
         errors::ResponseError,
@@ -27,7 +27,7 @@ pub fn collect_diagnostics<'a>(
     let unused_prefixes = unused_prefix(server, document)?;
     Ok(unused_prefixes
         .chain(undeclared_prefix(server, document)?)
-        .chain(uncompressed_uris(server, document)?))
+        .chain(uncompacted_uris(server, document)?))
 }
 
 fn unused_prefix<'a>(
@@ -58,19 +58,19 @@ fn undeclared_prefix(
     }))
 }
 
-fn uncompressed_uris<'a>(
+fn uncompacted_uris<'a>(
     server: &'a Server,
     document: &TextDocumentItem,
 ) -> Result<impl Iterator<Item = Diagnostic> + use<'a>, ResponseError> {
-    let uncompressed_uris = get_all_uncompressed_uris(server, &document.uri)?;
-    let diagnostics = uncompressed_uris.into_iter().filter_map(|(uri, range)| {
-        match server.compress_uri(&uri[1..uri.len() - 1]) {
+    let uncompacted_uris = get_all_uncompacted_uris(server, &document.uri)?;
+    let diagnostics = uncompacted_uris.into_iter().filter_map(|(uri, range)| {
+        match server.shorten_uri(&uri[1..uri.len() - 1]) {
             Some((_prefix, _namespace, curie)) => Some(Diagnostic {
                 source: Some("dings".to_string()),
                 code: None,
                 range,
                 severity: DiagnosticSeverity::Information,
-                message: format!("You might want to compress this Uri\n{} -> {}", uri, curie),
+                message: format!("You might want to shorten this Uri\n{} -> {}", uri, curie),
             }),
             None => None,
         }

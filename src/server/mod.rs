@@ -92,42 +92,42 @@ impl Server {
         (self.send_message_clusure)(message);
     }
 
-    /// Compresses a raw URI into its CURIE (Compact URI) form and retrieves related metadata.
+    /// Shortens a raw URI into its CURIE (Compact URI) form and retrieves related metadata.
     ///
     /// This method takes a raw URI as input, attempts to find its associated prefix and URI prefix
-    /// from the `uri_converter`, and compresses the URI into its CURIE form. If successful, it
+    /// from the `uri_converter`, and shorten the URI into its CURIE form. If successful, it
     /// returns a tuple containing:
     /// - The prefix associated with the URI.
     /// - The URI prefix corresponding to the namespace of the URI.
-    /// - The compressed CURIE representation of the URI.
+    /// - The CURIE representation of the URI.
     ///
     /// # Parameters
-    /// - `uri`: A string slice representing the raw URI to be compressed.
+    /// - `uri`: A string slice representing the raw URI to be shortened.
     ///
     /// # Returns
-    /// - `Some((prefix, uri_prefix, curie))` if the URI can be successfully compressed:
+    /// - `Some((prefix, uri_prefix, curie))` if the URI can be successfully compacted:
     ///   - `prefix`: A `String` representing the prefix associated with the URI.
     ///   - `uri_prefix`: A `String` representing the URI namespace prefix.
-    ///   - `curie`: A `String` representing the compressed CURIE form of the URI.
-    /// - `None` if the URI cannot be found or compressed.
+    ///   - `curie`: A `String` representing the compact CURIE form of the URI.
+    /// - `None` if the URI cannot be found or shortened.
     ///
     /// # Example
     /// ```rust
     /// let uri = "http://example.com/resource";
-    /// if let Some((prefix, uri_prefix, curie)) = instance.compress_uri(uri) {
+    /// if let Some((prefix, uri_prefix, curie)) = instance.shorten_uri(uri) {
     ///     println!("Prefix: {}", prefix);
     ///     println!("URI Prefix: {}", uri_prefix);
     ///     println!("CURIE: {}", curie);
     /// } else {
-    ///     println!("Failed to compress URI.");
+    ///     println!("Failed to shorten URI.");
     /// }
     /// ```
     ///
     /// # Errors
     /// Returns `None` if:
     /// - The `uri_converter` fails to find a record associated with the URI.
-    /// - The `uri_converter` fails to compress the URI into a CURIE.
-    pub(crate) fn compress_uri(&self, uri: &str) -> Option<(String, String, String)> {
+    /// - The `uri_converter` fails to shorten the URI into a CURIE.
+    pub(crate) fn shorten_uri(&self, uri: &str) -> Option<(String, String, String)> {
         let record = self.tools.uri_converter.find_by_uri(uri).ok()?;
         let curie = self.tools.uri_converter.compress(uri).ok()?;
         Some((record.prefix.clone(), record.uri_prefix.clone(), curie))

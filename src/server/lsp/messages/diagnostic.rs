@@ -76,7 +76,7 @@ mod test {
                      "character": 50
                    }
                  },
-                 "message": "You might want to compress this Uri\n<https://cube.link/observation> -> cube:observation",
+                 "message": "You might want to shorten this Uri\n<https://cube.link/observation> -> cube:observation",
                  "severity": 4
                }"#
         );
@@ -84,7 +84,7 @@ mod test {
         assert_eq!(diagnostic,
             Diagnostic{
                 range: Range::new(9,19,9,50),
-                message:"You might want to compress this Uri\n<https://cube.link/observation> -> cube:observation".to_string(),
+                message:"You might want to shorten this Uri\n<https://cube.link/observation> -> cube:observation".to_string(),
                 severity: DiagnosticSeverity::Hint,
                 code: None,
                 source: None
