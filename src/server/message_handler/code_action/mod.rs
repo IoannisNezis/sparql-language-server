@@ -1,8 +1,12 @@
+mod quickfix;
 use std::collections::HashSet;
+
+use quickfix::get_quickfix;
 
 use crate::server::{
     anaysis::{get_all_uncompacted_uris, get_declared_uri_prefixes, namespace_is_declared},
     lsp::{
+        diagnostic::{Diagnostic, DiagnosticCode},
         errors::ResponseError,
         textdocument::{Range, TextDocumentItem, TextEdit},
         CodeAction, CodeActionKind, CodeActionParams, CodeActionRequest, CodeActionResponse,
@@ -15,12 +19,31 @@ pub fn handle_codeaction_request(
     request: CodeActionRequest,
 ) -> Result<CodeActionResponse, ResponseError> {
     let mut code_action_response = CodeActionResponse::new(request.get_id());
-    let code_actions = generate_code_actions(server, &request.params)?;
-    code_action_response.add_code_actions(code_actions);
+    code_action_response.add_code_actions(generate_code_actions(server, &request.params)?);
+    code_action_response.add_code_actions(
+        request
+            .params
+            .context
+            .diagnostics
+            .into_iter()
+            .filter_map(|diagnostic| {
+                match get_quickfix(server, &request.params.text_document.uri, diagnostic) {
+                    Ok(code_action) => code_action,
+                    Err(err) => {
+                        log::error!(
+                            "Encountered Error while computing quickfix:\n{}\nDropping error!",
+                            err.message
+                        );
+                        None
+                    }
+                }
+            })
+            .collect(),
+    );
     Ok(code_action_response)
 }
 
-pub fn generate_code_actions(
+fn generate_code_actions(
     server: &Server,
     params: &CodeActionParams,
 ) -> Result<Vec<CodeAction>, ResponseError> {
@@ -51,7 +74,7 @@ pub fn generate_code_actions(
 
 // TODO: Handle errors properly.
 fn shorten_uri(server: &Server, range: Range, document: &TextDocumentItem) -> Option<CodeAction> {
-    let mut code_action = CodeAction::new("Shorten URI", Some(CodeActionKind::Refactor));
+    let mut code_action = CodeAction::new("Shorten URI", Some(CodeActionKind::QuickFix));
     let mut uri = &document.text[range.to_byte_index_range(&document.text)?];
     uri = &uri[1..uri.len() - 1];
     if let Some((prefix, uri_prefix, curie)) = server.shorten_uri(uri) {

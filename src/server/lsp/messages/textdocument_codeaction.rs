@@ -27,7 +27,7 @@ impl CodeActionRequest {
 pub struct CodeActionParams {
     pub text_document: TextDocumentIdentifier,
     pub range: Range,
-    context: CodeActionContext,
+    pub context: CodeActionContext,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -54,7 +54,7 @@ pub enum CodeActionKind {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CodeActionContext {
-    diagnostics: Vec<Diagnostic>,
+    pub diagnostics: Vec<Diagnostic>,
     only: Option<Vec<CodeActionKind>>,
     trigger_kind: Option<CodeActionTriggerKind>,
 }
@@ -96,13 +96,14 @@ pub struct CodeAction {
     pub title: String,
     pub edit: WorkspaceEdit,
     #[serde(skip_serializing_if = "Option::is_none")]
-    kind: Option<CodeActionKind>,
+    pub kind: Option<CodeActionKind>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    diagnostics: Vec<Diagnostic>, // NOTE: there are more optional options:
-                                  // isPreferred: boolean
-                                  // disabled: { reason }
-                                  // command: Command
-                                  // data: LSPAny
+    pub diagnostics: Vec<Diagnostic>,
+    // NOTE: there are more optional options:
+    // isPreferred: boolean
+    // disabled: { reason }
+    // command: Command
+    // data: LSPAny
 }
 
 impl CodeAction {

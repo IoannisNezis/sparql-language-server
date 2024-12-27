@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::server::lsp::textdocument::Range;
+use crate::server::lsp::{base_types::LSPAny, textdocument::Range};
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -24,7 +24,8 @@ pub(crate) struct Diagnostic {
     pub(crate) code: Option<DiagnosticCode>,
     // codeDescription: CodeDescription
     /**
-     * The diagnostic's code, which might appear in the user interface.
+     * A human-readable string describing the source of this
+     * diagnostic, e.g. 'typescript' or 'super lint'.
      */
     pub source: Option<String>,
 
@@ -34,7 +35,14 @@ pub(crate) struct Diagnostic {
     pub message: String,
     // tags
     // relatedInformation
-    // data
+    /**
+     * A data entry field that is preserved between a
+     * `textDocument/publishDiagnostics` notification and
+     * `textDocument/codeAction` request.
+     *
+     * @since 3.16.0
+     */
+    pub data: Option<LSPAny>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -58,7 +66,9 @@ pub enum DiagnosticSeverity {
 mod test {
     use indoc::indoc;
 
-    use crate::server::lsp::{diagnostic::DiagnosticSeverity, textdocument::Range};
+    use crate::server::lsp::{
+        base_types::LSPAny, diagnostic::DiagnosticSeverity, textdocument::Range,
+    };
 
     use super::Diagnostic;
 
@@ -77,17 +87,19 @@ mod test {
                    }
                  },
                  "message": "You might want to shorten this Uri\n<https://cube.link/observation> -> cube:observation",
-                 "severity": 4
+                 "severity": 4,
+                 "data": "some-string"
                }"#
         );
         let diagnostic: Diagnostic = serde_json::from_str(&message).unwrap();
         assert_eq!(diagnostic,
-            Diagnostic{
-                range: Range::new(9,19,9,50),
-                message:"You might want to shorten this Uri\n<https://cube.link/observation> -> cube:observation".to_string(),
-                severity: DiagnosticSeverity::Hint,
-                code: None,
-                source: None
-            });
+        Diagnostic{
+            range: Range::new(9,19,9,50),
+            message:"You might want to shorten this Uri\n<https://cube.link/observation> -> cube:observation".to_string(),
+            severity: DiagnosticSeverity::Hint,
+            code: None,
+            source: None,
+            data: Some(LSPAny::String("some-string".to_string()))
+        });
     }
 }

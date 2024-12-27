@@ -1,7 +1,8 @@
 use crate::server::{
     anaysis::{get_all_uncompacted_uris, get_undeclared_prefixes, get_unused_prefixes},
     lsp::{
-        diagnostic::{Diagnostic, DiagnosticSeverity},
+        base_types::LSPAny,
+        diagnostic::{Diagnostic, DiagnosticCode, DiagnosticSeverity},
         errors::ResponseError,
         textdocument::TextDocumentItem,
         DiagnosticRequest, DiagnosticResponse,
@@ -38,9 +39,10 @@ fn unused_prefix<'a>(
     Ok(ununsed_prefixes.map(|(prefix, range)| Diagnostic {
         range: range.clone(),
         severity: DiagnosticSeverity::Warning,
-        source: Some("qlue-ls (unused_prefix)".to_string()),
-        code: None,
+        source: Some("qlue-ls (unused-prefix)".to_string()),
+        code: Some(DiagnosticCode::String("unused-prefix".to_string())),
         message: format!("'{}' is declared here, but was never used\n", prefix),
+        data: None,
     }))
 }
 
@@ -53,8 +55,9 @@ fn undeclared_prefix(
         range: range.clone(),
         severity: DiagnosticSeverity::Error,
         source: Some("qlue-ls (undeclared_prefix)".to_string()),
-        code: None,
+        code: Some(DiagnosticCode::String("undeclared-prefix".to_string())),
         message: format!("'{}' is used here, but was never delared\n", prefix),
+        data: Some(LSPAny::String(prefix)),
     }))
 }
 
@@ -71,6 +74,7 @@ fn uncompacted_uris<'a>(
                 range,
                 severity: DiagnosticSeverity::Information,
                 message: format!("You might want to shorten this Uri\n{} -> {}", uri, curie),
+                data: None,
             }),
             None => None,
         }
