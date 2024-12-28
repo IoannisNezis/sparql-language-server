@@ -3,6 +3,9 @@ export CFLAGS_wasm32_unknown_unknown := `echo "-I$(pwd)/wasm-sysroot -Wbad-funct
 test:
 	cargo test --bin qlue-ls
 
+run-editor:
+	cd editor &&  npm run dev 
+
 build-native:
 	cargo build --release
 

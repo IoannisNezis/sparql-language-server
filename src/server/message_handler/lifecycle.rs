@@ -88,6 +88,10 @@ pub(super) fn handle_initialize_request(
                 server
                     .send_message(serde_json::to_string(&init_progress_end_notification).unwrap());
             }
+            info!(
+                "{}",
+                serde_json::to_string_pretty(&server.capabilities).unwrap()
+            );
             Ok(InitializeResonse::new(initialize_request.get_id(), server))
         }
         _ => Err(ResponseError::new(
