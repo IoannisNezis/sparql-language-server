@@ -19,7 +19,6 @@
 
     onDestroy(() => {
         wrapper?.dispose(true);
-        console.log('destroy');
     });
 </script>
 
