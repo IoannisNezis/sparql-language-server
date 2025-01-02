@@ -1,0 +1,14 @@
+{
+  "scopeName": "source.myLanguage",
+  "patterns": [
+    {
+      "name": "keyword.control.myLanguage",
+      "match": "\\b(if\|else|for|while)\\b"
+    },
+    {
+      "name": "string.quoted.double.myLanguage",
+      "begin": "\"",
+      "end": "\""
+    }
+  ]
+}

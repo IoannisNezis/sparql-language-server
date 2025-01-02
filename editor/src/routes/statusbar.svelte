@@ -1,7 +1,22 @@
 <script lang="ts">
-    let errorCount = $state(0);
-    let warningCount = $state(0);
-    let infoCount = 0;
+    import { type editor } from 'monaco-editor';
+    interface Props {
+        markers: editor.IMarker[];
+    }
+    let { markers }: Props = $props();
+    // const Hint = 1;
+    const Info = 2;
+    const Warning = 4;
+    const Error = 8;
+    let errorCount = $derived(
+        markers.filter((item: editor.IMarker) => item.severity == Error).length
+    );
+    let infoCount = $derived(
+        markers.filter((item: editor.IMarker) => item.severity == Info).length
+    );
+    let warningCount = $derived(
+        markers.filter((item: editor.IMarker) => item.severity == Warning).length
+    );
 </script>
 
 <div class="flex w-full flex-row-reverse border-t border-gray-700 px-5 py-1">
