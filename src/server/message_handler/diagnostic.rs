@@ -68,13 +68,17 @@ fn uncompacted_uris<'a>(
     let uncompacted_uris = get_all_uncompacted_uris(server, &document.uri)?;
     let diagnostics = uncompacted_uris.into_iter().filter_map(|(uri, range)| {
         match server.shorten_uri(&uri[1..uri.len() - 1]) {
-            Some((_prefix, _namespace, curie)) => Some(Diagnostic {
-                source: Some("dings".to_string()),
-                code: None,
+            Some((prefix, namespace, curie)) => Some(Diagnostic {
+                source: Some("qlue-ls".to_string()),
+                code: Some(DiagnosticCode::String("uncompacted-uri".to_string())),
                 range,
                 severity: DiagnosticSeverity::Information,
                 message: format!("You might want to shorten this Uri\n{} -> {}", uri, curie),
-                data: None,
+                data: Some(LSPAny::LSPArray(vec![
+                    LSPAny::String(prefix),
+                    LSPAny::String(namespace),
+                    LSPAny::String(curie),
+                ])),
             }),
             None => None,
         }

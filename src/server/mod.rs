@@ -1,6 +1,6 @@
 mod anaysis;
 mod capabilities;
-mod commands;
+mod common;
 mod configuration;
 mod lsp;
 mod state;

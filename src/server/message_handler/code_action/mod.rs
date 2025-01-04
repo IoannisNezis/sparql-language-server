@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use quickfix::get_quickfix;
 
 use crate::server::{
-    anaysis::{get_all_uncompacted_uris, get_declared_uri_prefixes, namespace_is_declared},
+    anaysis::{get_all_uncompacted_uris, get_declared_uri_prefixes},
     lsp::{
         diagnostic::{Diagnostic, DiagnosticCode},
         errors::ResponseError,
@@ -59,9 +59,9 @@ fn generate_code_actions(
                 && parent.kind() != "BaseDecl"
             {
                 let mut code_actions = vec![];
-                if let Some(code_action) = shorten_uri(server, Range::from_node(node), &document) {
-                    code_actions.push(code_action);
-                }
+                // if let Some(code_action) = shorten_uri(server, Range::from_node(node), &document) {
+                //     code_actions.push(code_action);
+                // }
                 if let Some(code_action) = shorten_all_uris(server, &document) {
                     code_actions.push(code_action);
                 }
@@ -70,27 +70,6 @@ fn generate_code_actions(
         }
     }
     Ok(vec![])
-}
-
-// TODO: Handle errors properly.
-fn shorten_uri(server: &Server, range: Range, document: &TextDocumentItem) -> Option<CodeAction> {
-    let mut code_action = CodeAction::new("Shorten URI", Some(CodeActionKind::QuickFix));
-    let mut uri = &document.text[range.to_byte_index_range(&document.text)?];
-    uri = &uri[1..uri.len() - 1];
-    if let Some((prefix, uri_prefix, curie)) = server.shorten_uri(uri) {
-        code_action.add_edit(&document.uri, TextEdit::new(range, &curie));
-        if !namespace_is_declared(&server.state, &document.uri, &prefix).ok()? {
-            code_action.add_edit(
-                &document.uri,
-                TextEdit::new(
-                    Range::new(0, 0, 0, 0),
-                    &format!("PREFIX {}: <{}>\n", prefix, uri_prefix),
-                ),
-            );
-        }
-        return Some(code_action);
-    }
-    None
 }
 
 // TODO: Handle errors properly.
@@ -139,8 +118,6 @@ mod test {
         Server,
     };
 
-    use super::shorten_uri;
-
     fn setup_state(text: &str) -> ServerState {
         let mut state = ServerState::new();
         let mut parser = Parser::new();
@@ -151,48 +128,6 @@ mod test {
         let tree = parser.parse(&document.text, None);
         state.add_document(document, tree);
         return state;
-    }
-
-    #[test]
-    fn shorten_uri_undeclared() {
-        let mut server = Server::new(|_message| {});
-        let state = setup_state(indoc!(
-            "SELECT * {
-               ?a <http://schema.org/name> ?b .
-             }"
-        ));
-        server.state = state;
-        let document = server.state.get_document("uri").unwrap();
-        let code_action = shorten_uri(&server, Range::new(1, 5, 1, 29), document).unwrap();
-        assert_eq!(
-            code_action.edit.changes.get("uri").unwrap(),
-            &vec![
-                TextEdit::new(Range::new(1, 5, 1, 29), "schema:name"),
-                TextEdit::new(
-                    Range::new(0, 0, 0, 0),
-                    "PREFIX schema: <http://schema.org/>\n"
-                ),
-            ]
-        );
-    }
-
-    #[test]
-    fn shorten_uri_declared() {
-        let mut server = Server::new(|_message| {});
-        let state = setup_state(indoc!(
-            "PREFIX schema: <http://schema.org/>
-             SELECT * {
-               ?a <http://schema.org/name> ?b .
-             }"
-        ));
-        server.state = state;
-        let document = server.state.get_document("uri").unwrap();
-
-        let code_action = shorten_uri(&server, Range::new(2, 5, 2, 29), document).unwrap();
-        assert_eq!(
-            code_action.edit.changes.get("uri").unwrap(),
-            &vec![TextEdit::new(Range::new(2, 5, 2, 29), "schema:name"),]
-        );
     }
 
     #[test]

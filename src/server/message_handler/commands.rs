@@ -1,11 +1,7 @@
-use core::fmt;
-use std::any::type_name;
-
 use log::error;
-use serde::{de::DeserializeOwned, Serialize};
 
 use crate::server::{
-    commands::PublishDiagnosticsCommandAruments,
+    common::{serde_parse, PublishDiagnosticsCommandAruments},
     lsp::{
         errors::{ErrorCode, ResponseError},
         rpc::NotificationMessageBase,
@@ -23,7 +19,7 @@ pub fn handle_execute_command_request(
 ) -> Result<ExecuteCommandResponse, ResponseError> {
     match request.params.command.as_str() {
         "publishDiagnostics" => {
-            let arguments = parse_command_arguments(&request.params.arguments)?;
+            let arguments = serde_parse(&request.params.arguments)?;
             publish_diagnostic(server, &arguments);
             Ok(ExecuteCommandResponse::new(request.get_id()))
         }
@@ -34,33 +30,6 @@ pub fn handle_execute_command_request(
                 &format!("Received unknown Command request: {}", unknown_command),
             ))
         }
-    }
-}
-
-fn parse_command_arguments<T, O>(rpc_message: O) -> Result<T, ResponseError>
-where
-    T: Serialize + DeserializeOwned,
-    O: Serialize + fmt::Debug,
-{
-    match serde_json::to_string(&rpc_message) {
-        Ok(serialized_message) => serde_json::from_str(&serialized_message).map_err(|error| {
-            error!(
-                "Error while deserializing message:\n{}-----------------------\n{:?}",
-                error, rpc_message,
-            );
-            ResponseError::new(
-                ErrorCode::ParseError,
-                &format!(
-                    "Could not deserialize RPC-message \"{}\"\n\n{}",
-                    type_name::<T>(),
-                    error
-                ),
-            )
-        }),
-        Err(error) => Err(ResponseError::new(
-            ErrorCode::ParseError,
-            &format!("Could not serialize RPC-message\n\n{}", error),
-        )),
     }
 }
 

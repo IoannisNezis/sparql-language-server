@@ -9,12 +9,12 @@ use super::utils::TextDocumentPositionParams;
 pub struct CompletionRequest {
     #[serde(flatten)]
     base: RequestMessageBase,
-    params: CompletionParams,
+    pub params: CompletionParams,
 }
 
 impl CompletionRequest {
-    pub(crate) fn get_document_uri(&self) -> &String {
-        &self.params.base.text_document.uri
+    pub(crate) fn get_text_position(&self) -> &TextDocumentPositionParams {
+        &self.params.base
     }
 
     pub(crate) fn get_id(&self) -> &RequestId {
@@ -30,7 +30,7 @@ impl CompletionRequest {
 pub struct CompletionParams {
     #[serde(flatten)]
     base: TextDocumentPositionParams,
-    context: CompletionContext,
+    pub context: CompletionContext,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -56,59 +56,10 @@ pub struct CompletionResponse {
 }
 
 impl CompletionResponse {
-    pub fn new(id: &RequestId) -> Self {
+    pub fn new(id: &RequestId, items: Vec<CompletionItem>) -> Self {
         CompletionResponse {
             base: ResponseMessageBase::success(id),
-            result: CompletionResult {
-                items: vec![
-                    CompletionItem {
-                        label: "SELECT".to_string(),
-                        insert_text: "SELECT ${1:*} WHERE {\n  $0\n}".to_string(),
-                        kind: CompletionItemKind::Snippet,
-                        detail: "Select query".to_string(),
-                        insert_text_format: InsertTextFormat::Snippet,
-                    },
-                    CompletionItem {
-                        label: "PREFIX".to_string(),
-                        insert_text: "PREFIX ${1:namespace}: <${0:iri}>".to_string(),
-                        kind: CompletionItemKind::Snippet,
-                        detail: "Declare a namespace".to_string(),
-                        insert_text_format: InsertTextFormat::Snippet,
-                    },
-                    CompletionItem {
-                        label: "FILTER".to_string(),
-                        insert_text: "FILTER ( $0 )".to_string(),
-                        kind: CompletionItemKind::Snippet,
-                        detail: "Filter the results".to_string(),
-                        insert_text_format: InsertTextFormat::Snippet,
-                    },
-                    CompletionItem {
-                        label: "ORDER BY".to_string(),
-                        insert_text: "ORDER BY ${1|ASC,DESC|} ( $0 )".to_string(),
-                        kind: CompletionItemKind::Snippet,
-                        detail: "Sort the results".to_string(),
-                        insert_text_format: InsertTextFormat::Snippet,
-                    },
-                ],
-            },
-        }
-    }
-
-    pub(crate) fn from_variables(id: &RequestId, variables: Vec<String>) -> Self {
-        CompletionResponse {
-            base: ResponseMessageBase::success(id),
-            result: CompletionResult {
-                items: variables
-                    .iter()
-                    .map(|variable| CompletionItem {
-                        label: variable.to_owned(),
-                        insert_text: variable.to_owned(),
-                        kind: CompletionItemKind::Variable,
-                        detail: "".to_string(),
-                        insert_text_format: InsertTextFormat::Snippet,
-                    })
-                    .collect(),
-            },
+            result: CompletionResult { items },
         }
     }
 }
@@ -120,7 +71,7 @@ struct CompletionResult {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
-struct CompletionItem {
+pub struct CompletionItem {
     label: String,
     kind: CompletionItemKind,
     detail: String,
@@ -128,9 +79,27 @@ struct CompletionItem {
     insert_text_format: InsertTextFormat,
 }
 
+impl CompletionItem {
+    pub fn new(
+        label: &str,
+        detail: &str,
+        insert_text: &str,
+        kind: CompletionItemKind,
+        insert_text_format: InsertTextFormat,
+    ) -> Self {
+        Self {
+            label: label.to_string(),
+            kind,
+            detail: detail.to_string(),
+            insert_text: insert_text.to_string(),
+            insert_text_format,
+        }
+    }
+}
+
 #[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq)]
 #[repr(u8)]
-enum CompletionItemKind {
+pub enum CompletionItemKind {
     Text = 1,
     Method = 2,
     Function = 3,
@@ -160,7 +129,7 @@ enum CompletionItemKind {
 
 #[derive(Debug, Serialize_repr, Deserialize_repr, PartialEq)]
 #[repr(u8)]
-enum InsertTextFormat {
+pub enum InsertTextFormat {
     PlainText = 1,
     Snippet = 2,
 }
@@ -171,7 +140,8 @@ mod tests {
         messages::utils::TextDocumentPositionParams,
         rpc::{Message, RequestId, RequestMessageBase},
         textdocument::{Position, TextDocumentIdentifier},
-        CompletionContext, CompletionParams, CompletionTriggerKind,
+        CompletionContext, CompletionItem, CompletionItemKind, CompletionParams,
+        CompletionTriggerKind, InsertTextFormat,
     };
 
     use super::{CompletionRequest, CompletionResponse};
@@ -209,8 +179,15 @@ mod tests {
 
     #[test]
     fn serialize() {
-        let completion_response = CompletionResponse::new(&RequestId::Integer(1337));
-        let expected_message = r#"{"jsonrpc":"2.0","id":1337,"result":{"items":[{"label":"SELECT","kind":15,"detail":"Select query","insertText":"SELECT ${1:*} WHERE {\n  $0\n}","insertTextFormat":2},{"label":"PREFIX","kind":15,"detail":"Declare a namespace","insertText":"PREFIX ${1:namespace}: <${0:iri}>","insertTextFormat":2},{"label":"FILTER","kind":15,"detail":"Filter the results","insertText":"FILTER ( $0 )","insertTextFormat":2},{"label":"ORDER BY","kind":15,"detail":"Sort the results","insertText":"ORDER BY ${1|ASC,DESC|} ( $0 )","insertTextFormat":2}]}}"#;
+        let cmp = CompletionItem::new(
+            "SELECT",
+            "Select query",
+            "SELECT ${1:*} WHERE {\n  $0\n}",
+            CompletionItemKind::Snippet,
+            InsertTextFormat::Snippet,
+        );
+        let completion_response = CompletionResponse::new(&RequestId::Integer(1337), vec![cmp]);
+        let expected_message = r#"{"jsonrpc":"2.0","id":1337,"result":{"items":[{"label":"SELECT","kind":15,"detail":"Select query","insertText":"SELECT ${1:*} WHERE {\n  $0\n}","insertTextFormat":2}]}}"#;
         let actual_message = serde_json::to_string(&completion_response).unwrap();
         assert_eq!(actual_message, expected_message);
     }
