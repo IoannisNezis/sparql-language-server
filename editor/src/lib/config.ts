@@ -114,24 +114,24 @@ export async function buildWrapperConfig(htmlContainer: HTMLElement, initial_tex
                                         vscode: '*'
                                 },
                                 contributes: {
-                                        // languages: [{
-                                        //         id: 'sparql',
-                                        //         extensions: ['.rq'],
-                                        //         aliases: ['sparql', 'SPARQL'],
-                                        //         configuration: '/sparql-configuration.json'
-                                        // }],
-                                        // themes: [
-                                        //         {
-                                        //                 "label": "SPARQL Custom Theme",
-                                        //                 "uiTheme": "vs-dark",
-                                        //                 "path": "./sparql-theme.json"
-                                        //         }
-                                        // ],
-                                        // grammars: [{
-                                        //         language: 'sparql',
-                                        //         scopeName: 'source.sparql',
-                                        //         path: '/sparql-grammar.json'
-                                        // }]
+                                        languages: [{
+                                                id: 'sparql',
+                                                extensions: ['.rq'],
+                                                aliases: ['sparql', 'SPARQL'],
+                                                configuration: '/sparql-configuration.json'
+                                        }],
+                                        themes: [
+                                                {
+                                                        "label": "SPARQL Custom Theme",
+                                                        "uiTheme": "vs-dark",
+                                                        "path": "./sparql-theme.json"
+                                                }
+                                        ],
+                                        grammars: [{
+                                                language: 'sparql',
+                                                scopeName: 'source.sparql',
+                                                path: '/sparql-grammar.json'
+                                        }]
                                 }
                         },
                         filesOrContents: extensionFilesOrContents
