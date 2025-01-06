@@ -20,9 +20,36 @@ pub fn handle_completion_request(
         ,
         // Completion was triggered by typing an identifier (24x7 code complete),
         // manual invocation (e.g Ctrl+Space) or via API.
-        CompletionTriggerKind::Invoked  => Ok(
-            CompletionResponse::new(request.get_id(), collect_completions(server, &request)?),
-        ),
+        CompletionTriggerKind::Invoked  => {
+            let mut completions = collect_completions(server, &request)?;
+            completions.extend([
+("https://www.openstreetmap.org/relation/2218270",
+"Berliner Urstromtal"),
+("https://www.openstreetmap.org/relation/13801600",
+"Berlinguet Inlet"),
+("https://www.openstreetmap.org/relation/62422",
+"Berlin"),
+("https://www.openstreetmap.org/relation/3133653",
+"Berlin-Treptow-Köpenick"),
+("https://www.openstreetmap.org/relation/170184",
+"Berlin"),
+("https://www.openstreetmap.org/relation/18329320",
+"Berlin"),
+("https://www.openstreetmap.org/relation/3133641",
+"Berlin-Steglitz-Zehlendorf"),
+("https://www.openstreetmap.org/relation/10093473",
+"Berlin Township"),
+("https://www.openstreetmap.org/relation/3133640",
+"Berlin-Reinickendorf"),
+("https://www.openstreetmap.org/relation/11905744",
+"Berliner Innenstadt"),
+].into_iter().map(|(value, label)| {
+                    let (_prefix, _uri, curie) = server.shorten_uri(value).unwrap();
+                    CompletionItem::new(label, &curie, &curie, CompletionItemKind::Value, InsertTextFormat::PlainText)
+                }));
+            Ok(
+            CompletionResponse::new(request.get_id(),completions)
+        )},
         CompletionTriggerKind::TriggerForIncompleteCompletions => {
             error!("Completion was triggered by \"TriggerForIncompleteCompetions\", this is not implemented yet");
             Err(ResponseError::new(ErrorCode::InvalidRequest, "Completion was triggered by \"TriggerForIncompleteCompetions\", this is not implemented yet"))
@@ -142,17 +169,6 @@ fn collect_completions(
     server: &Server,
     request: &CompletionRequest,
 ) -> Result<Vec<CompletionItem>, ResponseError> {
-    //TODO: As a example return:
-    //Berliner Urstromtal
-    //Berlinguet Inlet
-    //Berlin
-    //Berlin-Treptow-Köpenick
-    //Berlin
-    //Berlin
-    //Berlin-Steglitz-Zehlendorf
-    //Berlin Township
-    //Berlin-Reinickendorf
-    //Berliner Innenstadt
     let tree = server
         .state
         .get_tree(&request.get_text_position().text_document.uri)
