@@ -4,7 +4,7 @@ test:
 	cargo test --bin qlue-ls
 
 start-monaco-editor:
-	cd editor &&  npm run dev 
+	cd editor && npm install && npm run dev
 
 build-native:
 	cargo build --release
