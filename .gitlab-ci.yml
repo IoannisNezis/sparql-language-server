@@ -21,5 +21,5 @@ build and deploy:
         --label com.gitlab.ci.build=$CI_PROJECT_URL/builds/$CI_BUILD_ID
   script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-    - docker build $IMAGE_LABELS --label build-date=`date -Iseconds` --pull -t "$IMAGE_TAG" -f ./editor/Containerfile .
+    - docker build $IMAGE_LABELS --label build-date=`date -Iseconds` --pull -t "$IMAGE_TAG" -f ./editor/Containerfile ./
     - docker push "$IMAGE_TAG"

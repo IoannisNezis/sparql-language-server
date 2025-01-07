@@ -10,6 +10,13 @@ export default defineConfig({
 			plugins: [importMetaUrlPlugin]
 		}
 	},
+	worker: {
+		format: "es",
+		plugins: () => [
+			wasm(),
+			topLevelAwait()
+		]
+	},
 	resolve: {
 		dedupe: ['monaco-editor', 'vscode']
 	},

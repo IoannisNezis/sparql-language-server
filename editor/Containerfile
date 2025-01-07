@@ -1,8 +1,10 @@
 FROM node:22-bookworm-slim@sha256:426d99333b9d35f568cc604b604ea484aef7d12b21e78a36c4bfbdf5cfa4afe2 AS build
 
 RUN apt update -y
-COPY . /src
+COPY ./editor /src
+COPY ./pkg/ /pkg/
 WORKDIR /src
+RUN ls
 RUN npm install
 RUN npm run build
 
