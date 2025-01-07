@@ -1,0 +1,25 @@
+workflow:
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "main"
+      variables:
+        IMAGE_TAG: "${CI_REGISTRY_IMAGE}/monaco-editor:latest"
+    - if: $CI_MERGE_REQUEST_IID
+      variables:
+        IMAGE_TAG: "${CI_REGISTRY_IMAGE}/monaco-editor:mergerequest_$CI_MERGE_REQUEST_IID"
+
+stages:
+ - deploy
+
+build and deploy:
+  stage: deploy
+  variables:
+    IMAGE_LABELS: >
+        --label vcs-url=$CI_PROJECT_URL
+        --label com.gitlab.ci.builder=$GITLAB_USER_EMAIL
+        --label com.gitlab.ci.pipeline=$CI_PROJECT_URL/pipelines/$CI_PIPELINE_ID
+        --label com.gitlab.ci.ref=$CI_BUILD_REF_NAME
+        --label com.gitlab.ci.build=$CI_PROJECT_URL/builds/$CI_BUILD_ID
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker build $IMAGE_LABELS --label build-date=`date -Iseconds` --pull -t "$IMAGE_TAG" -f ./editor/Containerfile ./
+    - docker push "$IMAGE_TAG"
