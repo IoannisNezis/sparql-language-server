@@ -667,3 +667,27 @@ fn format_anon() {
     );
     format_and_compare(ugly_query, pretty_query);
 }
+
+#[test]
+fn format_comments_property_lists() {
+    let ugly_query = indoc!(
+        "SELECT * WHERE {
+           ?rettore p:P106 [
+             pq:P642 wd:Q193510 ;
+           # of Padua Univerity
+             pq:P580 ?starttime ;
+           ]
+         }"
+    );
+    let pretty_query = indoc!(
+        "SELECT * WHERE {
+           ?rettore p:P106 [
+             pq:P642 wd:Q193510 ;
+             # of Padua Univerity
+             pq:P580 ?starttime ;
+           ]
+         }
+         "
+    );
+    format_and_compare(ugly_query, pretty_query);
+}

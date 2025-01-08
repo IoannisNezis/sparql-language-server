@@ -281,7 +281,9 @@ pub(super) fn format_helper(
             indent_base,
             settings,
         ) // TODO: Only break on ";" if there is a value afterwards
-        .replace("; ", &(";".to_string() + &line_break + extra_indent)),
+        .replace("; ", &format!(";{}{}", &line_break, &extra_indent))
+        .replace("→", "")
+        .replace("← ", &line_break),
         "GroupGraphPattern" | "BrackettedExpression" | "ConstructTemplate" | "QuadData" => {
             separate_children_by(
                 text,
