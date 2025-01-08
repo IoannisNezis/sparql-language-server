@@ -15,12 +15,13 @@ pub fn handle_completion_request(
     request: CompletionRequest,
 ) -> Result<CompletionResponse, ResponseError> {
     match request.get_completion_context().trigger_kind {
+        // Completion was triggered by typing an trigger character
         CompletionTriggerKind::TriggerCharacter  => Ok(
             CompletionResponse::new(request.get_id(), collect_completions_triggered(server, &request)?))
         ,
         // Completion was triggered by typing an identifier (24x7 code complete),
         // manual invocation (e.g Ctrl+Space) or via API.
-        CompletionTriggerKind::Invoked | CompletionTriggerKind::TriggerCharacter => Ok(
+        CompletionTriggerKind::Invoked  => Ok(
             CompletionResponse::new(request.get_id(), collect_completions(server, &request)?),
         ),
         CompletionTriggerKind::TriggerForIncompleteCompletions => {

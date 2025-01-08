@@ -587,7 +587,7 @@ fn format_function_like_keywords() {
 #[test]
 fn format_full_select_querry() {
     let ugly_query = indoc!(
-        "PREFIX namespace <iri>
+        "PREFIX namespace: <iri>
          SELECT ?var From <dataset> FROM <dataset> WHERE {
          ?s ?p ?o
          }
@@ -597,7 +597,7 @@ fn format_full_select_querry() {
          LIMIT 12 OFFSET 20"
     );
     let pretty_query = indoc!(
-        "PREFIX namespace <iri>
+        "PREFIX namespace: <iri>
          SELECT ?var
          FROM <dataset>
          FROM <dataset>
@@ -612,4 +612,39 @@ fn format_full_select_querry() {
          "
     );
     format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_blank_node_property_list_path() {
+    let ugly_query_1 = indoc!(
+        "SELECT * WHERE {
+            wd:Q11571 p:P166 [ps:P166 ?entity ;
+                      pq:P585 ?date ]
+         }
+         "
+    );
+    let pretty_query_1 = indoc!(
+        "SELECT * WHERE {
+           wd:Q11571 p:P166 [
+             ps:P166 ?entity ;
+             pq:P585 ?date
+           ]
+         }
+         "
+    );
+    format_and_compare(ugly_query_1, pretty_query_1);
+    let ugly_query_2 = indoc!(
+        "SELECT * WHERE {
+            wd:Q11571 p:P166 [
+                      pq:P585 ?date ]
+         }
+         "
+    );
+    let pretty_query_2 = indoc!(
+        "SELECT * WHERE {
+           wd:Q11571 p:P166 [ pq:P585 ?date ]
+         }
+         "
+    );
+    format_and_compare(ugly_query_2, pretty_query_2);
 }

@@ -211,7 +211,7 @@ pub(super) fn format_helper(
         }
 
         "ObjectList" | "ExpressionList" | "SubstringExpression" | "RegexExpression" | "ArgList" => {
-            separate_children_by(text, &cursor.node(), "", 0, indent_base, settings)
+            separate_children_by(text, &cursor.node(), "", indentation, indent_base, settings)
                 .replace(",", ", ")
         }
         "TriplesSameSubjectPath" => match cursor.node().child_count() {
@@ -250,6 +250,29 @@ pub(super) fn format_helper(
                 settings,
             ),
         },
+        "BlankNodePropertyListPath" => {
+            let ret = separate_children_by(
+                text,
+                &cursor.node(),
+                " ",
+                indentation + 1,
+                indent_base,
+                settings,
+            );
+            // Check of property list contains more than one member
+            // n -> n/2 entries in the list
+            if cursor.node().named_child(0).unwrap().named_child_count() > 2 {
+                format!(
+                    "[{}{}{}{}]",
+                    &line_break,
+                    &indent_base,
+                    &ret[2..ret.len() - 2],
+                    &line_break
+                )
+            } else {
+                ret
+            }
+        }
         "PropertyListPathNotEmpty" => separate_children_by(
             text,
             &cursor.node(),
@@ -257,7 +280,7 @@ pub(super) fn format_helper(
             indentation,
             indent_base,
             settings,
-        )
+        ) // TODO: Only break on ";" if there is a value afterwards
         .replace("; ", &(";".to_string() + &line_break + extra_indent)),
         "GroupGraphPattern" | "BrackettedExpression" | "ConstructTemplate" | "QuadData" => {
             separate_children_by(
@@ -365,7 +388,7 @@ pub(super) fn format_helper(
         "PNAME_NS" | "IRIREF" | "VAR" | "INTEGER" | "DECIMAL" | "String" | "NIL"
         | "BLANK_NODE_LABEL" | "RdfLiteral" | "PrefixedName" | "PathMod" | "(" | ")" | "{"
         | "}" | "." | "," | ";" | "*" | "+" | "-" | "/" | "<" | ">" | "=" | ">=" | "<=" | "!="
-        | "||" | "&&" | "|" | "^" => cursor
+        | "||" | "&&" | "|" | "^" | "[" | "]" => cursor
             .node()
             .utf8_text(text.as_bytes())
             .unwrap()
