@@ -6,7 +6,7 @@ use tree_sitter::Parser;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::server::{
-    configuration::FormatSettings,
+    configuration::Settings,
     lsp::{errors::ResponseError, FormattingRequest, FormattingResponse},
     Server,
 };
@@ -24,15 +24,14 @@ pub fn handle_format_request(
 #[wasm_bindgen]
 pub fn format_raw(text: String) -> String {
     let mut parser = Parser::new();
-    // TODO: use user configuration
-    let format_settings = FormatSettings::default();
+    let settings = Settings::new();
     match parser.set_language(&tree_sitter_sparql::LANGUAGE.into()) {
         Ok(()) => {
             let tree = parser
                 .parse(text.as_bytes(), None)
                 .expect("could not parse");
             let formatted_text =
-                format_helper(&text, &mut tree.walk(), 0, "  ", "", &format_settings);
+                format_helper(&text, &mut tree.walk(), 0, "  ", "", &settings.format);
             return formatted_text;
         }
         Err(_) => panic!("Could not setup parser"),
