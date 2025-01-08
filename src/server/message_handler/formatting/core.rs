@@ -385,6 +385,7 @@ pub(super) fn format_helper(
                 .unwrap()
                 .to_string(),
         },
+        "ANON" => "[]".to_string(),
         "PNAME_NS" | "IRIREF" | "VAR" | "INTEGER" | "DECIMAL" | "String" | "NIL"
         | "BLANK_NODE_LABEL" | "RdfLiteral" | "PrefixedName" | "PathMod" | "(" | ")" | "{"
         | "}" | "." | "," | ";" | "*" | "+" | "-" | "/" | "<" | ">" | "=" | ">=" | "<=" | "!="

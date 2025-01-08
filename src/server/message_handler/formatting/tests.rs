@@ -648,3 +648,22 @@ fn format_blank_node_property_list_path() {
     );
     format_and_compare(ugly_query_2, pretty_query_2);
 }
+
+#[test]
+fn format_anon() {
+    let ugly_query = indoc!(
+        "SELECT * WHERE {
+            ?s ?p
+            [
+            ]
+         }
+         "
+    );
+    let pretty_query = indoc!(
+        "SELECT * WHERE {
+           ?s ?p []
+         }
+         "
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
