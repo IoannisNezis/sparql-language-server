@@ -35,7 +35,12 @@ enum Command {
     /// Run the language server
     Server,
     /// Run the formatter on a given file
-    Format { path: Utf8PathBuf },
+    Format {
+        /// Sets a custom ...
+        #[arg(short, long)]
+        writeback: bool,
+        path: Utf8PathBuf,
+    },
     /// Watch the logs
     Logs,
 }
@@ -80,26 +85,30 @@ fn main() {
             let mut server = Server::new(send_message);
             listen_stdio(|message| server.handle_message(message));
         }
-        Command::Format { path } => {
+        Command::Format { path, writeback } => {
             match File::open(path.clone()) {
                 Ok(mut file) => {
                     let mut contents = String::new();
                     file.read_to_string(&mut contents)
-                        .expect("Could not read file");
+                        .expect(&format!("Could not read file {}", path));
                     let formatted_contents = format_raw(contents);
-                    let mut file = OpenOptions::new()
-                        .write(true)
-                        .append(false)
-                        .open(path.clone())
-                        .expect("Could not write to file");
-                    file.write_all(formatted_contents.as_bytes())
-                        .expect("Unable to write");
+                    if writeback {
+                        let mut file = OpenOptions::new()
+                            .write(true)
+                            .append(false)
+                            .open(path.clone())
+                            .expect("Could not write to file");
+                        file.write_all(formatted_contents.as_bytes())
+                            .expect("Unable to write");
+                        println!("Sucessfully formatted {path}");
+                    } else {
+                        println!("{}", formatted_contents);
+                    }
                 }
                 Err(e) => {
                     panic!("Could not open file: {}", e)
                 }
             };
-            println!("Sucessfully formatted {path}");
         }
         Command::Logs => {
             let logfile_path = get_logfile_path();
