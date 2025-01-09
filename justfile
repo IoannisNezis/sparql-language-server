@@ -7,7 +7,7 @@ start-monaco-editor:
 	cd editor && npm install && npm run dev
 
 build-native:
-	cargo build --release
+	cargo build --release --bin qlue-ls
 
 build-wasm profile="release" target="bundler":
 	notify-send -t 1000 "starting wasm build..."
