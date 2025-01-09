@@ -1,5 +1,5 @@
 <h1 align="center">
-  Qlue-ls 🦀
+  🦀 Qlue-ls 🦀
 </h1>
 
 ⚡Qlue-ls (pronounced "clueless") is a *blazingly fast* [language server](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification) for [SPARQL](https://de.wikipedia.org/wiki/SPARQL), written in Rust 🦀.
@@ -9,9 +9,9 @@
 > Only the format capability is production ready.  
 > The rest is experimental.
 
-# Getting Started
+# 🚀 Getting Started
 
-## Installation
+## 📦 Installation
 
 Qlue-ls is available on [crate.io](https://crates.io/crates/qlue-ls):
 
@@ -33,15 +33,15 @@ cd Qlue-ls
 cargo build --release --bin qlue-ls
 ```
 
-## Usage
+## CLI Usage
 
-To run qlue-ls as **formatter** run:
+To run Qlue-ls as **formatter** run:
 
 ```shell
 qlue-ls format <PATH>
 ```
 
-To run qlue-ls as **lanugage server** run:
+To run Qlue-ls as **lanugage server** run:
 
 ```shell
 qlue-ls server
@@ -49,13 +49,13 @@ qlue-ls server
 
 This will create a language server listening on stdio.
 
-## Connect to Neovim
+## with Neovim
 
 After you installed the language server, add this to your `init.lua`:
 
 ```lua
 vim.api.nvim_create_autocmd({ 'FileType' }, {
-  desc = 'Connect to qlue-ls',
+  desc = 'Connect to Qlue-ls',
   pattern = { 'sparql' },
   callback = function()
     vim.lsp.start {
@@ -78,53 +78,53 @@ Open a `.rq` file and check that the buffer is attached to th server:
 
 Configure keymaps in `on_attach` function.
 
-# Capabilities
+# 🚀 Capabilities
 
-## Formatting
+## 📐 Formatting
 
 **Status**: Full support
 
 Formats SPARQL queries to ensure consistent and readable syntax.
 Customizable options to align with preferred query styles are also implemented.
 
-## Diagnostics
+## 🩺 Diagnostics
 
 **Status**: Partial support
 
-Currently provides a few basic diagnostics for syntax errors and simple issues in SPARQL queries.
-Further enhancements are planned to cover a broader range of semantic and logic-related diagnostics.
-
 **Currently provided diagnostics**:
 
-- unused namespace (warning): A declared namespace is not used
-- undefined namespace (error): A used namespace is not declared
+| Type       | Name             | Description                   |
+|:---------- |:---------------- |:----------------------------- |
+| ❌ error   | undefined prefix | a used prefix is not declared |
+| ⚠️  warning | unused prefix    | a declared prefix is not used |
+| ℹ️  info    | uncompacted uri  | a raw uncompacted uri is used |
 
-**Planed diagnostics**:
+## ✨ Completion
 
-- path compresion possible (info): A declared namespace is not used
+**Status**: Partial support
 
-## Completion
+I split auto-completion into 3 stages:
 
-**Status**: Rudimentary
+1. Static (Keywords, constructs, ...)
+2. Dynamic offline (local defined variables)
+3. Dynamic online (with data from a knowledge-graph)
 
-Basic auto-completion for SPARQL keywords and variables. Currently not context aware.  
-Future improvements will expand suggestions to include functions, predicates, and custom completions based on query context.
+The implementation is currently in Stage 1.5.
+Static completion is done, dynamic offline completion is in development.
 
-## Code Actions
+## 🛠️ Code Actions
 
-**Status**: Planed
+**Status**: Partial support
 
-Future support for code actions, such as quick fixes and refactoring suggestions, to improve productivity and code quality in SPARQL development.
+| name              | description                           | diagnostic        |
+|:----------------- |:------------------------------------- |:----------------- |
+| shorten uri       | shorten uri into compacted form       | uncompacted uri   |
+| declare prefix    | declares undeclared prefix (if known) | undeclared prefix |
+| shorten all uri's | shorten all uri's into compacted form |                   |
 
-**Planed code actions**:
+# ⚙️  Configuration
 
-- Consolidate property paths
-- Refactor iris into namespaces
-- Sort Prefixes
-
-# Configuration
-
-qlue-ls can be configured through a `qlue-ls.toml` or `qlue-ls.yml` file.
+Qlue-ls can be configured through a `qlue-ls.toml` or `qlue-ls.yml` file.
 
 Here is the full default configuration
 ```toml
@@ -138,7 +138,7 @@ tab_size = 2
 where_new_line = false
 ```
 
-# use in web
+# 🌐 use in web
 
 If you want to connect from a web-based-editor, you can use this package as well.  
 For this purpouse this can be compiled to wasm and is availible on [npm](https://www.npmjs.com/package/@ioannisnezis/sparql-language-server):
@@ -151,7 +151,7 @@ npm i qlue-ls
 You will have to wrap this in a Web Worker and provide a language server client.
 There will be more documentation on this in the future...
 
-# Special Thanks
+# 🙏 Special Thanks
 
 * [TJ DeVries](https://github.com/tjdevries) for the inspiration and great tutorials
 * [Chris Biscardi](https://github.com/christopherbiscardi) for teaching me Rust
