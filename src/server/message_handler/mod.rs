@@ -20,7 +20,9 @@ use log::warn;
 use misc::handle_set_trace_notifcation;
 use serde::{de::DeserializeOwned, Serialize};
 use std::any::type_name;
-use textdocument_syncronization::{handle_did_change_notification, handle_did_open_notification};
+use textdocument_syncronization::{
+    handle_did_change_notification, handle_did_open_notification, handle_did_save_notification,
+};
 
 pub use diagnostic::*;
 pub use formatting::format_raw;
@@ -88,6 +90,7 @@ pub fn dispatch(
         "exit" => link!(handle_exit_notifcation),
         "textDocument/didOpen" => link!(handle_did_open_notification),
         "textDocument/didChange" => link!(handle_did_change_notification),
+        "textDocument/didSave" => link!(handle_did_save_notification),
         "$/setTrace" => link!(handle_set_trace_notifcation),
         unknown_method => {
             warn!(

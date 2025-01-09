@@ -4,6 +4,7 @@ use crate::server::{
     lsp::{
         errors::{ErrorCode, ResponseError},
         DidChangeTextDocumentNotification, DidOpenTextDocumentNotification,
+        DidSaveTextDocumentNotification,
     },
     Server,
 };
@@ -51,4 +52,15 @@ pub(super) fn handle_did_change_notification(
         error!("{}", message);
         Err(ResponseError::new(ErrorCode::InvalidRequest, &message))
     }
+}
+
+pub(super) fn handle_did_save_notification(
+    _server: &mut Server,
+    did_save_notification: DidSaveTextDocumentNotification,
+) -> Result<(), ResponseError> {
+    log::warn!(
+        "saved text document (has no effect yet): \"{}\"",
+        did_save_notification.params.text_document.uri
+    );
+    Ok(())
 }
