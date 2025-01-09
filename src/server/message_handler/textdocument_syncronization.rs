@@ -39,6 +39,10 @@ pub(super) fn handle_did_change_notification(
         }
         if let Err(err) = server.state.update_tree(uri, new_tree) {
             error!("{}", err.message);
+            return Err(ResponseError::new(
+                ErrorCode::InternalError,
+                &format!("Error while building parse-tree:\n{}", err.message),
+            ));
         }
 
         Ok(())

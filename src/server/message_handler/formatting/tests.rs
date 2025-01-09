@@ -691,3 +691,22 @@ fn format_comments_property_lists() {
     );
     format_and_compare(ugly_query, pretty_query);
 }
+
+#[test]
+fn format_commas() {
+    let ugly_query = indoc!(
+        r#"SELECT * WHERE {
+           ?a ?b ",,," .
+           FILTER (1 IN (1,2,3))
+         }
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * WHERE {
+            ?a ?b ",,," .
+            FILTER (1 IN (1, 2, 3))
+          }
+          "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}

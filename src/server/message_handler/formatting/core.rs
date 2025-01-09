@@ -210,7 +210,7 @@ pub(super) fn format_helper(
             .replace("} \n", "}\n")
         }
 
-        "ObjectList" | "ExpressionList" | "SubstringExpression" | "RegexExpression" | "ArgList" => {
+        "ExpressionList" => {
             separate_children_by(text, &cursor.node(), "", indentation, indent_base, settings)
                 .replace(",", ", ")
         }
@@ -298,8 +298,18 @@ pub(super) fn format_helper(
             .replace("←}", &(line_break + "}"))
             .replace("←", "")
         }
-        "OrderCondition" | "Aggregate" | "BuildInCall" | "FunctionCall" | "PathSequence"
-        | "PathEltOrInverse" | "PathElt" | "PathPrimary" => {
+        "ObjectList"
+        | "SubstringExpression"
+        | "RegexExpression"
+        | "ArgList"
+        | "OrderCondition"
+        | "Aggregate"
+        | "BuildInCall"
+        | "FunctionCall"
+        | "PathSequence"
+        | "PathEltOrInverse"
+        | "PathElt"
+        | "PathPrimary" => {
             separate_children_by(text, &cursor.node(), "", indentation, indent_base, settings)
         }
         "QuadsNotTriples" => separate_children_by(
