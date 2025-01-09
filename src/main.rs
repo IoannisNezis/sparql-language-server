@@ -95,6 +95,7 @@ fn main() {
                     if writeback {
                         let mut file = OpenOptions::new()
                             .write(true)
+                            .truncate(true)
                             .append(false)
                             .open(path.clone())
                             .expect("Could not write to file");
