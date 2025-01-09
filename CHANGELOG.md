@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
+## [0.2.0] 2025-01-09
 
 ### Added
 
 - new code-action: declare prefix
 - example for monaco-editor with a language-client attached to this language-server
+- formatter subcommand uses user-configuration
+- this CHANGELOG
+
+### Fixed
+
+- format subcommand writeback-bug
+- formatting of Blank and ANON nodes
+
+### Changed
+
+- format cli subcommand: --writeback option, prints to stdout by default
