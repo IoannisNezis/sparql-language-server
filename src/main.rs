@@ -36,7 +36,7 @@ enum Command {
     Server,
     /// Run the formatter on a given file
     Format {
-        /// Sets a custom ...
+        /// overwrite given file
         #[arg(short, long)]
         writeback: bool,
         path: Utf8PathBuf,
