@@ -41,7 +41,7 @@ To run Qlue-ls as **formatter** run:
 qlue-ls format <PATH>
 ```
 
-To run Qlue-ls as **lanugage server** run:
+To run Qlue-ls as **language server** run:
 
 ```shell
 qlue-ls server
@@ -91,11 +91,11 @@ Customizable options to align with preferred query styles are also implemented.
 
 **Status**: Partial support
 
-**Currently provided diagnostics**:
+** provided diagnostics**:
 
-| Type       | Name             | Description                   |
-|:---------- |:---------------- |:----------------------------- |
-| ❌ error   | undefined prefix | a used prefix is not declared |
+| Type        | Name             | Description                   |
+|:------------|:-----------------|:------------------------------|
+| ❌ error     | undefined prefix | a used prefix is not declared |
 | ⚠️  warning | unused prefix    | a declared prefix is not used |
 | ℹ️  info    | uncompacted uri  | a raw uncompacted uri is used |
 
@@ -109,7 +109,7 @@ I split auto-completion into 3 stages:
 2. Dynamic offline (local defined variables)
 3. Dynamic online (with data from a knowledge-graph)
 
-The implementation is currently in Stage 1.5.
+The implementation is in Stage 1.5.
 Static completion is done, dynamic offline completion is in development.
 
 ## 🛠️ Code Actions
@@ -117,7 +117,7 @@ Static completion is done, dynamic offline completion is in development.
 **Status**: Partial support
 
 | name              | description                           | diagnostic        |
-|:----------------- |:------------------------------------- |:----------------- |
+|:------------------|:--------------------------------------|:------------------|
 | shorten uri       | shorten uri into compacted form       | uncompacted uri   |
 | declare prefix    | declares undeclared prefix (if known) | undeclared prefix |
 | shorten all uri's | shorten all uri's into compacted form |                   |
@@ -141,7 +141,7 @@ where_new_line = false
 # 🌐 use in web
 
 If you want to connect from a web-based-editor, you can use this package as well.  
-For this purpouse this can be compiled to wasm and is availible on [npm](https://www.npmjs.com/package/@ioannisnezis/sparql-language-server):
+For this purpose this can be compiled to wasm and is available on [npm](https://www.npmjs.com/package/@ioannisnezis/sparql-language-server):
 
 
 ```shell
