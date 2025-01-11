@@ -34,11 +34,14 @@ impl TextDocumentItem {
 
     fn apply_text_edit(&mut self, text_edit: TextEdit) {
         match text_edit.range.to_byte_index_range(&self.text) {
-            Some(range) => self.text.replace_range(range, &text_edit.new_text),
-            None => {
-                error!("Received textdocument/didChange notification with a TextEdit thats out ouf bounds:\nedit: {}\ndocument range: {}",text_edit, self.get_full_range())
+            Some(range) => {
+                self.text.replace_range(range, &text_edit.new_text);
             }
-        }
+            None => {
+                error!("Received textdocument/didChange notification with a TextEdit thats out ouf bounds:\nedit: {}\ndocument range: {}",text_edit, self.get_full_range());
+            }
+        };
+
         // WARNING: Always keep one newline at the end of a document to stay POSIX conform!
         // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
         match self.text.chars().rev().next() {
@@ -112,26 +115,28 @@ impl Position {
         }
     }
 
-    // TODO: This funtion should return None if the character is out of line
     pub fn to_byte_index(&self, text: &String) -> Option<usize> {
         if self.line == 0 && self.character == 0 && text.is_empty() {
             return Some(0);
         }
-        let (offset, line_length) = text
-            .lines()
-            .map(|line| line.len())
-            .chain(std::iter::once(0))
-            .scan((0, 0), |(offset, last_line_length), line_length| {
-                *offset = *last_line_length + *offset;
-                *last_line_length = line_length + 1;
-                Some((*offset, line_length))
-            })
-            .nth(self.line as usize)?;
-        if self.character <= line_length as u32 {
-            Some(offset + self.character as usize)
-        } else {
-            None
+        let mut byte_index: usize = 0;
+        let mut lines = text.lines();
+        for _i in 0..self.line {
+            byte_index += lines.next()?.len() + 1;
         }
+
+        std::iter::once(byte_index)
+            .chain(
+                lines
+                    .next()
+                    .unwrap_or("")
+                    .chars()
+                    .scan(byte_index, |accu, c| {
+                        *accu += c.len_utf8();
+                        Some(*accu)
+                    }),
+            )
+            .nth(self.character as usize)
     }
 }
 
@@ -238,7 +243,7 @@ mod tests {
 
     use indoc::indoc;
 
-    use crate::server::lsp::textdocument::{Range, TextEdit};
+    use crate::server::lsp::textdocument::{Position, Range, TextEdit};
 
     use super::TextDocumentItem;
 
@@ -381,6 +386,19 @@ mod tests {
     }
 
     #[test]
+    fn position_to_byte_index() {
+        let text = "aä�𐀀".to_string();
+        assert_eq!(Position::new(0, 0).to_byte_index(&text), Some(0));
+        assert_eq!(Position::new(0, 1).to_byte_index(&text), Some(1));
+        assert_eq!(Position::new(0, 2).to_byte_index(&text), Some(3));
+        assert_eq!(Position::new(0, 3).to_byte_index(&text), Some(6));
+        assert_eq!(Position::new(0, 4).to_byte_index(&text), Some(10));
+        assert_eq!(Position::new(1, 0).to_byte_index(&text), Some(11));
+        assert_eq!(Position::new(0, 5).to_byte_index(&text), None);
+        assert_eq!(Position::new(2, 0).to_byte_index(&text), None);
+    }
+
+    #[test]
     fn range_to_byte_index_range() {
         let text = indoc!(
             "12345
@@ -390,8 +408,8 @@ mod tests {
         )
         .to_string();
         assert_eq!(
-            Range::new(0, 5, 1, 0).to_byte_index_range(&text),
-            Some(5..6)
+            Range::new(0, 5, 1, 1).to_byte_index_range(&text),
+            Some(5..7)
         );
         let range = Range::new(1, 0, 2, 0);
         let pos = range.start;
