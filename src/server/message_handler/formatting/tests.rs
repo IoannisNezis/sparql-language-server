@@ -555,9 +555,9 @@ fn format_comments() {
 #[test]
 fn format_function_like_keywords() {
     let ugly_query = indoc!(
-        "SELECT (MAX (?a)  AS ?max_a ) WHERE {
-           BIND (  \"A\" AS  ?a )
-           FILTER ( ?a = \"A\")
+        r#"SELECT (MAX (?a)  AS ?max_a ) WHERE {
+           BIND (  "A" AS  ?a )
+           FILTER ( ?a = "A")
            FILTER YEAR ( ?a)
            FILTER <>  (2)
          }
@@ -565,21 +565,21 @@ fn format_function_like_keywords() {
          HAVING (?a > 2)
          ORDER BY DESC (?d)
          LIMIT 12 OFFSET 20
-        "
+        "#
     );
     let pretty_query = indoc!(
-        "SELECT (MAX(?a) AS ?max_a) WHERE {
-           BIND (\"A\" AS ?a)
-           FILTER (?a = \"A\")
-           FILTER YEAR(?a)
-           FILTER <>(2)
-         }
-         GROUP BY (2 AS ?d)
-         HAVING (?a > 2)
-         ORDER BY DESC(?d)
-         LIMIT 12
-         OFFSET 20
-         "
+        r#"SELECT (MAX(?a) AS ?max_a) WHERE {
+             BIND ("A" AS ?a)
+             FILTER (?a = "A")
+             FILTER YEAR(?a)
+             FILTER <>(2)
+           }
+           GROUP BY (2 AS ?d)
+           HAVING (?a > 2)
+           ORDER BY DESC(?d)
+           LIMIT 12
+           OFFSET 20
+           "#
     );
     format_and_compare(ugly_query, pretty_query)
 }
