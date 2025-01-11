@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [Unreleased]
+
+## [0.2.2] 2025-01-09
+
+### Fixed
+
+- handle textdocuments-edits with utf-8 characters
+
+## [0.2.1] 2025-01-09
+
+### Fixed
+
+- formatting strings with commas
+
 ## [0.2.0] 2025-01-09
 
 ### Added
