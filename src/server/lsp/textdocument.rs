@@ -103,6 +103,7 @@ pub struct Position {
     character: u32,
 }
 
+// NOTE: By default based on a UTF-16 string representation!
 impl Position {
     pub fn new(line: u32, character: u32) -> Self {
         Self { line, character }
@@ -115,6 +116,46 @@ impl Position {
         }
     }
 
+    /// Converts a UTF-16 based position within a string to a byte index.
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - A reference to the string in which the position is calculated.
+    ///
+    /// # Returns
+    ///
+    /// * `Option<usize>` - The byte index corresponding to the UTF-16 position
+    ///   if the position is valid. Returns `None` if the position is out of bounds
+    ///   or if the conversion cannot be performed.
+    ///
+    /// # Details
+    ///
+    /// This function takes into account the difference between UTF-8 and UTF-16
+    /// representations. In UTF-16, some characters, such as those outside the
+    /// Basic Multilingual Plane (e.g., emoji or certain CJK characters), are
+    /// represented as surrogate pairs, which occupy two 16-bit code units.
+    /// In contrast, UTF-8 uses a variable-length encoding where these same
+    /// characters can take up to four bytes.
+    ///
+    /// The function ensures that the given UTF-16 position is correctly
+    /// mapped to its corresponding byte index in the UTF-8 encoded string,
+    /// preserving the integrity of multi-byte characters.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let text = String::from("a😃b"); // "a" (1 byte), "😃" (4 bytes), "b" (1 byte)
+    /// let utf16_position = 2; // Position after the emoji
+    /// let byte_index = Position::new(0,3).to_byte_index(&text);
+    /// assert_eq!(byte_index, Some(5)); // Correctly maps to the byte index
+    /// ```
+    ///
+    /// # Caveats
+    ///
+    /// * If `text` contains invalid UTF-8 sequences, the behavior of this function
+    ///   is undefined.
+    /// * Ensure the provided UTF-16 position aligns with the logical structure of
+    ///   the string.
     pub fn to_byte_index(&self, text: &String) -> Option<usize> {
         if self.line == 0 && self.character == 0 && text.is_empty() {
             return Some(0);
@@ -124,19 +165,15 @@ impl Position {
         for _i in 0..self.line {
             byte_index += lines.next()?.len() + 1;
         }
-
-        std::iter::once(byte_index)
-            .chain(
-                lines
-                    .next()
-                    .unwrap_or("")
-                    .chars()
-                    .scan(byte_index, |accu, c| {
-                        *accu += c.len_utf8();
-                        Some(*accu)
-                    }),
-            )
-            .nth(self.character as usize)
+        let mut utf16_index: usize = 0;
+        let last_line = lines.next().unwrap_or("");
+        let mut chars = last_line.chars();
+        while utf16_index < self.character as usize {
+            let char = chars.next()?;
+            byte_index += char.len_utf8();
+            utf16_index += char.len_utf16();
+        }
+        return Some(byte_index);
     }
 }
 
@@ -392,9 +429,9 @@ mod tests {
         assert_eq!(Position::new(0, 1).to_byte_index(&text), Some(1));
         assert_eq!(Position::new(0, 2).to_byte_index(&text), Some(3));
         assert_eq!(Position::new(0, 3).to_byte_index(&text), Some(6));
-        assert_eq!(Position::new(0, 4).to_byte_index(&text), Some(10));
+        assert_eq!(Position::new(0, 5).to_byte_index(&text), Some(10));
         assert_eq!(Position::new(1, 0).to_byte_index(&text), Some(11));
-        assert_eq!(Position::new(0, 5).to_byte_index(&text), None);
+        assert_eq!(Position::new(0, 6).to_byte_index(&text), None);
         assert_eq!(Position::new(2, 0).to_byte_index(&text), None);
     }
 
