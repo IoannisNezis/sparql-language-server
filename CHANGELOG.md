@@ -9,6 +9,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+### Fixed
+
+- positions are (by default) utf-16 based, i changed the implementation to respect this
+
 ## [0.2.2] 2025-01-09
 
 ### Fixed
