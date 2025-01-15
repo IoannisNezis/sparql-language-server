@@ -9,6 +9,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.2.3]
+
 ### Fixed
 
 - positions are (by default) utf-16 based, i changed the implementation to respect this
