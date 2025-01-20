@@ -31,7 +31,7 @@ pub fn format_raw(text: String) -> String {
                 .parse(text.as_bytes(), None)
                 .expect("could not parse");
             let formatted_text =
-                format_helper(&text, &mut tree.walk(), 0, "  ", "", &settings.format);
+                format_helper(&text, &mut tree.walk(), 0, "  ", "", &settings.format) + "\n";
             return formatted_text;
         }
         Err(_) => panic!("Could not setup parser"),
