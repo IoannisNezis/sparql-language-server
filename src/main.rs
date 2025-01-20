@@ -91,17 +91,21 @@ fn main() {
                     let mut contents = String::new();
                     file.read_to_string(&mut contents)
                         .expect(&format!("Could not read file {}", path));
-                    let formatted_contents = format_raw(contents);
+                    let formatted_contents = format_raw(contents.clone());
                     if writeback {
-                        let mut file = OpenOptions::new()
-                            .write(true)
-                            .truncate(true)
-                            .append(false)
-                            .open(path.clone())
-                            .expect("Could not write to file");
-                        file.write_all(formatted_contents.as_bytes())
-                            .expect("Unable to write");
-                        println!("Sucessfully formatted {path}");
+                        if formatted_contents == contents {
+                            println!("{path} left unchanged");
+                        } else {
+                            let mut file = OpenOptions::new()
+                                .write(true)
+                                .truncate(true)
+                                .append(false)
+                                .open(path.clone())
+                                .expect("Could not write to file");
+                            file.write_all(formatted_contents.as_bytes())
+                                .expect("Unable to write");
+                            println!("{path} reformatted");
+                        }
                     } else {
                         println!("{}", formatted_contents);
                     }
