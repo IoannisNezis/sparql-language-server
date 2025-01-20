@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
+## [0.2.4]
+
+### Fixed
+
+- add trailing newline when formatting with format cli subcommand
 
 ## [0.2.3]
 

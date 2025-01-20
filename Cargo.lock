@@ -1520,7 +1520,7 @@ checksum = "4debfffbf1669869b4bea1bab297f8e9ec11900a9ff2dcf659c2a1c4918c811a"
 
 [[package]]
 name = "qlue-ls"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "camino",
  "cc",
