@@ -5,6 +5,7 @@ use std::{
     fs::{File, OpenOptions},
     io::{self, BufRead, BufReader, Read, Seek, Write},
     path::PathBuf,
+    process::exit,
     sync::mpsc::channel,
 };
 
@@ -39,6 +40,9 @@ enum Command {
         /// overwrite given file
         #[arg(short, long)]
         writeback: bool,
+        /// Avoid writing formatted file back; instead, exit with a non-zero status code if any files would have been modified, and zero otherwise
+        #[arg(short, long)]
+        check: bool,
         path: Utf8PathBuf,
     },
     /// Watch the logs
@@ -85,15 +89,29 @@ fn main() {
             let mut server = Server::new(send_message);
             listen_stdio(|message| server.handle_message(message));
         }
-        Command::Format { path, writeback } => {
+        Command::Format {
+            path,
+            writeback,
+            check,
+        } => {
             match File::open(path.clone()) {
                 Ok(mut file) => {
                     let mut contents = String::new();
                     file.read_to_string(&mut contents)
                         .expect(&format!("Could not read file {}", path));
                     let formatted_contents = format_raw(contents.clone());
+                    let unchanged = formatted_contents == contents;
+                    if check {
+                        if unchanged {
+                            println!("{path} already formatted");
+                            exit(0);
+                        } else {
+                            println!("{path} would be reformatted");
+                            exit(1);
+                        }
+                    }
                     if writeback {
-                        if formatted_contents == contents {
+                        if unchanged {
                             println!("{path} left unchanged");
                         } else {
                             let mut file = OpenOptions::new()
