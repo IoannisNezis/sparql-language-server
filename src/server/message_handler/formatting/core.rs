@@ -1,45 +1,319 @@
+use lazy_static::lazy_static;
 use std::{collections::HashSet, usize};
 use streaming_iterator::StreamingIterator;
 
-use log::{error, warn};
-use tree_sitter::{Node, Query, QueryCursor, Tree, TreeCursor};
+use log::{error, info, warn};
+use tree_sitter::{Node, Parser, Query, QueryCursor, TreeCursor};
 
 use crate::server::{
     configuration::FormatSettings,
     lsp::{
-        textdocument::{TextDocumentItem, TextEdit},
+        textdocument::{Range, TextDocumentItem, TextEdit},
         FormattingOptions,
     },
 };
 
 use super::utils::KEYWORDS;
 
-// TODO: unify formatting options
-pub(super) fn format_textdoument(
+pub(super) fn format_pipeline(
     document: &TextDocumentItem,
-    tree: &Tree,
-    settings: &FormatSettings,
+    parser: &mut Parser,
     options: &FormattingOptions,
+    settings: &FormatSettings,
 ) -> Vec<TextEdit> {
-    // WARNING: ALWAYS maintain a newline at the end of a query as this is POSIX conform
-    // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_206
-    let range = document.get_full_range();
     let indent_string = match settings.insert_spaces.unwrap_or(options.insert_spaces) {
         true => " ".repeat(settings.tab_size.unwrap_or(options.tab_size) as usize),
         false => "\t".to_string(),
     };
-    let text = format_helper(
+    let tree = parser.parse(document.text.as_bytes(), None).unwrap();
+    let mut edits = collect_format_edits(
         &document.text,
         &mut tree.walk(),
         0,
         &indent_string,
         "",
         settings,
-    ) + "\n";
-    vec![TextEdit::new(range, &text)]
+    );
+    for x in &edits {
+        info!("{:?}", x);
+    }
+    edits.sort_by_key(|edit| edit.range.start.clone());
+    return edits.into_iter().rev().collect();
 }
 
-pub(super) fn format_helper(
+lazy_static! {
+    static ref EXIT_EARLY: HashSet<&'static str> = HashSet::from(["STRING_LITERAL"]);
+    static ref INC_INDENTATION: HashSet<&'static str> = HashSet::from([
+        "BlankNodePropertyListPath",
+        "GroupGraphPattern",
+        "BrackettedExpression",
+        "ConstructTemplate",
+        "QuadData",
+        "QuadsNotTriples"
+    ]);
+}
+
+pub(super) fn collect_format_edits(
+    text: &String,
+    cursor: &mut TreeCursor,
+    mut indentation: usize,
+    indent_base: &str,
+    extra_indent: &str,
+    settings: &FormatSettings,
+) -> Vec<TextEdit> {
+    let node = cursor.node();
+
+    // NOTE: Early exit
+    if EXIT_EARLY.contains(node.kind()) {
+        return vec![];
+    }
+
+    let indent_str = &indent_base.repeat(indentation);
+    let indent_str_small = match indentation {
+        0 => String::new(),
+        i => (&indent_base).repeat(i - 1),
+    };
+    let line_break = "\n".to_string() + &indent_str;
+
+    let line_break_small = "\n".to_string() + &indent_str_small;
+
+    let separator = match node.kind() {
+        "unit"
+        | "Prologue"
+        | "GroupOrUnionGraphPattern"
+        | "Modify"
+        | "TriplesTemplateBlock"
+        | "GroupGraphPatternSub"
+        | "Quads"
+        | "SolutionModifier"
+        | "LimitOffsetClauses" => &line_break,
+
+        // "namespace"
+        "ExpressionList"
+        | "GroupGraphPattern"
+        | "BrackettedExpression"
+        | "ConstructTemplate"
+        | "QuadData"
+        | "ObjectList"
+        | "SubstringExpression"
+        | "RegexExpression"
+        | "ArgList"
+        | "OrderCondition"
+        | "Aggregate"
+        | "BuildInCall"
+        | "FunctionCall"
+        | "PathSequence"
+        | "PathEltOrInverse"
+        | "PathElt"
+        | "PathPrimary"
+        | "PN_PREFIX"
+        | "TriplesBlock"
+        | "TriplesTemplate"
+        | "ConstructTriples"
+        | "ConstructQuery"
+        | "assignment" => "",
+
+        "BaseDecl"
+        | "PrefixDecl"
+        | "SelectClause"
+        | "SubSelect"
+        | "DatasetClause"
+        | "MinusGraphPattern"
+        | "DefaultGraphClause"
+        | "NamedGraphClause"
+        | "TriplesSameSubject"
+        | "property"
+        | "OptionalGraphPattern"
+        | "GraphGraphPattern"
+        | "ServiceGraphPattern"
+        | "binary_expression"
+        | "InlineData"
+        | "ValuesClause"
+        | "DataBlock"
+        | "GroupClause"
+        | "GroupCondition"
+        | "HavingClause"
+        | "HavingCondition"
+        | "OrderClause"
+        | "LimitClause"
+        | "OffsetClause"
+        | "ExistsFunc"
+        | "NotExistsFunc"
+        | "Filter"
+        | "Bind"
+        | "Load"
+        | "Clear"
+        | "Drop"
+        | "Add"
+        | "Move"
+        | "Copy"
+        | "Create"
+        | "InsertData"
+        | "DeleteData"
+        | "DeleteWhere"
+        | "GraphRef"
+        | "GraphRefAll"
+        | "GraphOrDefault"
+        | "DeleteClause"
+        | "InsertClause"
+        | "UsingClause"
+        | "PropertyListNotEmpty"
+        | "Path"
+        | "PropertyListPathNotEmpty"
+        | "TriplesSameSubjectPath" => " ",
+
+        "PNAME_NS" | "IRIREF" | "VAR" | "INTEGER" | "DECIMAL" | "String" | "NIL"
+        | "BLANK_NODE_LABEL" | "RdfLiteral" | "PrefixedName" | "PathMod" | "(" | ")" | "{"
+        | "}" | "." | "," | ";" | "*" | "+" | "-" | "/" | "<" | ">" | "=" | ">=" | "<=" | "!="
+        | "||" | "&&" | "|" | "^" | "[" | "]" => "",
+        _ => {
+            log::warn!("unknown node: {}", node.kind());
+            " "
+        }
+    };
+
+    let mut cursor = node.walk();
+    let children: Vec<Node> = node.children(&mut cursor).collect();
+    let seperation_edits = children
+        .iter()
+        .zip(children.iter().skip(1))
+        .map(|(node1, node2)| {
+            // Add sparator between nodes
+            TextEdit::new(
+                Range::new(
+                    node1.end_position().row as u32,
+                    node1.end_position().column as u32,
+                    node2.start_position().row as u32,
+                    node2.start_position().column as u32,
+                ),
+                separator,
+            )
+        });
+
+    if INC_INDENTATION.contains(node.kind()) {
+        indentation += 1;
+    }
+    let recursive_edits = children.iter().flat_map(|node| {
+        // collect edits from childs
+        collect_format_edits(
+            text,
+            &mut node.walk(),
+            indentation,
+            indent_base,
+            extra_indent,
+            settings,
+        )
+    });
+    let details_edits: Vec<TextEdit> = match node.kind() {
+        "comment" => vec![TextEdit::new(
+            Range::new(
+                node.end_position().row as u32,
+                node.end_position().column as u32,
+                node.end_position().row as u32,
+                node.end_position().column as u32,
+            ),
+            &line_break,
+        )],
+        "SolutionModifier" => vec![TextEdit::new(
+            Range::from_ts_positions(node.start_position(), node.start_position()),
+            "",
+        )],
+        "ConstructTemplate" => children
+            .iter()
+            .filter_map(|child| match child.kind() {
+                "{" => Some(TextEdit::new(
+                    Range::from_node(*child),
+                    &format!(" {{{}{}", line_break, indent_base),
+                )),
+                "}" => Some(TextEdit::new(
+                    Range::from_node(*child),
+                    &format!("{}}}{}", line_break, line_break),
+                )),
+                _ => None,
+            })
+            .collect(),
+        "TriplesBlock" | "ConstructTriples" => children
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, child)| match child.kind() {
+                "." => match idx {
+                    x if x < children.len() - 1 => Some(TextEdit::new(
+                        Range::from_node(*child),
+                        &format!(" .{}", line_break),
+                    )),
+                    _ => Some(TextEdit::new(Range::from_node(*child), " .")),
+                },
+                _ => None,
+            })
+            .collect(),
+        "GroupGraphPattern" => {
+            let mut edits = vec![];
+            if children.len() > 2 {
+                if let Some(child) = children.first() {
+                    if child.kind() == "{" {
+                        edits.push(TextEdit::new(
+                            Range::from_node(*child),
+                            &format!("{{{}{}", line_break, indent_base),
+                        ));
+                    }
+                }
+                if let Some(child) = children.last() {
+                    if child.kind() == "}" {
+                        edits.push(TextEdit::new(
+                            Range::from_node(*child),
+                            &format!("{}}}", line_break),
+                        ));
+                    }
+                }
+            }
+            edits
+        }
+        "ExpressionList" => children
+            .iter()
+            .filter_map(|child| match child.kind() {
+                "," => Some(TextEdit::new(Range::from_node(*child), ", ")),
+                _ => None,
+            })
+            .collect(),
+        "AS" => vec![
+            TextEdit::new(
+                Range::new(
+                    node.start_position().row as u32,
+                    node.start_position().column as u32,
+                    node.end_position().row as u32,
+                    node.end_position().column as u32,
+                ),
+                " AS ",
+            ),
+            // TextEdit::new(
+            //     Range::new(
+            //         node.end_position().row as u32,
+            //         node.end_position().column as u32,
+            //         node.end_position().row as u32,
+            //         node.end_position().column as u32,
+            //     ),
+            //     " ",
+            // ),
+        ],
+        "ANON" => vec![TextEdit::new(Range::from_node(node), "[]")],
+        keyword if (KEYWORDS.contains(&keyword)) => match settings.capitalize_keywords {
+            true => vec![TextEdit::new(Range::from_node(node), keyword)],
+            false => vec![TextEdit::new(
+                Range::from_node(node),
+                node.utf8_text(text.as_bytes()).unwrap(),
+            )],
+        },
+        _ => vec![],
+    };
+
+    let x = seperation_edits
+        .chain(details_edits.into_iter())
+        .chain(recursive_edits)
+        .collect();
+    return x;
+}
+
+pub(super) fn format_parse1(
     text: &String,
     cursor: &mut TreeCursor,
     indentation: usize,
@@ -232,7 +506,7 @@ pub(super) fn format_helper(
 
                 subject.utf8_text(text.as_bytes()).unwrap().to_string()
                     + " "
-                    + &format_helper(
+                    + &format_parse1(
                         text,
                         &mut predicate.walk(),
                         indentation,
@@ -382,12 +656,12 @@ pub(super) fn format_helper(
             indent_base,
             settings,
         )
-        .replace(". ", &(".".to_string() + &line_break))
         .replace("→", "")
         .replace("← ", &line_break),
         // NOTE: Here a marker chars (→ and ←) are used to mark the start and end of a comment node.
         // Later these markers are removed.
         // This assumes that the marker char does not appear in queries.
+        // TODO: solve this better
         "comment" => "→".to_string() + cursor.node().utf8_text(text.as_bytes()).unwrap() + "←",
         keyword if (KEYWORDS.contains(&keyword)) => match settings.capitalize_keywords {
             true => keyword.to_string(),
@@ -441,7 +715,7 @@ fn separate_children_by(
 ) -> String {
     node.children(&mut node.walk())
         .map(|node| {
-            format_helper(
+            format_parse1(
                 text,
                 &mut node.walk(),
                 indentation,

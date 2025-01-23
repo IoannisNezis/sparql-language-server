@@ -1532,6 +1532,7 @@ dependencies = [
  "env_logger",
  "getrandom",
  "indoc",
+ "lazy_static",
  "log",
  "log4rs",
  "notify",

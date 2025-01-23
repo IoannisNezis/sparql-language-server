@@ -3,9 +3,20 @@ use tree_sitter::Parser;
 
 use crate::server::{
     configuration::FormatSettings,
-    lsp::{textdocument::TextDocumentItem, FormattingOptions},
-    message_handler::formatting::format_textdoument,
+    lsp::{
+        textdocument::{TextDocumentItem, TextEdit},
+        FormattingOptions,
+    },
+    message_handler::formatting::format_pipeline,
 };
+
+fn check_collision(edits: &Vec<TextEdit>) {
+    for idx1 in 0..edits.len() {
+        for idx2 in idx1..edits.len() {
+            assert!(!edits[idx1].overlaps(&edits[idx2]));
+        }
+    }
+}
 
 fn format_and_compare(ugly_query: &str, pretty_query: &str) {
     let format_settings = FormatSettings::default();
@@ -17,11 +28,31 @@ fn format_and_compare(ugly_query: &str, pretty_query: &str) {
     parser
         .set_language(&tree_sitter_sparql::LANGUAGE.into())
         .unwrap();
-    let tree = parser.parse(ugly_query, None).unwrap();
+    // let tree = parser.parse(ugly_query, None).unwrap();
     let mut document = TextDocumentItem::new("testdocument", ugly_query);
-    let changes = format_textdoument(&document, &tree, &format_settings, &format_options);
-    document.apply_text_edits(changes);
+    let edits = format_pipeline(&document, &mut parser, &format_options, &format_settings);
+    // check_collision(&edits);
+    document.apply_text_edits(edits);
     assert_eq!(document.text, pretty_query);
+}
+
+#[test]
+fn format_basic() {
+    let ugly_query = indoc!(
+        "SELECT * WHERE{
+           ?a ?c ?b .
+           ?a ?b ?c
+         }
+        "
+    );
+    let pretty_query = indoc!(
+        "SELECT * WHERE {
+           ?a ?c ?b .
+           ?a ?b ?c
+         }
+         "
+    );
+    format_and_compare(ugly_query, pretty_query);
 }
 #[test]
 fn format_prologue() {
@@ -63,14 +94,16 @@ fn format_alternating_group_graph_pattern() {
         "SELECT * {
              ?a ?c ?b .{
              } ?a ?b ?c
-             }\n"
+             }
+        "
     );
     let pretty_query = indoc!(
         "SELECT * {
            ?a ?c ?b .
            {}
            ?a ?b ?c
-         }\n"
+         }
+         "
     );
     format_and_compare(ugly_query, pretty_query);
 }
@@ -668,6 +701,26 @@ fn format_anon() {
     format_and_compare(ugly_query, pretty_query);
 }
 
+#[test]
+fn format_comments_with_dots() {
+    let ugly_query = indoc!(
+        "SELECT * WHERE {
+           ?s # First comment sentence. Second comment sentence.
+           ?p
+           ?o
+           .
+           ?s ?p ?o
+         }"
+    );
+    let pretty_query = indoc!(
+        "SELECT * WHERE {
+           ?s # First comment sentence. Second comment sentence.
+           ?p ?o .
+           ?s ?p ?o
+         }"
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
 #[test]
 fn format_comments_property_lists() {
     let ugly_query = indoc!(
