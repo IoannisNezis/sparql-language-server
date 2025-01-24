@@ -7,13 +7,15 @@ use crate::server::{
         textdocument::{TextDocumentItem, TextEdit},
         FormattingOptions,
     },
-    message_handler::formatting::format_pipeline,
+    message_handler::formatting::format_document,
 };
 
 fn check_collision(edits: &Vec<TextEdit>) {
     for idx1 in 0..edits.len() {
-        for idx2 in idx1..edits.len() {
-            assert!(!edits[idx1].overlaps(&edits[idx2]));
+        for idx2 in idx1 + 1..edits.len() {
+            let a = edits.get(idx1).unwrap();
+            let b = edits.get(idx2).unwrap();
+            assert!(!a.overlaps(&b));
         }
     }
 }
@@ -30,8 +32,8 @@ fn format_and_compare(ugly_query: &str, pretty_query: &str) {
         .unwrap();
     // let tree = parser.parse(ugly_query, None).unwrap();
     let mut document = TextDocumentItem::new("testdocument", ugly_query);
-    let edits = format_pipeline(&document, &mut parser, &format_options, &format_settings);
-    // check_collision(&edits);
+    let edits = format_document(&document, &mut parser, &format_options, &format_settings);
+    check_collision(&edits);
     document.apply_text_edits(edits);
     assert_eq!(document.text, pretty_query);
 }
@@ -90,13 +92,7 @@ fn format_nesting_indentation() {
 }
 #[test]
 fn format_alternating_group_graph_pattern() {
-    let ugly_query = indoc!(
-        "SELECT * {
-             ?a ?c ?b .{
-             } ?a ?b ?c
-             }
-        "
-    );
+    let ugly_query = indoc!("SELECT  *  {  ?a  ?c  ?b  .    {   }  ?a  ?b   ?c   }");
     let pretty_query = indoc!(
         "SELECT * {
            ?a ?c ?b .
@@ -686,9 +682,7 @@ fn format_blank_node_property_list_path() {
 fn format_anon() {
     let ugly_query = indoc!(
         "SELECT * WHERE {
-            ?s ?p
-            [
-            ]
+         ?s ?p[]
          }
          "
     );

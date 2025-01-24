@@ -16,7 +16,7 @@ pub(super) fn handle_format_request(
     request: FormattingRequest,
 ) -> Result<FormattingResponse, ResponseError> {
     let (document, _tree) = server.state.get_state(request.get_document_uri())?;
-    let edits = format_pipeline(
+    let edits = format_document(
         &document,
         &mut server.tools.parser,
         request.get_options(),

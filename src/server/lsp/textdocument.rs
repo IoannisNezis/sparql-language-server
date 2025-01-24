@@ -51,15 +51,17 @@ impl TextDocumentItem {
 
     pub(crate) fn apply_text_edits(&mut self, mut text_edits: Vec<TextEdit>) {
         // info!("{}", text_edits);
-        // info!("____________________________________");
+        println!("____________________________________");
         // text_edits.sort_by_key(|edit| edit.range.start.clone());
         // for text_edit in text_edits.into_iter().rev() {
+        println!("init:\n|{}|", self.text);
         for text_edit in text_edits.into_iter() {
+            println!("edit:\n{}", text_edit.clone());
             self.apply_text_edit(text_edit);
-            // info!("After edit:\n{}", self.text);
+            println!("After edit:\n|{}|", self.text);
         }
         // info!("After edits:\n{}", self.text);
-        // info!("____________________________________");
+        println!("____________________________________");
     }
 
     pub fn get_full_range(&self) -> Range {
@@ -105,8 +107,8 @@ type Uri = String;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
 pub struct Position {
-    line: u32,
-    character: u32,
+    pub line: u32,
+    pub character: u32,
 }
 
 // NOTE: By default based on a UTF-16 string representation!
@@ -255,6 +257,10 @@ impl Range {
     pub(crate) fn overlaps(&self, other: &Range) -> bool {
         self.start < other.end && self.end > other.start
     }
+
+    fn is_empty(&self) -> bool {
+        self.start == self.end
+    }
 }
 
 impl Display for Range {
@@ -279,7 +285,7 @@ impl TextEdit {
     }
 
     pub fn overlaps(&self, other: &TextEdit) -> bool {
-        self.overlaps(other)
+        self.range.overlaps(&other.range)
     }
 
     pub fn from_text_document_content_change_event(
@@ -290,6 +296,10 @@ impl TextEdit {
             range: change_event.range,
             new_text: change_event.text,
         }
+    }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.range.is_empty() && self.new_text.is_empty()
     }
 }
 

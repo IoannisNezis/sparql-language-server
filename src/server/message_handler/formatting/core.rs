@@ -1,9 +1,9 @@
 use lazy_static::lazy_static;
-use std::{collections::HashSet, usize};
+use std::{collections::HashSet, str::CharIndices, usize};
 use streaming_iterator::StreamingIterator;
 
 use log::{error, info, warn};
-use tree_sitter::{Node, Parser, Query, QueryCursor, TreeCursor};
+use tree_sitter::{ffi::TSPoint, Node, Parser, Point, Query, QueryCursor, TreeCursor};
 
 use crate::server::{
     configuration::FormatSettings,
@@ -15,12 +15,13 @@ use crate::server::{
 
 use super::utils::KEYWORDS;
 
-pub(super) fn format_pipeline(
+pub(super) fn format_document(
     document: &TextDocumentItem,
     parser: &mut Parser,
     options: &FormattingOptions,
     settings: &FormatSettings,
 ) -> Vec<TextEdit> {
+    // TODO: Throw error dont panic!
     let indent_string = match settings.insert_spaces.unwrap_or(options.insert_spaces) {
         true => " ".repeat(settings.tab_size.unwrap_or(options.tab_size) as usize),
         false => "\t".to_string(),
@@ -34,15 +35,38 @@ pub(super) fn format_pipeline(
         "",
         settings,
     );
-    for x in &edits {
-        info!("{:?}", x);
-    }
-    edits.sort_by_key(|edit| edit.range.start.clone());
-    return edits.into_iter().rev().collect();
+    edits.sort_by(|a, b| b.range.start.cmp(&a.range.start));
+    let consolidated = consolidate_edits(edits);
+    // for x in &consolidated {
+    //     println!("{:?}", x);
+    // }
+    consolidated
+}
+
+fn consolidate_edits(edits: Vec<TextEdit>) -> Vec<TextEdit> {
+    let accumulator: Vec<TextEdit> = Vec::new();
+    edits.into_iter().fold(accumulator, |mut acc, edit| {
+        if edit.is_empty() {
+            return acc;
+        }
+        match acc.last_mut() {
+            Some(prev) if prev.range.start == edit.range.end => {
+                prev.new_text.insert_str(0, &edit.new_text);
+                prev.range.start = edit.range.start;
+            }
+            _ => {
+                acc.push(edit);
+            }
+        };
+        acc
+    })
 }
 
 lazy_static! {
-    static ref EXIT_EARLY: HashSet<&'static str> = HashSet::from(["STRING_LITERAL"]);
+    static ref BRACKETS_OPEN: HashSet<&'static str> = HashSet::from(["[", "(", "{"]);
+    static ref BRACKETS_CLOSE: HashSet<&'static str> = HashSet::from(["]", ")", "}"]);
+    static ref EXIT_EARLY: HashSet<&'static str> =
+        HashSet::from(["STRING_LITERAL", "PN_LOCAL", ":"]);
     static ref INC_INDENTATION: HashSet<&'static str> = HashSet::from([
         "BlankNodePropertyListPath",
         "GroupGraphPattern",
@@ -69,13 +93,15 @@ pub(super) fn collect_format_edits(
     }
 
     let indent_str = &indent_base.repeat(indentation);
-    let indent_str_small = match indentation {
-        0 => String::new(),
-        i => (&indent_base).repeat(i - 1),
-    };
-    let line_break = "\n".to_string() + &indent_str;
+    let indent_str_big = (&indent_base).repeat(indentation + 1);
+    // let indent_str_small = match indentation {
+    //     0 => String::new(),
+    //     i => (&indent_base).repeat(i - 1),
+    // };
+    let line_break = format!("\n{}", indent_str);
 
-    let line_break_small = "\n".to_string() + &indent_str_small;
+    // let line_break_small = format!("\n{}", indent_str_small);
+    let line_break_big = format!("\n{}", indent_str_big);
 
     let separator = match node.kind() {
         "unit"
@@ -107,6 +133,7 @@ pub(super) fn collect_format_edits(
         | "PathElt"
         | "PathPrimary"
         | "PN_PREFIX"
+        | "BlankNodePropertyListPath"
         | "TriplesBlock"
         | "TriplesTemplate"
         | "ConstructTriples"
@@ -114,9 +141,12 @@ pub(super) fn collect_format_edits(
         | "assignment" => "",
 
         "BaseDecl"
-        | "PrefixDecl"
         | "SelectClause"
+        | "PropertyListPathNotEmpty"
+        | "PrefixDecl"
+        | "SelectQuery"
         | "SubSelect"
+        | "WhereClause"
         | "DatasetClause"
         | "MinusGraphPattern"
         | "DefaultGraphClause"
@@ -159,13 +189,12 @@ pub(super) fn collect_format_edits(
         | "UsingClause"
         | "PropertyListNotEmpty"
         | "Path"
-        | "PropertyListPathNotEmpty"
         | "TriplesSameSubjectPath" => " ",
 
-        "PNAME_NS" | "IRIREF" | "VAR" | "INTEGER" | "DECIMAL" | "String" | "NIL"
-        | "BLANK_NODE_LABEL" | "RdfLiteral" | "PrefixedName" | "PathMod" | "(" | ")" | "{"
-        | "}" | "." | "," | ";" | "*" | "+" | "-" | "/" | "<" | ">" | "=" | ">=" | "<=" | "!="
-        | "||" | "&&" | "|" | "^" | "[" | "]" => "",
+        "SELECT" | "WHERE" | "PNAME_NS" | "IRIREF" | "VAR" | "INTEGER" | "DECIMAL" | "String"
+        | "NIL" | "BLANK_NODE_LABEL" | "RdfLiteral" | "PrefixedName" | "PathMod" | "(" | ")"
+        | "{" | "}" | "." | "," | ";" | "*" | "+" | "-" | "/" | "<" | ">" | "=" | ">=" | "<="
+        | "!=" | "||" | "&&" | "|" | "^" | "[" | "]" => "",
         _ => {
             log::warn!("unknown node: {}", node.kind());
             " "
@@ -214,10 +243,82 @@ pub(super) fn collect_format_edits(
             ),
             &line_break,
         )],
-        "SolutionModifier" => vec![TextEdit::new(
-            Range::from_ts_positions(node.start_position(), node.start_position()),
-            "",
-        )],
+        "unit" => {
+            let mut edits = vec![];
+            if let Some(child) = children.first() {
+                edits.push(TextEdit::new(
+                    Range::from_ts_positions(Point { row: 0, column: 0 }, child.start_position()),
+                    "",
+                ));
+            }
+            if let Some(child) = children.last() {
+                edits.push(TextEdit::new(
+                    Range::from_ts_positions(child.end_position(), node.end_position()),
+                    "",
+                ));
+            }
+
+            edits
+        }
+
+        "BlankNodePropertyListPath" => match children.get(1).map(|child| child.child_count() > 3) {
+            Some(false) => children
+                .iter()
+                .filter_map(|child| match child.kind() {
+                    "[" => Some(TextEdit::new(Range::from_node(*child), "[ ")),
+                    "]" => Some(TextEdit::new(Range::from_node(*child), " ]")),
+                    _ => None,
+                })
+                .collect(),
+            Some(true) => children
+                .iter()
+                .filter_map(|child| match child.kind() {
+                    "[" => Some(TextEdit::new(
+                        Range::from_node(*child),
+                        &format!("[{}", line_break_big),
+                    )),
+                    "]" => Some(TextEdit::new(
+                        Range::from_node(*child),
+                        &format!("{}]", line_break),
+                    )),
+                    _ => None,
+                })
+                .collect(),
+            None => vec![],
+        },
+        "PropertyListPathNotEmpty" => match node.parent() {
+            Some(parent) => match parent.kind() {
+                "BlankNodePropertyListPath" => {
+                    let mut edits: Vec<TextEdit> = children
+                        .iter()
+                        .filter_map(|child| match child.kind() {
+                            ";" => Some(TextEdit::new(
+                                Range::from_node(*child),
+                                &format!(";{}", &line_break[..line_break.len() - 1]),
+                            )),
+                            _ => None,
+                        })
+                        .collect();
+                    edits
+                }
+                "TriplesSameSubjectPath" => children
+                    .iter()
+                    .filter_map(|child| match child.kind() {
+                        ";" => Some(TextEdit::new(
+                            Range::from_node(*child),
+                            &format!(";{}", &line_break[..line_break.len() - 1]),
+                        )),
+                        _ => None,
+                    })
+                    .collect(),
+                _ => vec![],
+            },
+            None => vec![],
+        },
+        // "SolutionModifier" => vec![TextEdit::new(
+        //     Range::from_ts_positions(node.start_position(), node.start_position()),
+        //     "",
+        // )],
         "ConstructTemplate" => children
             .iter()
             .filter_map(|child| match child.kind() {
@@ -246,27 +347,41 @@ pub(super) fn collect_format_edits(
                 _ => None,
             })
             .collect(),
-        "GroupGraphPattern" => {
-            let mut edits = vec![];
-            if children.len() > 2 {
-                if let Some(child) = children.first() {
-                    if child.kind() == "{" {
-                        edits.push(TextEdit::new(
-                            Range::from_node(*child),
-                            &format!("{{{}{}", line_break, indent_base),
-                        ));
-                    }
-                }
-                if let Some(child) = children.last() {
-                    if child.kind() == "}" {
-                        edits.push(TextEdit::new(
-                            Range::from_node(*child),
-                            &format!("{}}}", line_break),
-                        ));
-                    }
-                }
-            }
-            edits
+
+        "GroupGraphPattern" if children.len() > 2 => {
+            children
+                .iter()
+                .filter_map(|child| match child.kind() {
+                    open if BRACKETS_OPEN.contains(open) => Some(TextEdit::new(
+                        Range::from_node(*child),
+                        &format!("{}{}{}", open, line_break, indent_base),
+                    )),
+                    close if BRACKETS_CLOSE.contains(close) => Some(TextEdit::new(
+                        Range::from_node(*child),
+                        &format!("{}{}", line_break, close),
+                    )),
+                    _ => None,
+                })
+                .collect()
+
+            // let mut edits = vec![];
+            // if let Some(child) = children.first() {
+            //     if BRACKETS_OPEN.contains(child.kind()) {
+            //         edits.push(TextEdit::new(
+            //             Range::from_node(*child),
+            //             &format!("{}{}{}", child.kind(), line_break, indent_base),
+            //         ));
+            //     }
+            // }
+            // if let Some(child) = children.last() {
+            //     if BRACKETS_CLOSE.contains(child.kind()) {
+            //         edits.push(TextEdit::new(
+            //             Range::from_node(*child),
+            //             &format!("{}{}", line_break, child.kind(),),
+            //         ));
+            //     }
+            // }
+            // edits
         }
         "ExpressionList" => children
             .iter()
@@ -306,9 +421,12 @@ pub(super) fn collect_format_edits(
         _ => vec![],
     };
 
-    let x = seperation_edits
+    if node.kind() == "ERROR" {
+        return recursive_edits.collect();
+    }
+    let x = recursive_edits
         .chain(details_edits.into_iter())
-        .chain(recursive_edits)
+        .chain(seperation_edits)
         .collect();
     return x;
 }
