@@ -114,7 +114,7 @@ fn get_all_uris(
             node.utf8_text(document.text.as_bytes())
                 .unwrap()
                 .to_string(),
-            Range::from_node(node),
+            Range::from_node(&node),
         ));
     }
     Ok(namespaces)
@@ -198,7 +198,7 @@ pub(crate) fn get_declared_prefixes(
             node.utf8_text(document.text.as_bytes())
                 .unwrap()
                 .to_string(),
-            Range::from_node(node),
+            Range::from_node(&node),
         ));
     }
     Ok(namespaces)
@@ -219,7 +219,7 @@ pub(crate) fn get_declared_uri_prefixes(
             node.utf8_text(document.text.as_bytes())
                 .unwrap()
                 .to_string(),
-            Range::from_node(node),
+            Range::from_node(&node),
         ));
     }
     Ok(namespaces)
@@ -240,7 +240,7 @@ pub fn get_used_prefixes(
             node.utf8_text(document.text.as_bytes())
                 .unwrap()
                 .to_string(),
-            Range::from_node(node),
+            Range::from_node(&node),
         ));
     }
     Ok(namespaces)

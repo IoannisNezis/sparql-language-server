@@ -51,17 +51,17 @@ impl TextDocumentItem {
 
     pub(crate) fn apply_text_edits(&mut self, mut text_edits: Vec<TextEdit>) {
         // info!("{}", text_edits);
-        println!("____________________________________");
+        // println!("____________________________________");
         // text_edits.sort_by_key(|edit| edit.range.start.clone());
         // for text_edit in text_edits.into_iter().rev() {
-        println!("init:\n|{}|", self.text);
+        // println!("init:\n|{}|", self.text);
         for text_edit in text_edits.into_iter() {
-            println!("edit:\n{}", text_edit.clone());
+            // println!("edit:\n{}", text_edit.clone());
             self.apply_text_edit(text_edit);
-            println!("After edit:\n|{}|", self.text);
+            // println!("After edit:\n|{}|", self.text);
         }
         // info!("After edits:\n{}", self.text);
-        println!("____________________________________");
+        // println!("____________________________________");
     }
 
     pub fn get_full_range(&self) -> Range {
@@ -87,6 +87,10 @@ impl TextDocumentItem {
                 Range::new(0, 0, (line_count - 1) as u32, last_line.len() as u32)
             }
         }
+    }
+
+    pub(crate) fn get_range(&self, range: &Range) -> Option<&str> {
+        self.text.get(range.to_byte_index_range(&self.text)?)
     }
 }
 
@@ -232,8 +236,14 @@ impl Range {
     }
 
     // pub (crate) fn from_ts_point(from: Point)
+    pub(crate) fn between(node1: &Node, node2: &Node) -> Range {
+        Self {
+            start: Position::from_ts_position(node1.end_position()),
+            end: Position::from_ts_position(node2.start_position()),
+        }
+    }
 
-    pub(crate) fn from_node(node: Node) -> Range {
+    pub(crate) fn from_node(node: &Node) -> Range {
         Self {
             start: Position::from_ts_position(node.start_position()),
             end: Position::from_ts_position(node.end_position()),

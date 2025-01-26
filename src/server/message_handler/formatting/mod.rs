@@ -7,7 +7,10 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::server::{
     configuration::Settings,
-    lsp::{errors::ResponseError, FormattingRequest, FormattingResponse},
+    lsp::{
+        errors::ResponseError, textdocument::TextDocumentItem, FormattingOptions,
+        FormattingRequest, FormattingResponse,
+    },
     Server,
 };
 
@@ -15,10 +18,10 @@ pub(super) fn handle_format_request(
     server: &mut Server,
     request: FormattingRequest,
 ) -> Result<FormattingResponse, ResponseError> {
-    let (document, _tree) = server.state.get_state(request.get_document_uri())?;
+    let (document, tree) = server.state.get_state(request.get_document_uri())?;
     let edits = format_document(
         &document,
-        &mut server.tools.parser,
+        tree,
         request.get_options(),
         &server.settings.format,
     );
@@ -34,9 +37,18 @@ pub fn format_raw(text: String) -> String {
             let tree = parser
                 .parse(text.as_bytes(), None)
                 .expect("could not parse");
-            let formatted_text =
-                format_parse1(&text, &mut tree.walk(), 0, "  ", "", &settings.format) + "\n";
-            return formatted_text;
+            let mut document = TextDocumentItem::new("tmp", &text);
+            let edits = format_document(
+                &document,
+                &tree,
+                &FormattingOptions {
+                    tab_size: 2,
+                    insert_spaces: true,
+                },
+                &settings.format,
+            );
+            document.apply_text_edits(edits);
+            return document.text;
         }
         Err(_) => panic!("Could not setup parser"),
     }
