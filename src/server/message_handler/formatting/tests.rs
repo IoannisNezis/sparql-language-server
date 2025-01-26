@@ -635,23 +635,21 @@ fn format_comments() {
          }
 
 
-         # unit comment 3"
+         # unit comment 3
+         "
     );
     let pretty_query = indoc!(
         "# unit comment 1
          PREFIX test: <test>
          # prolouge comment
-         PREFIX test: <test>
-         # unit comment 2
+         PREFIX test: <test> # unit comment 2
          SELECT ?a WHERE {
            # GroupGraphPattern comment 1
-           ?c <> ?a .
-           # Triples comment
+           ?c <> ?a . # Triples comment
            ?d <> ?b .
            ?b <> ?a .
            # GroupGraphPatternSub comment
-           {}
-           # GroupGraphPattern comment 2
+           {} # GroupGraphPattern comment 2
          }
          # unit comment 3
          "

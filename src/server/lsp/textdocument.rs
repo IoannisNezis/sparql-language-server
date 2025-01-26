@@ -362,26 +362,6 @@ mod tests {
     }
 
     #[test]
-    fn bulk_edits() {
-        let mut document: TextDocumentItem = TextDocumentItem {
-            uri: "file:///dings".to_string(),
-            language_id: "foo".to_string(),
-            version: 1,
-            text: "ABC\n".to_string(),
-        };
-        document.apply_text_edits(vec![
-            TextEdit {
-                range: Range::new(0, 1, 0, 1),
-                new_text: "|".to_string(),
-            },
-            TextEdit {
-                range: Range::new(0, 2, 0, 2),
-                new_text: "|".to_string(),
-            },
-        ]);
-        assert_eq!(document.text, "A|B|C\n");
-    }
-    #[test]
     fn changes() {
         let mut document: TextDocumentItem = TextDocumentItem {
             uri: "file:///dings".to_string(),

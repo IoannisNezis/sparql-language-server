@@ -55,45 +55,6 @@ pub(super) fn format_document(
     shorten
 }
 
-fn remove_redundent_edits(edits: Vec<TextEdit>, document: &TextDocumentItem) -> Vec<TextEdit> {
-    edits
-        .into_iter()
-        .filter(|edit| {
-            if let Some(slice) = document.get_range(&edit.range) {
-                if edit.new_text == slice {
-                    return false;
-                }
-            }
-            return true;
-        })
-        .collect()
-}
-
-fn consolidate_edits(edits: Vec<TextEdit>) -> Vec<TextEdit> {
-    let accumulator: Vec<TextEdit> = Vec::new();
-    edits.into_iter().fold(accumulator, |mut acc, edit| {
-        if edit.is_empty() {
-            return acc;
-        }
-        match acc.last_mut() {
-            Some(prev) if prev.range.start == edit.range.end => {
-                prev.new_text.insert_str(0, &edit.new_text);
-                prev.range.start = edit.range.start;
-            }
-            Some(prev)
-                if prev.range.start == prev.range.end && prev.range.start == edit.range.start =>
-            {
-                prev.new_text.push_str(&edit.new_text);
-                prev.range.end = edit.range.end;
-            }
-            _ => {
-                acc.push(edit);
-            }
-        };
-        acc
-    })
-}
-
 lazy_static! {
     static ref BRACKETS_OPEN: HashSet<&'static str> = HashSet::from(["[", "(", "{"]);
     static ref BRACKETS_CLOSE: HashSet<&'static str> = HashSet::from(["]", ")", "}"]);
@@ -144,7 +105,7 @@ pub(super) fn collect_format_edits(
 
     // NOTE: Step 2: Augmentation
     let augmentation_edits =
-        node_augmentation(&node, &children, indentation, indent_base, settings);
+        node_augmentation(&node, &children, indentation, indent_base, settings, text);
 
     // NOTE: Step 3: Recursion
     let recursive_edits = children.iter().flat_map(|node| {
@@ -173,15 +134,55 @@ pub(super) fn collect_format_edits(
     }
 }
 
+fn remove_redundent_edits(edits: Vec<TextEdit>, document: &TextDocumentItem) -> Vec<TextEdit> {
+    edits
+        .into_iter()
+        .filter(|edit| {
+            if let Some(slice) = document.get_range(&edit.range) {
+                if edit.new_text == slice {
+                    return false;
+                }
+            }
+            return true;
+        })
+        .collect()
+}
+
+fn consolidate_edits(edits: Vec<TextEdit>) -> Vec<TextEdit> {
+    let accumulator: Vec<TextEdit> = Vec::new();
+    edits.into_iter().fold(accumulator, |mut acc, edit| {
+        if edit.is_empty() {
+            return acc;
+        }
+        match acc.last_mut() {
+            Some(prev) if prev.range.start == edit.range.end => {
+                prev.new_text.insert_str(0, &edit.new_text);
+                prev.range.start = edit.range.start;
+            }
+            Some(prev)
+                if prev.range.start == prev.range.end && prev.range.start == edit.range.start =>
+            {
+                prev.new_text.push_str(&edit.new_text);
+                prev.range.end = edit.range.end;
+            }
+            _ => {
+                acc.push(edit);
+            }
+        };
+        acc
+    })
+}
+
 fn node_augmentation(
     node: &Node,
     children: &Vec<Node>,
     indentation: usize,
     indent_base: &str,
     settings: &FormatSettings,
+    text: &String,
 ) -> Vec<TextEdit> {
     let mut augmentations =
-        in_node_augmentation(node, children, indentation, indent_base, settings);
+        in_node_augmentation(node, children, indentation, indent_base, settings, text);
     augmentations.push(pre_node_augmentation(
         node,
         indentation,
@@ -203,6 +204,7 @@ fn in_node_augmentation(
     indentation: usize,
     indent_base: &str,
     settings: &FormatSettings,
+    text: &String,
 ) -> Vec<TextEdit> {
     match node.kind() {
         "unit" => match (children.first(), children.last()) {
@@ -218,6 +220,32 @@ fn in_node_augmentation(
             ],
             _ => vec![],
         },
+        "comment" => {
+            let mut edits = Vec::new();
+            if let Some(prev) = node.prev_sibling() {
+                let insert = match prev.end_position().row == node.start_position().row {
+                    true => " ",
+                    false => &get_linebreak(&indentation, indent_base),
+                };
+                edits.append(&mut vec![
+                    TextEdit::new(Range::from_node(node), ""),
+                    TextEdit::new(
+                        Range::from_ts_positions(prev.end_position(), prev.end_position()),
+                        &format!("{}{}", insert, node.utf8_text(text.as_bytes()).unwrap()),
+                    ),
+                ]);
+            }
+            if let Some(next) = node.next_sibling() {
+                edits.append(&mut vec![
+                    TextEdit::new(Range::from_node(node), ""),
+                    TextEdit::new(
+                        Range::from_ts_positions(next.start_position(), next.start_position()),
+                        &format!("{}", get_linebreak(&indentation, indent_base)),
+                    ),
+                ]);
+            }
+            return edits;
+        }
         "PropertyListPathNotEmpty" => match node.parent() {
             Some(parent) => match parent.kind() {
                 "BlankNodePropertyListPath" | "TriplesSameSubjectPath" => children
