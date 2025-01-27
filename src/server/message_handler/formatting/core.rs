@@ -6,7 +6,7 @@ use tree_sitter::{Node, Point, Tree, TreeCursor};
 use crate::server::{
     configuration::FormatSettings,
     lsp::{
-        textdocument::{Range, TextDocumentItem, TextEdit},
+        textdocument::{Position, Range, TextDocumentItem, TextEdit},
         FormattingOptions,
     },
 };
@@ -24,7 +24,7 @@ pub(super) fn format_document(
         true => " ".repeat(settings.tab_size.unwrap_or(options.tab_size) as usize),
         false => "\t".to_string(),
     };
-    let mut edits = collect_format_edits(
+    let (mut edits, comments) = collect_format_edits(
         &document.text,
         &mut tree.walk(),
         0,
@@ -33,26 +33,69 @@ pub(super) fn format_document(
         settings,
     );
     edits.sort_by(|a, b| b.range.start.cmp(&a.range.start));
-
-    // log::info!("---EDITS before---");
+    // log::info!("-------------Raw edits  ------------");
     // for x in &edits {
     //     log::info!("{}", x);
-    //     #[cfg(test)]
-    //     println!("{}", x);
     // }
 
-    let consolidated = consolidate_edits(edits);
-    let shorten = remove_redundent_edits(consolidated, document);
+    log::info!("{}", edits.len());
+    edits = insert_comments(edits, comments);
+    edits = consolidate_edits(edits);
+    edits = remove_redundent_edits(edits, document);
+    return edits;
+}
 
-    // log::info!("---EDITS after---");
-    // #[cfg(test)]
-    // println!("---EDITS after---");
-    // for x in &shorten {
-    //     log::info!("{}", x);
-    //     #[cfg(test)]
-    //     println!("{}", x);
-    // }
-    shorten
+fn insert_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<TextEdit> {
+    let mut comment_iter = comments.into_iter().peekable();
+    let mut drop_whitespace = false;
+    edits.into_iter().rev().fold(vec![], |mut acc, edit| {
+        while comment_iter
+            .peek()
+            .map(|comment| comment.position <= edit.range.start)
+            .unwrap_or(false)
+        {
+            log::info!("{:?}", edit);
+            log::info!(
+                "{:?} <- {}",
+                acc.last(),
+                comment_iter.peek().unwrap().position
+            );
+            acc.push(
+                comment_iter
+                    .next()
+                    .expect("comment itterator should not be empty")
+                    .to_edit(),
+            );
+            drop_whitespace = true;
+        }
+        acc.push(edit);
+        return acc;
+    })
+}
+
+struct CommentMarker {
+    text: String,
+    position: Position,
+    indentation_level: usize,
+    inline: bool,
+}
+
+impl CommentMarker {
+    fn to_edit(&self) -> TextEdit {
+        let prefix = match self.inline {
+            true => " ",
+            false => &get_linebreak(&self.indentation_level, "  "),
+        };
+        TextEdit::new(
+            Range::new(
+                self.position.line,
+                self.position.character,
+                self.position.line,
+                self.position.character,
+            ),
+            &format!("{}{}", prefix, &self.text),
+        )
+    }
 }
 
 lazy_static! {
@@ -69,23 +112,31 @@ lazy_static! {
         "QuadData",
     ]);
 }
-
-pub(super) fn collect_format_edits(
+pub(self) fn collect_format_edits(
     text: &String,
     cursor: &mut TreeCursor,
     indentation: usize,
     indent_base: &str,
     extra_indent: &str,
     settings: &FormatSettings,
-) -> Vec<TextEdit> {
+) -> (Vec<TextEdit>, Vec<CommentMarker>) {
     let node = cursor.node();
 
     // NOTE: Early exit
     if EXIT_EARLY.contains(node.kind()) {
-        return vec![];
+        return (vec![], vec![]);
     }
 
-    let children: Vec<Node> = node.children(cursor).collect();
+    // NOTE: Extract comments
+    let (children, mut comments): (Vec<Node>, Vec<CommentMarker>) =
+        node.children(cursor)
+            .fold((vec![], vec![]), |mut acc, node| {
+                match node.kind() {
+                    "comment" => acc.1.push(comment_marker(&node, text, indentation)),
+                    _ => acc.0.push(node),
+                };
+                return acc;
+            });
 
     // NOTE: Step 1: Separation
     let separator = get_separator(node.kind());
@@ -93,14 +144,14 @@ pub(super) fn collect_format_edits(
         children
             .iter()
             .zip(children.iter().skip(1))
-            .map(move |(node1, node2)| match separator {
-                Seperator::LineBreak => TextEdit::new(
+            .filter_map(move |(node1, node2)| match separator {
+                Seperator::LineBreak => Some(TextEdit::new(
                     Range::between(node1, node2),
                     &get_linebreak(&indentation, indent_base),
-                ),
-                Seperator::Space => TextEdit::new(Range::between(node1, node2), " "),
-                Seperator::Empty => TextEdit::new(Range::between(node1, node2), ""),
-                Seperator::Unknown => TextEdit::new(Range::between(node1, node2), " "),
+                )),
+                Seperator::Space => Some(TextEdit::new(Range::between(node1, node2), " ")),
+                Seperator::Empty => Some(TextEdit::new(Range::between(node1, node2), "")),
+                Seperator::Unknown => None,
             });
 
     // NOTE: Step 2: Augmentation
@@ -109,8 +160,7 @@ pub(super) fn collect_format_edits(
 
     // NOTE: Step 3: Recursion
     let recursive_edits = children.iter().flat_map(|node| {
-        // collect edits from childs
-        collect_format_edits(
+        let (edits, mut x) = collect_format_edits(
             text,
             &mut node.walk(),
             match INC_INDENTATION.contains(node.kind()) {
@@ -120,17 +170,34 @@ pub(super) fn collect_format_edits(
             indent_base,
             extra_indent,
             settings,
-        )
+        );
+        comments.append(&mut x);
+        return edits;
     });
 
-    if node.kind() == "ERROR" {
-        return recursive_edits.collect();
-    } else {
-        return seperation_edits
-            .into_iter()
-            .chain(recursive_edits)
-            .chain(augmentation_edits)
-            .collect();
+    let edits = seperation_edits
+        .into_iter()
+        .chain(recursive_edits)
+        .chain(augmentation_edits)
+        .collect();
+
+    return (edits, comments);
+}
+
+fn comment_marker(comment_node: &Node, text: &String, indentation: usize) -> CommentMarker {
+    assert_eq!(comment_node.kind(), "comment");
+    let attach = comment_node
+        .prev_sibling()
+        .or(comment_node.parent())
+        .expect("all comment nodes should have a parent");
+    CommentMarker {
+        text: comment_node
+            .utf8_text(text.as_bytes())
+            .expect("TSNode range should have a valid utf8 string")
+            .to_string(),
+        position: Position::from_point(attach.end_position()),
+        inline: attach.end_position().row == comment_node.start_position().row,
+        indentation_level: indentation,
     }
 }
 
@@ -210,16 +277,23 @@ fn in_node_augmentation(
         "unit" => match (children.first(), children.last()) {
             (Some(first), Some(last)) => vec![
                 TextEdit::new(
-                    Range::from_ts_positions(last.end_position(), node.end_position()),
+                    Range::from_ts_positions(Point { row: 0, column: 0 }, first.start_position()),
                     "",
                 ),
                 TextEdit::new(
-                    Range::from_ts_positions(Point { row: 0, column: 0 }, first.start_position()),
-                    "",
+                    Range::from_ts_positions(last.end_position(), node.end_position()),
+                    "\n",
                 ),
             ],
             _ => vec![],
         },
+        "ERROR" => children
+            .iter()
+            .filter_map(|child| match child.kind() {
+                "comment" => Some(TextEdit::new(Range::from_node(child), "")),
+                _ => None,
+            })
+            .collect(),
         "comment" => {
             let mut edits = Vec::new();
             if let Some(prev) = node.prev_sibling() {
@@ -386,13 +460,23 @@ fn pre_node_augmentation(
         | "Quads"
         | "DatasetClause"
         | "UNION" => &get_linebreak(&indentation, indent_base),
+
+        "Filter" => match node.prev_sibling() {
+            Some(prev)
+                if prev.kind() == "TriplesBlock"
+                    && prev.end_position().row == node.start_position().row =>
+            {
+                " "
+            }
+            Some(_prev) => &get_linebreak(&indentation, indent_base),
+            None => "",
+        },
         "QuadsNotTriples"
         | "GroupOrUnionGraphPattern"
         | "OptionalGraphPattern"
         | "MinusGraphPattern"
         | "GraphGraphPattern"
         | "ServiceGraphPattern"
-        | "Filter"
         | "Bind"
         | "InlineData"
         | "Update"

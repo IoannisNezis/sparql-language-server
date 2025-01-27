@@ -833,3 +833,28 @@ fn format_commas() {
     );
     format_and_compare(ugly_query, pretty_query);
 }
+
+#[test]
+fn format_filter_inline() {
+    let ugly_query = indoc!(
+        r#"SELECT * WHERE {
+           FILTER (?a)
+           ?a ?b ",,," .
+           FILTER (?a)
+           ?a ?b ?c . FILTER (?a)
+           ?a ?b ?c FILTER (?a)
+         }
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * WHERE {
+             FILTER (?a)
+             ?a ?b ",,," .
+             FILTER (?a)
+             ?a ?b ?c . FILTER (?a)
+             ?a ?b ?c FILTER (?a)
+           }
+           "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}

@@ -3,7 +3,7 @@ use std::{
     usize,
 };
 
-use log::{error, info};
+use log::error;
 use serde::{Deserialize, Serialize};
 
 use tree_sitter::{Node, Point};
@@ -49,19 +49,10 @@ impl TextDocumentItem {
         };
     }
 
-    pub(crate) fn apply_text_edits(&mut self, mut text_edits: Vec<TextEdit>) {
-        // info!("{}", text_edits);
-        // println!("____________________________________");
-        // text_edits.sort_by_key(|edit| edit.range.start.clone());
-        // for text_edit in text_edits.into_iter().rev() {
-        // println!("init:\n|{}|", self.text);
-        for text_edit in text_edits.into_iter() {
-            // println!("edit:\n{}", text_edit.clone());
-            self.apply_text_edit(text_edit);
-            // println!("After edit:\n|{}|", self.text);
-        }
-        // info!("After edits:\n{}", self.text);
-        // println!("____________________________________");
+    pub(crate) fn apply_text_edits(&mut self, text_edits: Vec<TextEdit>) {
+        text_edits
+            .into_iter()
+            .for_each(|text_edit| self.apply_text_edit(text_edit));
     }
 
     pub fn get_full_range(&self) -> Range {
@@ -128,6 +119,13 @@ impl Position {
         }
     }
 
+    pub(crate) fn from_point(position: Point) -> Position {
+        Position {
+            line: position.row as u32,
+            character: position.column as u32,
+        }
+    }
+
     /// Converts a UTF-16 based position within a string to a byte index.
     ///
     /// # Arguments
@@ -187,13 +185,6 @@ impl Position {
         }
         return Some(byte_index);
     }
-
-    fn from_ts_position(position: Point) -> Position {
-        Position {
-            line: position.row as u32,
-            character: position.column as u32,
-        }
-    }
 }
 
 impl PartialOrd for Position {
@@ -238,15 +229,15 @@ impl Range {
     // pub (crate) fn from_ts_point(from: Point)
     pub(crate) fn between(node1: &Node, node2: &Node) -> Range {
         Self {
-            start: Position::from_ts_position(node1.end_position()),
-            end: Position::from_ts_position(node2.start_position()),
+            start: Position::from_point(node1.end_position()),
+            end: Position::from_point(node2.start_position()),
         }
     }
 
     pub(crate) fn from_node(node: &Node) -> Range {
         Self {
-            start: Position::from_ts_position(node.start_position()),
-            end: Position::from_ts_position(node.end_position()),
+            start: Position::from_point(node.start_position()),
+            end: Position::from_point(node.end_position()),
         }
     }
 
@@ -259,11 +250,12 @@ impl Range {
 
     pub(crate) fn from_ts_positions(start_position: Point, end_position: Point) -> Range {
         Self {
-            start: Position::from_ts_position(start_position),
-            end: Position::from_ts_position(end_position),
+            start: Position::from_point(start_position),
+            end: Position::from_point(end_position),
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn overlaps(&self, other: &Range) -> bool {
         self.start < other.end && self.end > other.start
     }
@@ -294,6 +286,7 @@ impl TextEdit {
         }
     }
 
+    #[cfg(test)]
     pub fn overlaps(&self, other: &TextEdit) -> bool {
         self.range.overlaps(&other.range)
     }
