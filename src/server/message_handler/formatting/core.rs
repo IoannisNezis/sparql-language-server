@@ -33,46 +33,79 @@ pub(super) fn format_document(
         settings,
     );
     edits.sort_by(|a, b| b.range.start.cmp(&a.range.start));
-    // log::info!("-------------Raw edits  ------------");
-    // for x in &edits {
-    //     log::info!("{}", x);
-    // }
+    log::info!("-------------Raw edits------------");
+    for x in &edits {
+        log::info!("{}", x);
+    }
 
-    log::info!("{}", edits.len());
-    edits = insert_comments(edits, comments);
+    log::info!("-------------Comments------------");
+    for x in &comments {
+        log::info!("{:?}", x);
+    }
+    edits = merge_comments(edits, comments);
+    log::info!("-------------Merged Comments------------");
+    for x in &edits {
+        log::info!("{}", x);
+    }
     edits = consolidate_edits(edits);
     edits = remove_redundent_edits(edits, document);
     return edits;
 }
 
-fn insert_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<TextEdit> {
+fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<TextEdit> {
     let mut comment_iter = comments.into_iter().peekable();
-    let mut drop_whitespace = false;
-    edits.into_iter().rev().fold(vec![], |mut acc, edit| {
-        while comment_iter
-            .peek()
-            .map(|comment| comment.position <= edit.range.start)
-            .unwrap_or(false)
-        {
-            log::info!("{:?}", edit);
-            log::info!(
-                "{:?} <- {}",
-                acc.last(),
-                comment_iter.peek().unwrap().position
-            );
-            acc.push(
-                comment_iter
+    let mut merged_edits = edits
+        .into_iter()
+        .fold(vec![], |mut acc: Vec<TextEdit>, edit| {
+            while comment_iter
+                .peek()
+                .map(|comment| comment.position > edit.range.start)
+                .unwrap_or(false)
+            {
+                // NOTE:remove whitespace edits "after" comment edit
+                let mut prev = None;
+                if acc.last().is_some() {
+                    for idx in (0..acc.len()).rev() {
+                        // TODO: remove only consecutive edits
+                        match acc[idx].new_text.as_str() {
+                            // log::info!("checking: {}", acc[idx])
+                            " " => {
+                                prev = Some(acc.remove(idx));
+                            }
+                            "" => {}
+                            _ => {
+                                prev = Some(&acc[idx]);
+                                break;
+                            }
+                        };
+                    }
+                }
+                // NOTE: Insert comment edit
+                let comment = comment_iter
                     .next()
-                    .expect("comment itterator should not be empty")
-                    .to_edit(),
-            );
-            drop_whitespace = true;
-        }
-        acc.push(edit);
-        return acc;
-    })
+                    .expect("comment itterator should not be empty");
+                let mut comment_edit = comment.to_edit();
+                log::info!("checking: {:?}", prev);
+                if let Some(prev) = prev {
+                    log::info!("{:?}", prev);
+                    let suffix = match prev.new_text.chars().next() {
+                        Some('\n') => "",
+                        _ => &get_linebreak(&comment.indentation_level, "  "),
+                    };
+
+                    log::info!("suffix: \"{}\"", suffix);
+                    comment_edit.new_text += suffix;
+                }
+                acc.push(comment_edit);
+            }
+            acc.push(edit);
+            return acc;
+        });
+    comment_iter.for_each(|comment| merged_edits.push(comment.to_edit()));
+    return merged_edits;
 }
 
+#[derive(Debug)]
 struct CommentMarker {
     text: String,
     position: Position,
@@ -82,9 +115,13 @@ struct CommentMarker {
 
 impl CommentMarker {
     fn to_edit(&self) -> TextEdit {
-        let prefix = match self.inline {
-            true => " ",
-            false => &get_linebreak(&self.indentation_level, "  "),
+        let prefix = match (
+            self.position.line == 0 && self.position.character == 0,
+            self.inline,
+        ) {
+            (true, _) => "",
+            (false, true) => " ",
+            (false, false) => &get_linebreak(&self.indentation_level, "  "),
         };
         TextEdit::new(
             Range::new(
@@ -156,7 +193,7 @@ pub(self) fn collect_format_edits(
 
     // NOTE: Step 2: Augmentation
     let augmentation_edits =
-        node_augmentation(&node, &children, indentation, indent_base, settings, text);
+        node_augmentation(&node, &children, indentation, indent_base, settings);
 
     // NOTE: Step 3: Recursion
     let recursive_edits = children.iter().flat_map(|node| {
@@ -175,6 +212,16 @@ pub(self) fn collect_format_edits(
         return edits;
     });
 
+    // log::info!("------------{}-------------", node.kind());
+    // log::info!("Sepearation:");
+    // let sep: Vec<TextEdit> = seperation_edits.collect();
+    // for edit in &sep {
+    //     log::info!("{}", edit);
+    // }
+    // log::info!("Augmentation:");
+    // for edit in &augmentation_edits {
+    //     log::info!("{}", edit);
+    // }
     let edits = seperation_edits
         .into_iter()
         .chain(recursive_edits)
@@ -195,7 +242,10 @@ fn comment_marker(comment_node: &Node, text: &String, indentation: usize) -> Com
             .utf8_text(text.as_bytes())
             .expect("TSNode range should have a valid utf8 string")
             .to_string(),
-        position: Position::from_point(attach.end_position()),
+        position: match attach.kind() {
+            "unit" => Position::new(0, 0),
+            _ => Position::from_point(attach.end_position()),
+        },
         inline: attach.end_position().row == comment_node.start_position().row,
         indentation_level: indentation,
     }
@@ -246,17 +296,16 @@ fn node_augmentation(
     indentation: usize,
     indent_base: &str,
     settings: &FormatSettings,
-    text: &String,
 ) -> Vec<TextEdit> {
     let mut augmentations =
-        in_node_augmentation(node, children, indentation, indent_base, settings, text);
-    augmentations.push(pre_node_augmentation(
-        node,
-        indentation,
-        indent_base,
-        settings,
-    ));
-    augmentations.push(post_node_augmentation(node, indentation, indent_base));
+        in_node_augmentation(node, children, indentation, indent_base, settings);
+
+    if let Some(edits) = pre_node_augmentation(node, indentation, indent_base, settings) {
+        augmentations.push(edits);
+    }
+    if let Some(edits) = post_node_augmentation(node, indentation, indent_base) {
+        augmentations.push(edits);
+    }
 
     // NOTE: Capitalize keywords
     if KEYWORDS.contains(&node.kind()) && settings.capitalize_keywords {
@@ -271,7 +320,6 @@ fn in_node_augmentation(
     indentation: usize,
     indent_base: &str,
     settings: &FormatSettings,
-    text: &String,
 ) -> Vec<TextEdit> {
     match node.kind() {
         "unit" => match (children.first(), children.last()) {
@@ -294,32 +342,6 @@ fn in_node_augmentation(
                 _ => None,
             })
             .collect(),
-        "comment" => {
-            let mut edits = Vec::new();
-            if let Some(prev) = node.prev_sibling() {
-                let insert = match prev.end_position().row == node.start_position().row {
-                    true => " ",
-                    false => &get_linebreak(&indentation, indent_base),
-                };
-                edits.append(&mut vec![
-                    TextEdit::new(Range::from_node(node), ""),
-                    TextEdit::new(
-                        Range::from_ts_positions(prev.end_position(), prev.end_position()),
-                        &format!("{}{}", insert, node.utf8_text(text.as_bytes()).unwrap()),
-                    ),
-                ]);
-            }
-            if let Some(next) = node.next_sibling() {
-                edits.append(&mut vec![
-                    TextEdit::new(Range::from_node(node), ""),
-                    TextEdit::new(
-                        Range::from_ts_positions(next.start_position(), next.start_position()),
-                        &format!("{}", get_linebreak(&indentation, indent_base)),
-                    ),
-                ]);
-            }
-            return edits;
-        }
         "PropertyListPathNotEmpty" => match node.parent() {
             Some(parent) => match parent.kind() {
                 "BlankNodePropertyListPath" | "TriplesSameSubjectPath" => children
@@ -379,15 +401,23 @@ fn in_node_augmentation(
             .iter()
             .enumerate()
             .filter_map(|(idx, child)| match child.kind() {
-                "." => match idx {
-                    x if x < children.len() - 1 => Some(TextEdit::new(
-                        Range::from_node(&child),
-                        &format!(" .{}", get_linebreak(&indentation, indent_base)),
-                    )),
-                    _ => Some(TextEdit::new(Range::from_node(&child), " .")),
-                },
+                "." => {
+                    let mut edits = vec![TextEdit::new(
+                        Range::from_ts_positions(child.start_position(), child.start_position()),
+                        " ",
+                    )];
+                    if idx < children.len() - 1 {
+                        edits.push(TextEdit::new(
+                            Range::from_ts_positions(child.end_position(), child.end_position()),
+                            &get_linebreak(&indentation, indent_base),
+                        ));
+                    }
+
+                    return Some(edits);
+                }
                 _ => None,
             })
+            .flatten()
             .collect(),
         "ExpressionList" => children
             .iter()
@@ -452,24 +482,24 @@ fn pre_node_augmentation(
     indentation: usize,
     indent_base: &str,
     settings: &FormatSettings,
-) -> TextEdit {
+) -> Option<TextEdit> {
     let insert = match node.kind() {
         "GroupGraphPatternSub"
         | "ConstructTriples"
         | "SolutionModifier"
         | "Quads"
         | "DatasetClause"
-        | "UNION" => &get_linebreak(&indentation, indent_base),
+        | "UNION" => Some(get_linebreak(&indentation, indent_base)),
 
         "Filter" => match node.prev_sibling() {
             Some(prev)
                 if prev.kind() == "TriplesBlock"
                     && prev.end_position().row == node.start_position().row =>
             {
-                " "
+                Some(" ".to_string())
             }
-            Some(_prev) => &get_linebreak(&indentation, indent_base),
-            None => "",
+            Some(_prev) => Some(get_linebreak(&indentation, indent_base)),
+            None => None,
         },
         "QuadsNotTriples"
         | "GroupOrUnionGraphPattern"
@@ -483,20 +513,20 @@ fn pre_node_augmentation(
         | "Update1"
             if node.prev_sibling().is_some() =>
         {
-            &get_linebreak(&indentation, indent_base)
+            Some(get_linebreak(&indentation, indent_base))
         }
         "PropertyListPathNotEmpty" => match node.parent().map(|parent| parent.kind()) {
             Some("BlankNodePropertyListPath") if node.child_count() > 3 => {
-                &get_linebreak(&indentation, indent_base)
+                Some(get_linebreak(&indentation, indent_base))
             }
-            Some("BlankNodePropertyListPath") if node.child_count() <= 3 => " ",
-            _ => "",
+            Some("BlankNodePropertyListPath") if node.child_count() <= 3 => Some(" ".to_string()),
+            _ => None,
         },
         "TriplesTemplate" | "TriplesBlock" => match node.prev_sibling().map(|parent| parent.kind())
         {
             // Some("{") => &get_linebreak(&indentation, indent_base),
-            Some(x) if x != "." => &get_linebreak(&indentation, indent_base),
-            _ => "",
+            Some(x) if x != "." => Some(get_linebreak(&indentation, indent_base)),
+            _ => None,
         },
         "WhereClause" => {
             match settings.where_new_line
@@ -513,45 +543,48 @@ fn pre_node_augmentation(
                     .map(|sibling| sibling.kind() == "DatasetClause")
                     .unwrap_or(false)
             {
-                true => &get_linebreak(&indentation, indent_base),
-                false => " ",
+                true => Some(get_linebreak(&indentation, indent_base)),
+                false => Some(" ".to_string()),
             }
         }
-        "AS" => " ",
-        _ => "",
-    };
-    TextEdit::new(
+        "AS" => Some(" ".to_string()),
+        _ => None,
+    }?;
+    Some(TextEdit::new(
         Range::from_ts_positions(node.start_position(), node.start_position()),
-        insert,
-    )
+        &insert,
+    ))
 }
 
-fn post_node_augmentation(node: &Node, indentation: usize, indent_base: &str) -> TextEdit {
+fn post_node_augmentation(node: &Node, indentation: usize, indent_base: &str) -> Option<TextEdit> {
     let insert = match node.kind() {
-        "CONSTRUCT" | "UNION" => " ",
+        "CONSTRUCT" | "UNION" => Some(" ".to_string()),
         "PropertyListPathNotEmpty" => match node.parent().map(|parent| parent.kind()) {
-            Some("BlankNodePropertyListPath") if node.child_count() > 3 => {
-                &get_linebreak(&indentation.checked_sub(1).unwrap_or(0), indent_base)
-            }
-            Some("BlankNodePropertyListPath") if node.child_count() <= 3 => " ",
-            _ => "",
+            Some("BlankNodePropertyListPath") if node.child_count() > 3 => Some(get_linebreak(
+                &indentation.checked_sub(1).unwrap_or(0),
+                indent_base,
+            )),
+            Some("BlankNodePropertyListPath") if node.child_count() <= 3 => Some(" ".to_string()),
+            _ => None,
         },
         "TriplesTemplate" => match node.parent().map(|parent| parent.kind()) {
-            Some("TriplesTemplateBlock") => {
-                &get_linebreak(&indentation.checked_sub(1).unwrap_or(0), indent_base)
-            }
-            _ => "",
+            Some("TriplesTemplateBlock") => Some(get_linebreak(
+                &indentation.checked_sub(1).unwrap_or(0),
+                indent_base,
+            )),
+            _ => None,
         },
-        "GroupGraphPatternSub" | "ConstructTriples" | "Quads" => {
-            &get_linebreak(&indentation.checked_sub(1).unwrap_or(0), indent_base)
-        }
-        "AS" => " ",
-        _ => "",
-    };
-    TextEdit::new(
+        "GroupGraphPatternSub" | "ConstructTriples" | "Quads" => Some(get_linebreak(
+            &indentation.checked_sub(1).unwrap_or(0),
+            indent_base,
+        )),
+        "AS" => Some(" ".to_string()),
+        _ => None,
+    }?;
+    Some(TextEdit::new(
         Range::from_ts_positions(node.end_position(), node.end_position()),
-        insert,
-    )
+        &insert,
+    ))
 }
 
 fn get_linebreak(indentation: &usize, indent_base: &str) -> String {

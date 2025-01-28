@@ -586,19 +586,32 @@ fn format_modify() {
 
 #[test]
 fn format_property_paths() {
-    let ugly_query = indoc!(
+    let ugly_query1 = indoc!(
         "SELECT *
          WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S }
         "
     );
-    let pretty_query = indoc!(
+    let pretty_query1 = indoc!(
         "SELECT * WHERE {
            ?P foaf:givenName ?G ;
               foaf:surname ?S
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query1, pretty_query1);
+    let ugly_query2 = indoc!(
+        "SELECT *
+         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S; }
+        "
+    );
+    let pretty_query2 = indoc!(
+        "SELECT * WHERE {
+           ?P foaf:givenName ?G ;
+              foaf:surname ?S ;
+         }
+         "
+    );
+    format_and_compare(ugly_query2, pretty_query2);
 }
 
 #[test]
