@@ -62,40 +62,45 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
                 .map(|comment| comment.position > edit.range.start)
                 .unwrap_or(false)
             {
-                // NOTE:remove whitespace edits "after" comment edit
-                let mut prev = None;
-                if acc.last().is_some() {
-                    for idx in (0..acc.len()).rev() {
-                        // TODO: remove only consecutive edits
-                        match acc[idx].new_text.as_str() {
-                            // log::info!("checking: {}", acc[idx])
-                            " " => {
-                                prev = Some(acc.remove(idx));
-                            }
-                            "" => {}
-                            _ => {
-                                prev = Some(&acc[idx]);
-                                break;
-                            }
-                        };
-                    }
-                }
-                // NOTE: Insert comment edit
                 let comment = comment_iter
                     .next()
                     .expect("comment itterator should not be empty");
                 let mut comment_edit = comment.to_edit();
-                log::info!("checking: {:?}", prev);
-                if let Some(prev) = prev {
-                    log::info!("{:?}", prev);
-                    let suffix = match prev.new_text.chars().next() {
-                        Some('\n') => "",
-                        _ => &get_linebreak(&comment.indentation_level, "  "),
+                // NOTE:remove whitespace edits "after" comment edit
+                let mut iter = acc.iter().rev().zip(acc.iter().rev().skip(1));
+                let mut prune_end = acc.len();
+                while let Some((next, nextnext)) = iter.next() {
+                    match next.new_text.as_str() {
+                        " " | "" => {
+                            //NOTE: Pruning this edit
+                        }
+                        x => {
+                            log::info!("Canceling because of non whispace insert: {}", next);
+                            comment_edit.range.end = next.range.start.clone();
+                            if x.chars().next().map(|char| char != '\n').unwrap_or(false) {
+                                comment_edit.new_text +=
+                                    &get_linebreak(&comment.indentation_level, "  ");
+                            }
+                            break;
+                        }
                     };
-
-                    log::info!("suffix: \"{}\"", suffix);
-                    comment_edit.new_text += suffix;
+                    prune_end -= 1;
+                    if !(next.range.end == nextnext.range.start
+                        || (nextnext.range.start != nextnext.range.end
+                            && next.range.start == nextnext.range.start))
+                    {
+                        log::info!(
+                            "Canceling because of non consecutive inserts  {} - {}",
+                            next.range.end,
+                            nextnext.range.start
+                        );
+                        comment_edit.new_text += &get_linebreak(&comment.indentation_level, "  ");
+                        comment_edit.range.end = next.range.end.clone();
+                        break;
+                    }
                 }
+                // if let Some(last) = acc.get(prune_end) {}
+                acc = acc.split_at(prune_end).0.to_vec();
                 acc.push(comment_edit);
             }
             acc.push(edit);
