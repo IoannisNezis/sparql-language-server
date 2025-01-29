@@ -588,14 +588,15 @@ fn format_modify() {
 fn format_property_paths() {
     let ugly_query1 = indoc!(
         "SELECT *
-         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S;?p ?o }
+         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S;?p ?o;<><> }
         "
     );
     let pretty_query1 = indoc!(
         "SELECT * WHERE {
            ?P foaf:givenName ?G ;
               foaf:surname ?S ;
-              ?p ?o
+              ?p ?o ;
+              <> <>
          }
          "
     );
@@ -932,6 +933,23 @@ fn format_object_list() {
     format_and_compare(ugly_query, pretty_query);
 }
 
+#[test]
+fn format_comments_in_empty_ggp() {
+    let ugly_query = indoc!(
+        r#"SELECT * WHERE {
+           #a
+           }
+          "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * WHERE {
+             #a
+           }
+          "#
+    );
+
+    format_and_compare(ugly_query, pretty_query);
+}
 #[test]
 fn format_comments_in_strange_positions() {
     let ugly_query = indoc!(

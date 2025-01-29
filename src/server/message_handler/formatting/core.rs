@@ -81,7 +81,7 @@ pub(super) fn format_document(
         log::info!("{}", x);
     }
     log::info!("-------------merge comments------------");
-    edits = merge_comments(edits, comments);
+    edits = merge_comments(edits, comments, &document.text);
     for x in &edits {
         log::info!("{}", x);
     }
@@ -95,7 +95,11 @@ pub(super) fn format_document(
     return edits;
 }
 
-fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<TextEdit> {
+fn merge_comments(
+    edits: Vec<TextEdit>,
+    comments: Vec<CommentMarker>,
+    text: &String,
+) -> Vec<TextEdit> {
     let mut comment_iter = comments.into_iter().rev().peekable();
     let mut merged_edits = edits
         .into_iter()
@@ -125,6 +129,9 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
                             // NOTE: found non whitespace edit.
                             // Stop pruning edits.
                             // Add linebreak if edit does not lead with a newline.
+                            // WARNING: This could cause issues.
+                            // The amout of chars is neccesarily equal to the amout of
+                            // utf-8 bytes. Here i assume that all whispace is 1 utf8 byte long.
                             prune_end_index = next
                                 .new_text
                                 .chars()
@@ -146,7 +153,18 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
                         // NOTE: found non consecutive edits.
                         // Stop pruning edits.
                         // Add linebreak.
-                        comment_edit.new_text += &get_linebreak(&comment.indentation_level, "  ");
+                        let indent = match text.get(
+                            Range {
+                                start: next.range.end,
+                                end: nextnext.range.start,
+                            }
+                            .to_byte_index_range(text)
+                            .unwrap(),
+                        ) {
+                            Some("}") => comment.indentation_level.checked_sub(1).unwrap_or(0),
+                            _ => comment.indentation_level,
+                        };
+                        comment_edit.new_text += &get_linebreak(&indent, "  ");
                         comment_edit.range.end = next.range.end.clone();
                         break;
                     }
@@ -154,8 +172,10 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
                 acc = acc.split_at(prune_end).0.to_vec();
                 if let Some(last) = acc.last_mut() {
                     if last.range.start == comment_edit.range.end {
+                        // NOTE: Merge comment into last edit.
                         last.new_text = comment_edit.new_text + &last.new_text[prune_end_index..];
                     } else {
+                        // NOTE: trim leading whitspace of last edit
                         last.new_text = last.new_text[prune_end_index..].to_string();
                         acc.push(comment_edit);
                     }

@@ -100,7 +100,7 @@ pub struct TextDocumentIdentifier {
 
 type Uri = String;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Position {
     pub line: u32,
     pub character: u32,
