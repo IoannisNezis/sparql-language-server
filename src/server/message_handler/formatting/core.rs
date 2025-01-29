@@ -55,7 +55,6 @@ pub(super) fn format_document(
         false => "\t".to_string(),
     };
 
-    log::info!("-------------collect edits------------");
     let (mut edits, mut comments) = collect_format_edits(
         &document.text,
         &mut tree.walk(),
@@ -66,32 +65,10 @@ pub(super) fn format_document(
     );
     edits.sort_by(|a, b| b.range.start.cmp(&a.range.start));
     comments.sort_by(|a, b| a.position.cmp(&b.position));
-    log::info!("-------------Raw edits------------");
-    for x in &edits {
-        log::info!("{}", x);
-    }
-
-    log::info!("-------------Comments------------");
-    for x in comments.iter().rev() {
-        log::info!("{:?}", x);
-    }
-    log::info!("-------------consolidate------------");
     edits = consolidate_edits(edits);
-    for x in &edits {
-        log::info!("{}", x);
-    }
-    log::info!("-------------merge comments------------");
     edits = merge_comments(edits, comments, &document.text);
-    for x in &edits {
-        log::info!("{}", x);
-    }
     edits = consolidate_edits(edits);
-
-    log::info!("-------------remove redundant edits------------");
     edits = remove_redundent_edits(edits, document);
-    for x in &edits {
-        log::info!("{}", x);
-    }
     return edits;
 }
 
