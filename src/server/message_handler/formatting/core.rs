@@ -410,9 +410,7 @@ fn in_node_augmentation(
             let prop_list = children.last();
             match (subject, prop_list) {
                 (Some(subject), Some(prop_list))
-                    if subject.kind() == "VAR"
-                        && prop_list.kind() == "PropertyListPathNotEmpty"
-                        && prop_list.child_count() > 3 =>
+                    if prop_list.kind() == "PropertyListPathNotEmpty" =>
                 {
                     let insert = match settings.align_predicates {
                         true => &format!("{}", " ".repeat(get_column_width(subject) + 1)),

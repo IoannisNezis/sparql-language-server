@@ -34,8 +34,8 @@ serde_repr = "0.1.19"
 # tree-sitter
 tree-sitter = { package = "tree-sitter-c2rust", version = "0.24.3" }
 # tree-sitter = "0.24.3"
-tree-sitter-sparql = { version = "0.24" }
-# tree-sitter-sparql = { path = "../tree-sitter-sparql/" }
+# tree-sitter-sparql = { version = "0.24" }
+tree-sitter-sparql = { path = "../tree-sitter-sparql/" }
 streaming-iterator = "0.1.9"
 
 # cli

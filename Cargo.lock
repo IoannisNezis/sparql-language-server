@@ -2466,9 +2466,7 @@ checksum = "e8ddffe35a0e5eeeadf13ff7350af564c6e73993a24db62caee1822b185c2600"
 
 [[package]]
 name = "tree-sitter-sparql"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4ed50f6e7b99a046930fb4305dd6116222632e82600eebb01b5a2ffb4383ef3"
+version = "0.24.1"
 dependencies = [
  "cc",
  "tree-sitter-language",
