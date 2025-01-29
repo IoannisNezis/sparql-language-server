@@ -439,7 +439,7 @@ fn in_node_augmentation(
             })
             .flatten()
             .collect(),
-        "ExpressionList" => children
+        "ExpressionList" | "ObjectList" => children
             .iter()
             .filter_map(|child| match child.kind() {
                 "," => Some(TextEdit::new(Range::from_node(child), ", ")),

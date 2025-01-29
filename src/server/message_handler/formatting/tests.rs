@@ -910,3 +910,24 @@ fn format_trailing_comments() {
     );
     format_and_compare(ugly_query, pretty_query);
 }
+
+#[test]
+fn format_object_list() {
+    let ugly_query = indoc!(
+        r#"SELECT * WHERE {
+             <a>
+             <b>
+             <c>
+             ,
+             <d>
+           }
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * WHERE {
+             <a> <b> <c>, <d>
+           }
+         "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
