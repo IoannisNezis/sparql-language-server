@@ -308,7 +308,11 @@ impl TextEdit {
 
 impl Display for TextEdit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&format!("{} \"{}\"", self.range, self.new_text))
+        f.write_str(&format!(
+            "{} \"{}\"",
+            self.range,
+            self.new_text.replace(" ", "␣").replace("\n", "\\n")
+        ))
     }
 }
 

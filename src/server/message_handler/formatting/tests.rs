@@ -588,7 +588,7 @@ fn format_modify() {
 fn format_property_paths() {
     let ugly_query1 = indoc!(
         "SELECT *
-         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S; ?p ?o }
+         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S;?p ?o }
         "
     );
     let pretty_query1 = indoc!(
@@ -929,5 +929,34 @@ fn format_object_list() {
            }
          "#
     );
+    format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_comments_in_strange_positions() {
+    let ugly_query = indoc!(
+        r#"#asd
+           SELECT           # trailing comment
+            * 
+            # c1
+           WHERE #c2
+           {#3
+           }#c3
+
+               # non trailing comment
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"#asd
+           SELECT # trailing comment
+           *
+           # c1
+           WHERE #c2
+           { #3
+           } #c3
+           # non trailing comment
+         "#
+    );
+
     format_and_compare(ugly_query, pretty_query);
 }

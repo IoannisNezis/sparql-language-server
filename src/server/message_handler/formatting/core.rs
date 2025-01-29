@@ -66,25 +66,32 @@ pub(super) fn format_document(
     );
     edits.sort_by(|a, b| b.range.start.cmp(&a.range.start));
     comments.sort_by(|a, b| a.position.cmp(&b.position));
-    // log::info!("-------------Raw edits------------");
-    // for x in &edits {
-    //     log::info!("{}", x);
-    // }
+    log::info!("-------------Raw edits------------");
+    for x in &edits {
+        log::info!("{}", x);
+    }
 
     log::info!("-------------Comments------------");
-    for x in comments.iter().rev() {
-        log::info!("{:?}", x);
-    }
-    log::info!("-------------merge comments------------");
-    edits = merge_comments(edits, comments);
-    // log::info!("-------------Merged Comments------------");
-    // for x in &edits {
-    //     log::info!("{}", x);
+    // for x in comments.iter().rev() {
+    //     log::info!("{:?}", x);
     // }
     log::info!("-------------consolidate------------");
     edits = consolidate_edits(edits);
+    for x in &edits {
+        log::info!("{}", x);
+    }
+    log::info!("-------------merge comments------------");
+    edits = merge_comments(edits, comments);
+    for x in &edits {
+        log::info!("{}", x);
+    }
+    edits = consolidate_edits(edits);
+
     log::info!("-------------remove redundant edits------------");
     edits = remove_redundent_edits(edits, document);
+    for x in &edits {
+        log::info!("{}", x);
+    }
     return edits;
 }
 
@@ -105,15 +112,24 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
                 let mut comment_edit = comment.to_edit();
                 let mut iter = acc.iter().rev().zip(acc.iter().rev().skip(1));
                 let mut prune_end = acc.len();
+                let mut prune_end_index = 0;
                 while let Some((next, nextnext)) = iter.next() {
                     match next.new_text.as_str() {
-                        " " | "" => {
-                            //NOTE: Pruning this edit
+                        whitespace
+                            if whitespace.chars().all(|c| c.is_whitespace() && c != '\n') =>
+                        {
+                            //NOTE: Pruning this edit.
+                            //All Whitespace after a comment has to be removed.
                         }
                         x => {
                             // NOTE: found non whitespace edit.
                             // Stop pruning edits.
                             // Add linebreak if edit does not lead with a newline.
+                            prune_end_index = next
+                                .new_text
+                                .chars()
+                                .take_while(|c| c.is_whitespace() && c.is_ascii() && *c != '\n')
+                                .count();
                             comment_edit.range.end = next.range.start.clone();
                             if x.chars().next().map(|char| char != '\n').unwrap_or(false) {
                                 comment_edit.new_text +=
@@ -136,7 +152,16 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
                     }
                 }
                 acc = acc.split_at(prune_end).0.to_vec();
-                acc.push(comment_edit);
+                if let Some(last) = acc.last_mut() {
+                    if last.range.start == comment_edit.range.end {
+                        last.new_text = comment_edit.new_text + &last.new_text[prune_end_index..];
+                    } else {
+                        last.new_text = last.new_text[prune_end_index..].to_string();
+                        acc.push(comment_edit);
+                    }
+                } else {
+                    acc.push(comment_edit);
+                }
             }
             acc.push(edit);
             return acc;
@@ -269,8 +294,8 @@ pub(self) fn collect_format_edits(
 
     let edits = seperation_edits
         .into_iter()
-        .chain(recursive_edits)
         .chain(augmentation_edits)
+        .chain(recursive_edits)
         .collect();
 
     return (edits, comments);
