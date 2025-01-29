@@ -267,10 +267,12 @@ pub(self) fn collect_format_edits(
     // NOTE: Extract comments
     let (children, mut comments): (Vec<Node>, Vec<CommentMarker>) =
         node.children(cursor)
-            .fold((vec![], vec![]), |mut acc, node| {
-                match node.kind() {
-                    "comment" => acc.1.push(comment_marker(&node, text, indentation)),
-                    _ => acc.0.push(node),
+            .fold((vec![], vec![]), |mut acc, child| {
+                match child.kind() {
+                    "comment" if node.kind() != "ERROR" => {
+                        acc.1.push(comment_marker(&child, text, indentation))
+                    }
+                    _ => acc.0.push(child),
                 };
                 return acc;
             });
@@ -395,13 +397,6 @@ fn in_node_augmentation(
                 "",
             )],
         },
-        "ERROR" => children
-            .iter()
-            .filter_map(|child| match child.kind() {
-                "comment" => Some(TextEdit::new(Range::from_node(child), "")),
-                _ => None,
-            })
-            .collect(),
         "PropertyListPathNotEmpty" => match node.parent() {
             Some(parent) => match parent.kind() {
                 "BlankNodePropertyListPath" | "TriplesSameSubjectPath" => children

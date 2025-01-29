@@ -25,7 +25,7 @@ impl Default for FormatSettings {
             insert_spaces: None,
             tab_size: None,
             where_new_line: false,
-            filter_same_line: false,
+            filter_same_line: true,
         }
     }
 }
