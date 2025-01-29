@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.3.1]
+
+### Added
+
+- formatting inline format statements
+### Fixed
+
+- formatting input with comments at any location
+
 ## [0.3.0]
 
 ### Added
