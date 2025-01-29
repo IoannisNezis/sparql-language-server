@@ -3,9 +3,22 @@ use tree_sitter::Parser;
 
 use crate::server::{
     configuration::FormatSettings,
-    lsp::{textdocument::TextDocumentItem, FormattingOptions},
-    message_handler::formatting::format_textdoument,
+    lsp::{
+        textdocument::{TextDocumentItem, TextEdit},
+        FormattingOptions,
+    },
+    message_handler::formatting::format_document,
 };
+
+fn check_collision(edits: &Vec<TextEdit>) {
+    for idx1 in 0..edits.len() {
+        for idx2 in idx1 + 1..edits.len() {
+            let a = edits.get(idx1).unwrap();
+            let b = edits.get(idx2).unwrap();
+            assert!(!a.overlaps(&b));
+        }
+    }
+}
 
 fn format_and_compare(ugly_query: &str, pretty_query: &str) {
     let format_settings = FormatSettings::default();
@@ -17,11 +30,34 @@ fn format_and_compare(ugly_query: &str, pretty_query: &str) {
     parser
         .set_language(&tree_sitter_sparql::LANGUAGE.into())
         .unwrap();
-    let tree = parser.parse(ugly_query, None).unwrap();
+    // let tree = parser.parse(ugly_query, None).unwrap();
     let mut document = TextDocumentItem::new("testdocument", ugly_query);
-    let changes = format_textdoument(&document, &tree, &format_settings, &format_options);
-    document.apply_text_edits(changes);
+    let tree = parser
+        .parse(ugly_query.as_bytes(), None)
+        .expect("could not parse");
+    let edits = format_document(&document, &tree, &format_options, &format_settings);
+    check_collision(&edits);
+    document.apply_text_edits(edits);
     assert_eq!(document.text, pretty_query);
+}
+
+#[test]
+fn format_basic() {
+    let ugly_query = indoc!(
+        "SELECT * WHERE{
+           ?a ?c ?b .
+           ?a ?b ?c
+         }
+        "
+    );
+    let pretty_query = indoc!(
+        "SELECT * WHERE {
+           ?a ?c ?b .
+           ?a ?b ?c
+         }
+         "
+    );
+    format_and_compare(ugly_query, pretty_query);
 }
 #[test]
 fn format_prologue() {
@@ -30,7 +66,8 @@ fn format_prologue() {
               PReFIX   namespace:  <uri>
 
             prefix namespace:  <uri>
-            SELECT * {}\n"
+            SELECT * {}
+        "
     );
     let pretty_query = indoc!(
         "PREFIX namespace: <uri>
@@ -59,18 +96,14 @@ fn format_nesting_indentation() {
 }
 #[test]
 fn format_alternating_group_graph_pattern() {
-    let ugly_query = indoc!(
-        "SELECT * {
-             ?a ?c ?b .{
-             } ?a ?b ?c
-             }\n"
-    );
+    let ugly_query = indoc!("SELECT  *  {  ?a  ?c  ?b  .    {   }  ?a  ?b   ?c   }");
     let pretty_query = indoc!(
         "SELECT * {
            ?a ?c ?b .
            {}
            ?a ?b ?c
-         }\n"
+         }
+         "
     );
     format_and_compare(ugly_query, pretty_query);
 }
@@ -78,16 +111,63 @@ fn format_alternating_group_graph_pattern() {
 #[test]
 fn format_union() {
     let ugly_query = indoc!(
+        "SELECT * { ?a ?b ?c
+           {} UNION { {} UNION {} . ?a ?b ?c}
+             }
+        "
+    );
+    let pretty_query = indoc!(
         "SELECT * {
-           {} UNION { {} UNION {}}
+           ?a ?b ?c
+           {}
+           UNION {
+             {}
+             UNION {} .
+             ?a ?b ?c
+           }
+         }
+        "
+    );
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn format_surouding_whitespace() {
+    let ugly_query = indoc!(
+        "    
+          
+            
+           SELECT * WHERE {}
+    
+            
+                "
+    );
+    let pretty_query = indoc!("SELECT * WHERE {}\n");
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn format_select_clause() {
+    let ugly_query = indoc!("SELECT (   <>    as   ?a  )    ?a   {  }  \n");
+    let pretty_query = indoc!("SELECT (<> AS ?a) ?a {}\n");
+    format_and_compare(ugly_query, pretty_query)
+}
+
+#[test]
+fn format_optional() {
+    let ugly_query = indoc!(
+        "SELECT * {
+         ?s ?p ?o
+             Optional
+             {
+             ?a ?c ?c}
              }\n"
     );
     let pretty_query = indoc!(
         "SELECT * {
-           {}
-           UNION {
-             {}
-             UNION {}
+           ?s ?p ?o
+           OPTIONAL {
+             ?a ?c ?c
            }
          }
          "
@@ -96,24 +176,19 @@ fn format_union() {
 }
 
 #[test]
-fn format_select_clause() {
-    let ugly_query = indoc!("SELECT ( <> as ?a) ?a  *{}\n");
-    let pretty_query = indoc!("SELECT (<> AS ?a) ?a * {}\n");
-    format_and_compare(ugly_query, pretty_query)
-}
-
-#[test]
-fn format_optional() {
+fn format_service() {
     let ugly_query = indoc!(
         "SELECT * {
-             Optional
+         ?s ?p ?o
+             SERVICE <iri>
              {
              ?a ?c ?c}
              }\n"
     );
     let pretty_query = indoc!(
         "SELECT * {
-           OPTIONAL {
+           ?s ?p ?o
+           SERVICE <iri> {
              ?a ?c ?c
            }
          }
@@ -127,7 +202,8 @@ fn format_minus() {
     let ugly_query = indoc!(
         "SELECT * {
              {} MINUS {{} MINUS {}}
-             }\n"
+             }
+        "
     );
     let pretty_query = indoc!(
         "SELECT * {
@@ -147,7 +223,8 @@ fn format_graph() {
     let ugly_query = indoc!(
         "SELECT * {
              {} Graph ?a { ?a ?b  ?c}
-             }\n"
+             }
+        "
     );
     let pretty_query = indoc!(
         "SELECT * {
@@ -197,9 +274,10 @@ fn format_binary_expression() {
 
 #[test]
 fn format_bind() {
-    let ugly_query = indoc!("SELECT * {Bind (1 as ?var )}\n");
+    let ugly_query = indoc!("SELECT * {?s ?p ?o Bind (1 as ?var )}\n");
     let pretty_query = indoc!(
         "SELECT * {
+           ?s ?p ?o
            BIND (1 AS ?var)
          }
          "
@@ -232,14 +310,32 @@ fn format_values_clause() {
 #[test]
 fn format_solution_modifier() {
     let ugly_query = indoc!(
-        "SELECT * WHERE {}
+        "SELECT * WHERE {
+            {
+              SELECT * WHERE {
+              }
+             GROUP by ( 2 AS ?a )
+           HAVING (2 > 2) (1 > 2)
+            order BY ASC (?c)
+          OFfSET 3 LiMIT 3
+            }
+         }
            GROUP by ( 2 AS ?a )
           HAVING (2 > 2) (1 > 2)
             order BY ASC (?c)
          OFfSET 3 LiMIT 3"
     );
     let pretty_query = indoc!(
-        "SELECT * WHERE {}
+        "SELECT * WHERE {
+           {
+             SELECT * WHERE {}
+             GROUP BY (2 AS ?a)
+             HAVING (2 > 2) (1 > 2)
+             ORDER BY ASC(?c)
+             OFFSET 3
+             LIMIT 3
+           }
+         }
          GROUP BY (2 AS ?a)
          HAVING (2 > 2) (1 > 2)
          ORDER BY ASC(?c)
@@ -255,7 +351,8 @@ fn format_dataset_clause() {
     let ugly_query = indoc!(
         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
          SELECT  ?name ?x FROM    <http://example.org/foaf/aliceFoaf> FROM    <http://example.org/foaf/aliceFoaf>
-         WHERE   { ?x foaf:name ?name }\n"
+         WHERE   { ?x foaf:name ?name }
+        "
     );
     let pretty_query = indoc!(
         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -276,7 +373,8 @@ fn format_construct() {
         "PREFIX foaf:  <http://xmlns.com/foaf/0.1/>
          PREFIX vcard:  <http://www.w3.org/2001/vcard-rdf/3.0#>
          CONSTRUCT   { <http://example.org/person#Alice> vcard:FN ?name }
-         WHERE       { ?x foaf:name ?name } LIMIT 10"
+         WHERE       { ?x foaf:name ?name } LIMIT 10
+         "
     );
     let pretty_query = indoc!(
         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -298,11 +396,13 @@ fn format_describe() {
     let ugly_query = indoc!(
         "PREFIX foaf:   <http://xmlns.com/foaf/0.1/>
          DESCRIBE ?x ?y <http://example.org/>
-         WHERE    {?x foaf:knows ?y}\n"
+         WHERE    {?x foaf:knows ?y}
+         "
     );
     let pretty_query = indoc!(
         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-         DESCRIBE ?x ?y <http://example.org/> WHERE {
+         DESCRIBE ?x ?y <http://example.org/>
+         WHERE {
            ?x foaf:knows ?y
          }
          "
@@ -330,13 +430,15 @@ fn format_ask() {
 #[test]
 fn format_graph_management() {
     let ugly_query = indoc!(
-        "load SIlENT <a> INTO graph <c> ;
+        "PREFIX a: <> load SIlENT <a> INTO graph <c> ;
               LOAD    <b>; Clear Graph <b>          ;
           drop   graph<c>  ; ADD SILENT GRAPH <c> to DEFAULT ;MOVE default TO GRAPH <a> ;
-                  create graph <d>"
+                  create graph <d>
+        "
     );
     let pretty_query = indoc!(
-        "LOAD SILENT <a> INTO GRAPH <c> ;
+        "PREFIX a: <>
+         LOAD SILENT <a> INTO GRAPH <c> ;
          LOAD <b> ;
          CLEAR GRAPH <b> ;
          DROP GRAPH <c> ;
@@ -386,21 +488,24 @@ fn format_delete_data() {
     let ugly_query = indoc!(
         "delete   data
          {
-            ?a ?b ?c.
+            ?a ?b ?c. 
              graph <a> {
-         ?c ?b ?a }.
+         ?c ?b ?a.
+             ?c ?b ?a   }.
          ?d ?e ?f
          graph  ?d 
          {
          ?a ?d ?c
          }
          ?d ?e ?f
-         }\n"
+         }
+         "
     );
     let pretty_query = indoc!(
         "DELETE DATA {
            ?a ?b ?c .
            GRAPH <a> {
+             ?c ?b ?a .
              ?c ?b ?a
            } .
            ?d ?e ?f
@@ -456,7 +561,8 @@ fn format_modify() {
           } insert { ?x ?y ?z } using <a> using named <b> where
              {
          { ?a ?b ?c  .  }
-         }\n"
+         }
+         "
     );
     let pretty_query = indoc!(
         "WITH <a>
@@ -480,18 +586,34 @@ fn format_modify() {
 
 #[test]
 fn format_property_paths() {
-    let ugly_query = indoc!(
+    let ugly_query1 = indoc!(
         "SELECT *
-         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S }\n"
+         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S;?p ?o;<><> }
+        "
     );
-    let pretty_query = indoc!(
+    let pretty_query1 = indoc!(
         "SELECT * WHERE {
            ?P foaf:givenName ?G ;
-              foaf:surname ?S
+              foaf:surname ?S ;
+              ?p ?o ;
+              <> <>
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query1, pretty_query1);
+    let ugly_query2 = indoc!(
+        "SELECT *
+         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S; }
+        "
+    );
+    let pretty_query2 = indoc!(
+        "SELECT * WHERE {
+           ?P foaf:givenName ?G ;
+              foaf:surname ?S ;
+         }
+         "
+    );
+    format_and_compare(ugly_query2, pretty_query2);
 }
 
 #[test]
@@ -528,23 +650,21 @@ fn format_comments() {
          }
 
 
-         # unit comment 3"
+         # unit comment 3
+         "
     );
     let pretty_query = indoc!(
         "# unit comment 1
          PREFIX test: <test>
          # prolouge comment
-         PREFIX test: <test>
-         # unit comment 2
+         PREFIX test: <test> # unit comment 2
          SELECT ?a WHERE {
            # GroupGraphPattern comment 1
-           ?c <> ?a .
-           # Triples comment
+           ?c <> ?a . # Triples comment
            ?d <> ?b .
            ?b <> ?a .
            # GroupGraphPatternSub comment
-           {}
-           # GroupGraphPattern comment 2
+           {} # GroupGraphPattern comment 2
          }
          # unit comment 3
          "
@@ -653,9 +773,7 @@ fn format_blank_node_property_list_path() {
 fn format_anon() {
     let ugly_query = indoc!(
         "SELECT * WHERE {
-            ?s ?p
-            [
-            ]
+         ?s ?p[]
          }
          "
     );
@@ -668,6 +786,28 @@ fn format_anon() {
     format_and_compare(ugly_query, pretty_query);
 }
 
+#[test]
+fn format_comments_with_dots() {
+    let ugly_query = indoc!(
+        "SELECT * WHERE {
+           ?s # First comment sentence. Second comment sentence.
+           ?p
+           ?o
+           .
+           ?s ?p ?o
+         }
+         "
+    );
+    let pretty_query = indoc!(
+        "SELECT * WHERE {
+           ?s # First comment sentence. Second comment sentence.
+           ?p ?o .
+           ?s ?p ?o
+         }
+         "
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
 #[test]
 fn format_comments_property_lists() {
     let ugly_query = indoc!(
@@ -708,5 +848,142 @@ fn format_commas() {
           }
           "#
     );
+    format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_filter_inline() {
+    let ugly_query = indoc!(
+        r#"SELECT * WHERE {
+           FILTER (?a)
+           ?a ?b ",,," .
+           FILTER (?a)
+           ?a ?b ?c . FILTER (?a)
+           ?a ?b ?c FILTER (?a)
+         }
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * WHERE {
+             FILTER (?a)
+             ?a ?b ",,," .
+             FILTER (?a)
+             ?a ?b ?c . FILTER (?a)
+             ?a ?b ?c FILTER (?a)
+           }
+           "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_leading_comments() {
+    let ugly_query = indoc!(
+        r#"     # comment 1
+                
+            #comment 2
+           SELECT * WHERE {}
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"# comment 1
+           #comment 2
+           SELECT * WHERE {}
+         "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_trailing_comments() {
+    let ugly_query = indoc!(
+        r#"SELECT *          # trailing comment
+           WHERE {}
+
+               # non trailing comment
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * # trailing comment
+           WHERE {}
+           # non trailing comment
+         "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_object_list() {
+    let ugly_query = indoc!(
+        r#"SELECT * WHERE {
+             <a>
+             <b>
+             <c>
+             ,
+             <d>
+           }
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * WHERE {
+             <a> <b> <c>, <d>
+           }
+         "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_comments_in_empty_ggp() {
+    let ugly_query = indoc!(
+        r#"SELECT * WHERE {
+           #a
+           }
+          "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * WHERE {
+             #a
+           }
+          "#
+    );
+
+    format_and_compare(ugly_query, pretty_query);
+}
+#[test]
+fn format_comments_in_strange_positions() {
+    let ugly_query = indoc!(
+        r#"#asd
+           SELECT           # trailing comment
+            * 
+            # c1
+           WHERE #c2
+           {#3
+           }#c3
+
+               # non trailing comment
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"#asd
+           SELECT # trailing comment
+           *
+           # c1
+           WHERE #c2
+           { #3
+           } #c3
+           # non trailing comment
+         "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_group_concat() {
+    let ugly_query = indoc!(
+        r#"SELECT (  GROUP_CONCAT  (   ?a   ;   SEPARATOR  =  "bar"  )  AS ?x) WHERE {}
+          "#
+    );
+    let pretty_query = "SELECT (GROUP_CONCAT(?a; SEPARATOR=\"bar\") AS ?x) WHERE {}\n";
     format_and_compare(ugly_query, pretty_query);
 }
