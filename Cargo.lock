@@ -1532,6 +1532,7 @@ dependencies = [
  "env_logger",
  "getrandom",
  "indoc",
+ "lazy_static",
  "log",
  "log4rs",
  "notify",
@@ -2465,9 +2466,9 @@ checksum = "e8ddffe35a0e5eeeadf13ff7350af564c6e73993a24db62caee1822b185c2600"
 
 [[package]]
 name = "tree-sitter-sparql"
-version = "0.24.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4ed50f6e7b99a046930fb4305dd6116222632e82600eebb01b5a2ffb4383ef3"
+checksum = "df9b72030a4099b65785b130e4bdd5485e7d3e9162084fc8be1540b331ef4ddb"
 dependencies = [
  "cc",
  "tree-sitter-language",

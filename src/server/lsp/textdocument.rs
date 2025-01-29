@@ -22,7 +22,6 @@ pub struct TextDocumentItem {
 }
 
 impl TextDocumentItem {
-    #[cfg(test)]
     pub(crate) fn new(uri: &str, text: &str) -> TextDocumentItem {
         TextDocumentItem {
             uri: uri.to_string(),
@@ -51,9 +50,9 @@ impl TextDocumentItem {
     }
 
     pub(crate) fn apply_text_edits(&mut self, text_edits: Vec<TextEdit>) {
-        for text_edit in text_edits {
-            self.apply_text_edit(text_edit);
-        }
+        text_edits
+            .into_iter()
+            .for_each(|text_edit| self.apply_text_edit(text_edit));
     }
 
     pub fn get_full_range(&self) -> Range {
@@ -80,6 +79,10 @@ impl TextDocumentItem {
             }
         }
     }
+
+    pub(crate) fn get_range(&self, range: &Range) -> Option<&str> {
+        self.text.get(range.to_byte_index_range(&self.text)?)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -97,10 +100,10 @@ pub struct TextDocumentIdentifier {
 
 type Uri = String;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Position {
-    line: u32,
-    character: u32,
+    pub line: u32,
+    pub character: u32,
 }
 
 // NOTE: By default based on a UTF-16 string representation!
@@ -113,6 +116,13 @@ impl Position {
         Point {
             row: self.line as usize,
             column: self.character as usize,
+        }
+    }
+
+    pub(crate) fn from_point(position: Point) -> Position {
+        Position {
+            line: position.row as u32,
+            character: position.column as u32,
         }
     }
 
@@ -216,16 +226,18 @@ impl Range {
         }
     }
 
-    pub(crate) fn from_node(node: Node) -> Range {
+    // pub (crate) fn from_ts_point(from: Point)
+    pub(crate) fn between(node1: &Node, node2: &Node) -> Range {
         Self {
-            start: Position::new(
-                node.start_position().row as u32,
-                node.start_position().column as u32,
-            ),
-            end: Position::new(
-                node.end_position().row as u32,
-                node.end_position().column as u32,
-            ),
+            start: Position::from_point(node1.end_position()),
+            end: Position::from_point(node2.start_position()),
+        }
+    }
+
+    pub(crate) fn from_node(node: &Node) -> Range {
+        Self {
+            start: Position::from_point(node.start_position()),
+            end: Position::from_point(node.end_position()),
         }
     }
 
@@ -234,6 +246,26 @@ impl Range {
             (Some(from), Some(to)) => Some(from..to),
             _ => None,
         }
+    }
+
+    pub(crate) fn from_ts_positions(start_position: Point, end_position: Point) -> Range {
+        Self {
+            start: Position::from_point(start_position),
+            end: Position::from_point(end_position),
+        }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn overlaps(&self, other: &Range) -> bool {
+        self.start < other.end && self.end > other.start
+    }
+
+    fn is_empty(&self) -> bool {
+        self.start == self.end
+    }
+
+    pub(crate) fn contains(&self, position: Position) -> bool {
+        return self.start < position && position < self.end;
     }
 }
 
@@ -246,8 +278,8 @@ impl Display for Range {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TextEdit {
-    range: Range,
-    new_text: String,
+    pub range: Range,
+    pub new_text: String,
 }
 
 impl TextEdit {
@@ -256,6 +288,11 @@ impl TextEdit {
             range,
             new_text: new_text.to_string(),
         }
+    }
+
+    #[cfg(test)]
+    pub fn overlaps(&self, other: &TextEdit) -> bool {
+        self.range.overlaps(&other.range)
     }
 
     pub fn from_text_document_content_change_event(
@@ -267,11 +304,19 @@ impl TextEdit {
             new_text: change_event.text,
         }
     }
+
+    pub(crate) fn is_empty(&self) -> bool {
+        self.range.is_empty() && self.new_text.is_empty()
+    }
 }
 
 impl Display for TextEdit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&format!("{} \"{}\"", self.range, self.new_text))
+        f.write_str(&format!(
+            "{} \"{}\"",
+            self.range,
+            self.new_text.replace(" ", "␣").replace("\n", "\\n")
+        ))
     }
 }
 
@@ -475,5 +520,39 @@ mod tests {
         };
         document.apply_text_edits(changes);
         assert_eq!(document.text, "hello world\n");
+    }
+
+    #[test]
+    fn overlap() {
+        let a = Range::new(1, 1, 2, 2); //      >----<
+        let b = Range::new(1, 10, 2, 5); //        >----<
+        let c = Range::new(0, 0, 1, 10); //   >--<
+        let d = Range::new(1, 10, 2, 6); //         >-<
+        let e = Range::new(2, 6, 2, 7); //                >--<
+
+        assert!(a.overlaps(&b));
+        assert!(a.overlaps(&c));
+        assert!(a.overlaps(&d));
+        assert!(!a.overlaps(&e));
+
+        assert!(b.overlaps(&a));
+        assert!(!b.overlaps(&c));
+        assert!(b.overlaps(&d));
+        assert!(!b.overlaps(&e));
+
+        assert!(c.overlaps(&a));
+        assert!(!c.overlaps(&b));
+        assert!(!c.overlaps(&d));
+        assert!(!c.overlaps(&e));
+
+        assert!(d.overlaps(&a));
+        assert!(d.overlaps(&b));
+        assert!(!d.overlaps(&c));
+        assert!(!d.overlaps(&e));
+
+        assert!(!e.overlaps(&a));
+        assert!(!e.overlaps(&b));
+        assert!(!e.overlaps(&c));
+        assert!(!e.overlaps(&d));
     }
 }

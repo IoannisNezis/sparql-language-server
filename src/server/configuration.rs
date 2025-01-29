@@ -12,6 +12,7 @@ pub struct FormatSettings {
     pub insert_spaces: Option<bool>,
     pub tab_size: Option<u8>,
     pub where_new_line: bool,
+    pub filter_same_line: bool,
 }
 
 impl Default for FormatSettings {
@@ -24,6 +25,7 @@ impl Default for FormatSettings {
             insert_spaces: None,
             tab_size: None,
             where_new_line: false,
+            filter_same_line: true,
         }
     }
 }
