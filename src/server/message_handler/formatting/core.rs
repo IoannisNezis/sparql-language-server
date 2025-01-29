@@ -567,7 +567,8 @@ fn pre_node_augmentation(
         "Filter" => match node.prev_sibling() {
             Some(prev)
                 if prev.kind() == "TriplesBlock"
-                    && prev.end_position().row == node.start_position().row =>
+                    && prev.end_position().row == node.start_position().row
+                    && settings.filter_same_line =>
             {
                 Some(" ".to_string())
             }
@@ -672,6 +673,9 @@ enum Seperator {
 }
 
 fn get_separator(kind: &str) -> Seperator {
+    if KEYWORDS.contains(&kind) {
+        return Seperator::Unknown;
+    }
     match kind {
         "unit" | "Prologue" | "SolutionModifier" | "LimitOffsetClauses" => Seperator::LineBreak,
 
@@ -766,6 +770,7 @@ fn get_separator(kind: &str) -> Seperator {
         | "{" | "}" | "." | "," | ";" | "*" | "+" | "-" | "/" | "<" | ">" | "=" | ">=" | "<="
         | "!=" | "||" | "&&" | "|" | "^" | "[" | "]" => Seperator::Empty,
 
+        "ERROR" => Seperator::Unknown,
         _ => {
             log::warn!("unknown node: {}", kind);
             Seperator::Unknown

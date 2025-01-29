@@ -136,6 +136,7 @@ capitalize_keywords = true
 insert_spaces = true
 tab_size = 2
 where_new_line = false
+filter_same_line = true
 ```
 
 # 🌐 use in web
