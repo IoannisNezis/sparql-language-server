@@ -62,11 +62,11 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
                 .map(|comment| comment.position > edit.range.start)
                 .unwrap_or(false)
             {
+                // NOTE: remove all **consecutive** whitespace edits after comment edit.
                 let comment = comment_iter
                     .next()
                     .expect("comment itterator should not be empty");
                 let mut comment_edit = comment.to_edit();
-                // NOTE:remove whitespace edits "after" comment edit
                 let mut iter = acc.iter().rev().zip(acc.iter().rev().skip(1));
                 let mut prune_end = acc.len();
                 while let Some((next, nextnext)) = iter.next() {
@@ -75,7 +75,9 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
                             //NOTE: Pruning this edit
                         }
                         x => {
-                            log::info!("Canceling because of non whispace insert: {}", next);
+                            // NOTE: found non whitespace edit.
+                            // Stop pruning edits.
+                            // Add linebreak if edit does not lead with a newline.
                             comment_edit.range.end = next.range.start.clone();
                             if x.chars().next().map(|char| char != '\n').unwrap_or(false) {
                                 comment_edit.new_text +=
@@ -89,24 +91,27 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
                         || (nextnext.range.start != nextnext.range.end
                             && next.range.start == nextnext.range.start))
                     {
-                        log::info!(
-                            "Canceling because of non consecutive inserts  {} - {}",
-                            next.range.end,
-                            nextnext.range.start
-                        );
+                        // NOTE: found non consecutive edits.
+                        // Stop pruning edits.
+                        // Add linebreak.
                         comment_edit.new_text += &get_linebreak(&comment.indentation_level, "  ");
                         comment_edit.range.end = next.range.end.clone();
                         break;
                     }
                 }
-                // if let Some(last) = acc.get(prune_end) {}
                 acc = acc.split_at(prune_end).0.to_vec();
                 acc.push(comment_edit);
             }
             acc.push(edit);
             return acc;
         });
-    comment_iter.for_each(|comment| merged_edits.push(comment.to_edit()));
+    // NOTE: all remaining comments are attached to 0:0.
+    comment_iter.rev().for_each(|comment| {
+        let comment_edit = comment.to_edit();
+        merged_edits.push(TextEdit::new(Range::new(0, 0, 0, 0), "\n"));
+        merged_edits.push(comment_edit);
+    });
+
     return merged_edits;
 }
 
@@ -386,6 +391,7 @@ fn in_node_augmentation(
                     let mut cursor = prop_list.walk();
                     prop_list
                         .children(&mut cursor)
+                        .filter(|child| child.kind() != "comment")
                         .step_by(3)
                         .skip(1)
                         .map(|child| {
