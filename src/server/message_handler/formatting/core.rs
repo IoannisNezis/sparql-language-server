@@ -477,6 +477,23 @@ fn in_node_augmentation(
             })
             .flatten()
             .collect(),
+        "assignment" => children
+            .iter()
+            .filter_map(|child| match child.kind() {
+                "AS" => Some(vec![
+                    TextEdit::new(
+                        Range::from_ts_positions(child.end_position(), child.end_position()),
+                        " ",
+                    ),
+                    TextEdit::new(
+                        Range::from_ts_positions(child.start_position(), child.start_position()),
+                        " ",
+                    ),
+                ]),
+                _ => None,
+            })
+            .flatten()
+            .collect(),
         "ExpressionList" | "ObjectList" => children
             .iter()
             .filter_map(|child| match child.kind() {
@@ -616,7 +633,6 @@ fn pre_node_augmentation(
                 false => Some(" ".to_string()),
             }
         }
-        "AS" => Some(" ".to_string()),
         _ => None,
     }?;
     Some(TextEdit::new(
@@ -647,7 +663,6 @@ fn post_node_augmentation(node: &Node, indentation: usize, indent_base: &str) ->
             &indentation.checked_sub(1).unwrap_or(0),
             indent_base,
         )),
-        "AS" => Some(" ".to_string()),
         _ => None,
     }?;
     Some(TextEdit::new(
