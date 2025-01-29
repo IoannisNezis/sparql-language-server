@@ -351,12 +351,16 @@ fn in_node_augmentation(
             Some(parent) => match parent.kind() {
                 "BlankNodePropertyListPath" | "TriplesSameSubjectPath" => children
                     .iter()
-                    .filter_map(|child| match child.kind() {
-                        ";" => {
+                    .enumerate()
+                    .filter_map(|(idx, child)| match child.kind() {
+                        ";" if idx < children.len() - 1 => {
                             let linebreak = get_linebreak(&indentation, indent_base);
                             Some(TextEdit::new(
-                                Range::from_node(&child),
-                                &format!(";{}", &linebreak[..linebreak.len() - 1]),
+                                Range::from_ts_positions(
+                                    child.end_position(),
+                                    child.end_position(),
+                                ),
+                                &linebreak[..linebreak.len() - 1],
                             ))
                         }
                         _ => None,
@@ -382,16 +386,16 @@ fn in_node_augmentation(
                     let mut cursor = prop_list.walk();
                     prop_list
                         .children(&mut cursor)
+                        .step_by(3)
                         .skip(1)
-                        .filter_map(|child| match child.kind() {
-                            "Path" => Some(TextEdit::new(
+                        .map(|child| {
+                            TextEdit::new(
                                 Range::from_ts_positions(
                                     child.start_position(),
                                     child.start_position(),
                                 ),
                                 insert,
-                            )),
-                            _ => None,
+                            )
                         })
                         .collect()
                 }

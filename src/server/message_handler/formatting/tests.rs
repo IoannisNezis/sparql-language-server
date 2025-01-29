@@ -588,13 +588,14 @@ fn format_modify() {
 fn format_property_paths() {
     let ugly_query1 = indoc!(
         "SELECT *
-         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S }
+         WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S; ?p ?o }
         "
     );
     let pretty_query1 = indoc!(
         "SELECT * WHERE {
            ?P foaf:givenName ?G ;
-              foaf:surname ?S
+              foaf:surname ?S ;
+              ?p ?o
          }
          "
     );
