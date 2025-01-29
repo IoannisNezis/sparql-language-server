@@ -13,6 +13,36 @@ use crate::server::{
 
 use super::utils::KEYWORDS;
 
+#[derive(Debug)]
+struct CommentMarker {
+    text: String,
+    position: Position,
+    indentation_level: usize,
+    inline: bool,
+}
+
+impl CommentMarker {
+    fn to_edit(&self) -> TextEdit {
+        let prefix = match (
+            self.position.line == 0 && self.position.character == 0,
+            self.inline,
+        ) {
+            (true, _) => "",
+            (false, true) => " ",
+            (false, false) => &get_linebreak(&self.indentation_level, "  "),
+        };
+        TextEdit::new(
+            Range::new(
+                self.position.line,
+                self.position.character,
+                self.position.line,
+                self.position.character,
+            ),
+            &format!("{}{}", prefix, &self.text),
+        )
+    }
+}
+
 pub(super) fn format_document(
     document: &TextDocumentItem,
     tree: &Tree,
@@ -24,7 +54,9 @@ pub(super) fn format_document(
         true => " ".repeat(settings.tab_size.unwrap_or(options.tab_size) as usize),
         false => "\t".to_string(),
     };
-    let (mut edits, comments) = collect_format_edits(
+
+    log::info!("-------------collect edits------------");
+    let (mut edits, mut comments) = collect_format_edits(
         &document.text,
         &mut tree.walk(),
         0,
@@ -33,27 +65,31 @@ pub(super) fn format_document(
         settings,
     );
     edits.sort_by(|a, b| b.range.start.cmp(&a.range.start));
-    log::info!("-------------Raw edits------------");
-    for x in &edits {
-        log::info!("{}", x);
-    }
+    comments.sort_by(|a, b| a.position.cmp(&b.position));
+    // log::info!("-------------Raw edits------------");
+    // for x in &edits {
+    //     log::info!("{}", x);
+    // }
 
     log::info!("-------------Comments------------");
-    for x in &comments {
+    for x in comments.iter().rev() {
         log::info!("{:?}", x);
     }
+    log::info!("-------------merge comments------------");
     edits = merge_comments(edits, comments);
-    log::info!("-------------Merged Comments------------");
-    for x in &edits {
-        log::info!("{}", x);
-    }
+    // log::info!("-------------Merged Comments------------");
+    // for x in &edits {
+    //     log::info!("{}", x);
+    // }
+    log::info!("-------------consolidate------------");
     edits = consolidate_edits(edits);
+    log::info!("-------------remove redundant edits------------");
     edits = remove_redundent_edits(edits, document);
     return edits;
 }
 
 fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<TextEdit> {
-    let mut comment_iter = comments.into_iter().peekable();
+    let mut comment_iter = comments.into_iter().rev().peekable();
     let mut merged_edits = edits
         .into_iter()
         .fold(vec![], |mut acc: Vec<TextEdit>, edit| {
@@ -106,7 +142,7 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
             return acc;
         });
     // NOTE: all remaining comments are attached to 0:0.
-    comment_iter.rev().for_each(|comment| {
+    comment_iter.for_each(|comment| {
         let comment_edit = comment.to_edit();
         merged_edits.push(TextEdit::new(Range::new(0, 0, 0, 0), "\n"));
         merged_edits.push(comment_edit);
@@ -115,34 +151,43 @@ fn merge_comments(edits: Vec<TextEdit>, comments: Vec<CommentMarker>) -> Vec<Tex
     return merged_edits;
 }
 
-#[derive(Debug)]
-struct CommentMarker {
-    text: String,
-    position: Position,
-    indentation_level: usize,
-    inline: bool,
+fn remove_redundent_edits(edits: Vec<TextEdit>, document: &TextDocumentItem) -> Vec<TextEdit> {
+    edits
+        .into_iter()
+        .filter(|edit| {
+            if let Some(slice) = document.get_range(&edit.range) {
+                if edit.new_text == slice {
+                    return false;
+                }
+            }
+            return true;
+        })
+        .collect()
 }
 
-impl CommentMarker {
-    fn to_edit(&self) -> TextEdit {
-        let prefix = match (
-            self.position.line == 0 && self.position.character == 0,
-            self.inline,
-        ) {
-            (true, _) => "",
-            (false, true) => " ",
-            (false, false) => &get_linebreak(&self.indentation_level, "  "),
+fn consolidate_edits(edits: Vec<TextEdit>) -> Vec<TextEdit> {
+    let accumulator: Vec<TextEdit> = Vec::new();
+    edits.into_iter().fold(accumulator, |mut acc, edit| {
+        if edit.is_empty() {
+            return acc;
+        }
+        match acc.last_mut() {
+            Some(prev) if prev.range.start == edit.range.end => {
+                prev.new_text.insert_str(0, &edit.new_text);
+                prev.range.start = edit.range.start;
+            }
+            Some(prev)
+                if prev.range.start == prev.range.end && prev.range.start == edit.range.start =>
+            {
+                prev.new_text.push_str(&edit.new_text);
+                prev.range.end = edit.range.end;
+            }
+            _ => {
+                acc.push(edit);
+            }
         };
-        TextEdit::new(
-            Range::new(
-                self.position.line,
-                self.position.character,
-                self.position.line,
-                self.position.character,
-            ),
-            &format!("{}{}", prefix, &self.text),
-        )
-    }
+        acc
+    })
 }
 
 lazy_static! {
@@ -222,16 +267,6 @@ pub(self) fn collect_format_edits(
         return edits;
     });
 
-    // log::info!("------------{}-------------", node.kind());
-    // log::info!("Sepearation:");
-    // let sep: Vec<TextEdit> = seperation_edits.collect();
-    // for edit in &sep {
-    //     log::info!("{}", edit);
-    // }
-    // log::info!("Augmentation:");
-    // for edit in &augmentation_edits {
-    //     log::info!("{}", edit);
-    // }
     let edits = seperation_edits
         .into_iter()
         .chain(recursive_edits)
@@ -243,8 +278,14 @@ pub(self) fn collect_format_edits(
 
 fn comment_marker(comment_node: &Node, text: &String, indentation: usize) -> CommentMarker {
     assert_eq!(comment_node.kind(), "comment");
-    let attach = comment_node
-        .prev_sibling()
+    let mut maybe_attach = Some(*comment_node);
+    while let Some(kind) = maybe_attach.map(|node| node.kind()) {
+        match kind {
+            "comment" => maybe_attach = maybe_attach.map(|node| node.prev_sibling()).flatten(),
+            _ => break,
+        }
+    }
+    let attach = maybe_attach
         .or(comment_node.parent())
         .expect("all comment nodes should have a parent");
     CommentMarker {
@@ -259,45 +300,6 @@ fn comment_marker(comment_node: &Node, text: &String, indentation: usize) -> Com
         inline: attach.end_position().row == comment_node.start_position().row,
         indentation_level: indentation,
     }
-}
-
-fn remove_redundent_edits(edits: Vec<TextEdit>, document: &TextDocumentItem) -> Vec<TextEdit> {
-    edits
-        .into_iter()
-        .filter(|edit| {
-            if let Some(slice) = document.get_range(&edit.range) {
-                if edit.new_text == slice {
-                    return false;
-                }
-            }
-            return true;
-        })
-        .collect()
-}
-
-fn consolidate_edits(edits: Vec<TextEdit>) -> Vec<TextEdit> {
-    let accumulator: Vec<TextEdit> = Vec::new();
-    edits.into_iter().fold(accumulator, |mut acc, edit| {
-        if edit.is_empty() {
-            return acc;
-        }
-        match acc.last_mut() {
-            Some(prev) if prev.range.start == edit.range.end => {
-                prev.new_text.insert_str(0, &edit.new_text);
-                prev.range.start = edit.range.start;
-            }
-            Some(prev)
-                if prev.range.start == prev.range.end && prev.range.start == edit.range.start =>
-            {
-                prev.new_text.push_str(&edit.new_text);
-                prev.range.end = edit.range.end;
-            }
-            _ => {
-                acc.push(edit);
-            }
-        };
-        acc
-    })
 }
 
 fn node_augmentation(
@@ -343,7 +345,10 @@ fn in_node_augmentation(
                     "\n",
                 ),
             ],
-            _ => vec![],
+            _ => vec![TextEdit::new(
+                Range::from_ts_positions(Point { row: 0, column: 0 }, node.end_position()),
+                "",
+            )],
         },
         "ERROR" => children
             .iter()

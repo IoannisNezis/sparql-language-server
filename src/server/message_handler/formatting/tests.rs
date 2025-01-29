@@ -794,14 +794,16 @@ fn format_comments_with_dots() {
            ?o
            .
            ?s ?p ?o
-         }"
+         }
+         "
     );
     let pretty_query = indoc!(
         "SELECT * WHERE {
            ?s # First comment sentence. Second comment sentence.
            ?p ?o .
            ?s ?p ?o
-         }"
+         }
+         "
     );
     format_and_compare(ugly_query, pretty_query);
 }
@@ -869,6 +871,42 @@ fn format_filter_inline() {
              ?a ?b ?c FILTER (?a)
            }
            "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_leading_comments() {
+    let ugly_query = indoc!(
+        r#"     # comment 1
+                
+            #comment 2
+           SELECT * WHERE {}
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"# comment 1
+           #comment 2
+           SELECT * WHERE {}
+         "#
+    );
+    format_and_compare(ugly_query, pretty_query);
+}
+
+#[test]
+fn format_trailing_comments() {
+    let ugly_query = indoc!(
+        r#"SELECT *          # trailing comment
+           WHERE {}
+
+               # non trailing comment
+         "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * # trailing comment
+           WHERE {}
+           # non trailing comment
+         "#
     );
     format_and_compare(ugly_query, pretty_query);
 }
