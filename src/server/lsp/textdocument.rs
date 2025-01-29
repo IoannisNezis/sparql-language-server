@@ -263,6 +263,10 @@ impl Range {
     fn is_empty(&self) -> bool {
         self.start == self.end
     }
+
+    pub(crate) fn contains(&self, position: Position) -> bool {
+        return self.start < position && position < self.end;
+    }
 }
 
 impl Display for Range {

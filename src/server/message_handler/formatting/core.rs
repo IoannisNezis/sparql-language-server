@@ -72,9 +72,9 @@ pub(super) fn format_document(
     }
 
     log::info!("-------------Comments------------");
-    // for x in comments.iter().rev() {
-    //     log::info!("{:?}", x);
-    // }
+    for x in comments.iter().rev() {
+        log::info!("{:?}", x);
+    }
     log::info!("-------------consolidate------------");
     edits = consolidate_edits(edits);
     for x in &edits {
@@ -103,7 +103,7 @@ fn merge_comments(
     let mut comment_iter = comments.into_iter().rev().peekable();
     let mut merged_edits = edits
         .into_iter()
-        .fold(vec![], |mut acc: Vec<TextEdit>, edit| {
+        .fold(vec![], |mut acc: Vec<TextEdit>, mut edit| {
             while comment_iter
                 .peek()
                 .map(|comment| comment.position > edit.range.start)
@@ -114,6 +114,30 @@ fn merge_comments(
                     .next()
                     .expect("comment itterator should not be empty");
                 let mut comment_edit = comment.to_edit();
+
+                // NOTE: In some Edgecase the comment is in the middle of a (consolidated)
+                // edit. For Example
+                // Select #comment
+                // * {}
+                // In this case this edits needs to be split into two edits.
+                if edit.range.contains(comment.position) {
+                    let (before, after) = edit.new_text.split_at(
+                        // BUG: This is very questionable!
+                        // What happens if the charakters not 1 utd8 byte long?
+                        // What happens if the new_text is mutliple lines long?
+                        (comment.position.character - edit.range.start.character) as usize,
+                    );
+                    acc.push(TextEdit::new(
+                        Range {
+                            start: comment.position,
+                            end: edit.range.end,
+                        },
+                        after,
+                    ));
+                    edit.new_text = before.to_string();
+                    edit.range.end = comment.position;
+                }
+
                 let mut iter = acc.iter().rev().zip(acc.iter().rev().skip(1));
                 let mut prune_end = acc.len();
                 let mut prune_end_index = 0;
