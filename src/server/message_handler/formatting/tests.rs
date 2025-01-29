@@ -975,6 +975,15 @@ fn format_comments_in_strange_positions() {
            # non trailing comment
          "#
     );
+    format_and_compare(ugly_query, pretty_query);
+}
 
+#[test]
+fn format_group_concat() {
+    let ugly_query = indoc!(
+        r#"SELECT (  GROUP_CONCAT  (   ?a   ;   SEPARATOR  =  "bar"  )  AS ?x) WHERE {}
+          "#
+    );
+    let pretty_query = "SELECT (GROUP_CONCAT(?a; SEPARATOR=\"bar\") AS ?x) WHERE {}\n";
     format_and_compare(ugly_query, pretty_query);
 }

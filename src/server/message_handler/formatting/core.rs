@@ -123,8 +123,7 @@ fn merge_comments(
                 if edit.range.contains(comment.position) {
                     let (before, after) = edit.new_text.split_at(
                         // BUG: This is very questionable!
-                        // What happens if the charakters not 1 utd8 byte long?
-                        // What happens if the new_text is mutliple lines long?
+                        // What happens if the charakters not 1 utd8 m
                         (comment.position.character - edit.range.start.character) as usize,
                     );
                     acc.push(TextEdit::new(
@@ -548,6 +547,16 @@ fn in_node_augmentation(
                 _ => None,
             })
             .flatten()
+            .collect(),
+        "Aggregate" => children
+            .iter()
+            .filter_map(|child| match child.kind() {
+                ";" => Some(TextEdit::new(
+                    Range::from_ts_positions(child.end_position(), child.end_position()),
+                    " ",
+                )),
+                _ => None,
+            })
             .collect(),
         "Update" => children
             .iter()
