@@ -7,46 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [0.3.1]
+
+## [Unreleased]
+
+## [0.3.1] - 2025-01-30
 
 ### Added
 
 - formatting inline format statements
+
 ### Fixed
 
 - formatting input with comments at any location
 
-## [0.3.0]
+## [0.3.0] - 2025-01-20
 
 ### Added
 
 - new format option "check": dont write anything, just check if it would
 
-## [0.2.4]
+## [0.2.4] - 2025-01-20
 
 ### Fixed
 
 - add trailing newline when formatting with format cli subcommand
 
-## [0.2.3]
+## [0.2.3] - 2025-01-12
 
 ### Fixed
 
 - positions are (by default) utf-16 based, i changed the implementation to respect this
 
-## [0.2.2] 2025-01-09
+## [0.2.2] - 2025-01-09
 
 ### Fixed
 
 - handle textdocuments-edits with utf-8 characters
 
-## [0.2.1] 2025-01-09
+## [0.2.1] - 2025-01-09
 
 ### Fixed
 
 - formatting strings with commas
 
-## [0.2.0] 2025-01-09
+## [0.2.0] - 2025-01-09
 
 ### Added
 
