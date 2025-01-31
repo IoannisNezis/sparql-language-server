@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- stability test for formatter
+
 ### Fixed
 
 - fixed typo in diagnostic
