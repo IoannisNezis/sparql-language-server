@@ -10,6 +10,11 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+
+### Fixed
+
+- fixed typo in diagnostic
+
 ## [0.3.1] - 2025-01-30
 
 ### Added

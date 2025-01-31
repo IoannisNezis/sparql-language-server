@@ -56,7 +56,7 @@ fn undeclared_prefix(
         severity: DiagnosticSeverity::Error,
         source: Some("qlue-ls (undeclared_prefix)".to_string()),
         code: Some(DiagnosticCode::String("undeclared-prefix".to_string())),
-        message: format!("'{}' is used here, but was never delared\n", prefix),
+        message: format!("'{}' is used here, but was never declared\n", prefix),
         data: Some(LSPAny::String(prefix)),
     }))
 }
