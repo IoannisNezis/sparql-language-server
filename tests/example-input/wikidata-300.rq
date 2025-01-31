@@ -1,0 +1,6 @@
+SELECT DISTINCT ?item ?itemLabel WHERE {
+  ?item wdt:P31 wd:Q11424.
+  ?item wdt:P577 ?pubdate.
+  FILTER((?pubdate >= "2017-01-01T00:00:00Z"^^xsd:dateTime) && (?pubdate <= "2017-12-31T00:00:00Z"^^xsd:dateTime))
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

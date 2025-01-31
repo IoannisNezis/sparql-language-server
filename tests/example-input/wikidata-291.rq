@@ -1,0 +1,13 @@
+SELECT ?director ?director_label ?films ?sitelinks ((?films * ?sitelinks) as ?rank)
+WHERE {
+  {SELECT ?director (count(DISTINCT ?film) as ?films) (count(DISTINCT ?sitelink) as ?sitelinks)
+     WHERE {
+       ?director wdt:P106 wd:Q2526255 .         # has "film director" as occupation
+     ?film wdt:P57 ?director .            # get all films directed by the director
+       ?sitelink schema:about ?director .       # get all the sitelinks about the director
+       } GROUP BY ?director }
+SERVICE wikibase:label {
+  bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". # Get label if it exists
+?director rdfs:label ?director_label }
+} ORDER BY DESC(?rank)
+LIMIT 100

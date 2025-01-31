@@ -1,0 +1,17 @@
+# Humans who died on August 25 2001 according to the English Wikipedia
+SELECT ?item ?articlename ?itemLabel ?itemDescription ?sl
+WHERE {
+   VALUES ?dod {"+2001-08-25"^^xsd:dateTime}
+    ?dod ^wdt:P570 ?item .
+    ?item wikibase:sitelinks ?sl .
+    ?item ^schema:about ?article .
+    ?article schema:isPartOf <https://en.wikipedia.org/>;
+    schema:name ?articlename .
+  SERVICE wikibase:label
+    {
+      bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+      ?item rdfs:label ?itemLabel .
+      ?item schema:description ?itemDescription .
+    }
+  BIND(REPLACE(?itemLabel, "^.*(?<! [Vv][ao]n| [Dd][aeiu]| [Dd][e][lns]| [Ll][ae]) (?!([SJ]r\\.?|[XVI]+)$)", "") AS ?sortname)
+} ORDER BY ASC(UCASE(?sortname)) ASC(UCASE(?itemLabel))

@@ -1,0 +1,8 @@
+#properties used to link to instances of technical standard
+SELECT DISTINCT ?propertyRel ?propertyItem ?propertyItemLabel WHERE
+{
+   ?item ?propertyRel ?standard.
+   ?standard wdt:P31 wd:Q317623.
+   ?propertyItem wikibase:directClaim ?propertyRel
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

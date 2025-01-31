@@ -1,0 +1,9 @@
+#defaultView:Map
+SELECT ?city ?cityLabel ?coordinates
+WHERE
+{
+   VALUES ?highway {wd:Q327162 }
+   ?highway wdt:P2789 ?city .
+    ?city wdt:P625 ?coordinates .
+   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

@@ -1,0 +1,18 @@
+#Elevations over 8000
+#Displays units
+#Last updated 2021-04-25
+
+SELECT ?elevation ?unit ?unitLabel ?item ?itemLabel ?itemDescription ?coord
+WHERE
+{
+  ?item wdt:P2044 ?elevation .
+  # this could be dropped, but is included to speed it up
+  filter(?elevation > 8000)
+
+  ?item p:P2044 [ a wikibase:BestRank ; psv:P2044 [ wikibase:quantityAmount ?elevation ; wikibase:quantityUnit ?unit ] ] .
+
+  ?item wdt:P625 ?coord .
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY DESC(?elevation)

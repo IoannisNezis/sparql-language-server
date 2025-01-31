@@ -1,0 +1,12 @@
+SELECT ?town ?townLabel ?gate ?gateLabel where {
+  # Municipalities within the province
+  ?muni wdt:P31 wd:Q2039348;
+        wdt:P131 wd:Q705.
+  # Instances of city gate located within any of the municipalities
+  ?gate wdt:P31 wd:Q82117;
+        wdt:P131 ?muni;
+  # The Location (usually Town) that the gate is in
+        wdt:P276 ?town.
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "nl". }
+}

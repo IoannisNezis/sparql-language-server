@@ -1,0 +1,10 @@
+SELECT DISTINCT ?mediaType (COUNT (?ff) as ?count)
+WHERE
+{
+  ?ff wdt:P31/wdt:P279* wd:Q235557.
+  ?ff wdt:P1163 ?mediaType.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+
+GROUP BY ?mediaType
+ORDER BY DESC (?count)

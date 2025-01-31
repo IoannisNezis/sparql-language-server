@@ -1,0 +1,10 @@
+#title: Lexemes describing a color
+# By Vesihiisi
+
+SELECT ?l ?lemma ?languageLabel WHERE {
+  ?l dct:language ?language;
+     wikibase:lemma ?lemma;
+     wdt:P31 wd:Q376431.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY ?languageLabel

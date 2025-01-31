@@ -1,0 +1,13 @@
+SELECT DISTINCT ?item ?itemLabel ?countryLabel ?placeLabel (YEAR(?date) as ?year) ?coords ?image
+WHERE
+{
+  ?item wdt:P31/wdt:P279* wd:Q860861 .
+  ?item wdt:P170 wd:Q123454 .
+  OPTIONAL { ?item wdt:P17 ?country . }
+  OPTIONAL { ?item wdt:P131 ?place . }
+  OPTIONAL { ?item wdt:P571 ?date . }
+  OPTIONAL { ?item wdt:P625 ?coords . }
+  OPTIONAL { ?item wdt:P18 ?image . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" . }
+}
+ORDER BY ?itemLabel ?placeLabel

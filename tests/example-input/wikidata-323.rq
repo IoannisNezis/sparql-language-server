@@ -1,0 +1,10 @@
+#defaultView:Timeline
+SELECT ?album ?performerLabel ?albumLabel ?publication_date WHERE {
+  VALUES ?performer {
+      wd:Q936474
+      wd:Q207898
+    }
+   ?album wdt:P175 ?performer ;
+      wdt:P577 ?publication_date .
+   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}

@@ -1,0 +1,11 @@
+SELECT ?animal ?animalLabel ?died ?mannerOfDeathLabel ?image
+WHERE
+{
+  ?animal wdt:P31/wdt:P31 wd:Q16521; # instance of some taxon (does not include human)
+          wdt:P509 ?mannerOfDeath.
+  ?mannerOfDeath wdt:P279* wd:Q8454. # some subclass of capital punishment
+  OPTIONAL { ?animal wdt:P570 ?died. }
+  OPTIONAL { ?animal wdt:P18 ?image. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY ?died

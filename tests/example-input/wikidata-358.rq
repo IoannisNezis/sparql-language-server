@@ -1,0 +1,11 @@
+#defaultView:Map
+SELECT ?creator ?creatorLabel ?placebirthLabel ?geoloc where {
+  ?item wdt:P31/wdt:P279* wd:Q838948 . # œuvre d’art et ss-classe
+  ?item wdt:P608 wd:Q20980830 . # du projet Europeana 280
+  ?item wdt:P170 ?creator . # créateur
+  ?creator wdt:P19 ?placebirth . # lieu de naissance
+  ?placebirth wdt:P625 ?geoloc . #coordonnées géo
+  SERVICE wikibase:label {
+       bd:serviceParam wikibase:language "fr,es,en" .
+    }
+}

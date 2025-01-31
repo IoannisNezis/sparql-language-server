@@ -1,0 +1,8 @@
+#title: Wikidata items with English spoken text audio
+SELECT DISTINCT ?item ?itemLabel WHERE {
+  ?item p:P989 ?statement .# check for spoken text audio statement and exclude those without P989 value
+  ?statement ps:P989 ?spokentext .
+  ?statement pq:P407 ?lang . # get qualifier language
+  FILTER(?lang = wd:Q1860) . # filter for EN
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

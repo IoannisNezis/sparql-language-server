@@ -1,0 +1,11 @@
+# This gives a list of classes whose super-classes include both "physical entity" and "non-physical entity".
+# One of these is, presumably, in error.
+# Due to timeouts, it is necessary to explicitly limit the depth.
+SELECT DISTINCT ?item ?itemLabel WHERE {
+  {
+    SELECT ?item WHERE { ?item (wdt:P279/wdt:P279/(wdt:P279?)/(wdt:P279?)/(wdt:P279?)) wd:Q7048977, wd:Q112276019. }
+    LIMIT 300
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en,es,fr,de,mul". }
+}
+ORDER BY (?itemLabel)

@@ -1,0 +1,14 @@
+SELECT DISTINCT ?item ?itemLabel ?positionLabel ?picture ?start ?end ?days WHERE
+{
+  ?item wdt:P31 wd:Q5 ;
+        p:P39 ?position_statement .
+  ?position_statement ps:P39 ?position ;
+                      pq:P580 ?start FILTER (?start >= "1815-01-01T00:00:00Z"^^xsd:dateTime) .
+  ?position wdt:P31|wdt:P279* wd:Q15135541 .
+  OPTIONAL { ?position_statement pq:P582 ?x }
+  OPTIONAL { ?item wdt:P18 ?picture }
+  bind(if(bound(?x), ?x, NOW()) as ?end )
+  bind(floor(?end - ?start) as ?days)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" . }
+}
+ORDER BY DESC(?days) ?itemLabel

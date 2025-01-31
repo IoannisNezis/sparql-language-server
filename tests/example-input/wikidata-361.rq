@@ -1,0 +1,14 @@
+SELECT ?rettore ?rettoreLabel ?starttime ?endtime 
+WHERE {
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],       mul,       en" .
+  }
+  ?rettore p:P106 [
+    ps:P106 wd:Q212071 ;
+    pq:P642 wd:Q193510 ;
+    # of Padua Univerity
+  pq:P580 ?starttime ;
+    pq:P582 ?endtime
+  ] .
+}
+ORDER BY ?starttime

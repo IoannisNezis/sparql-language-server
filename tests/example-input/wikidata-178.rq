@@ -1,0 +1,19 @@
+#defaultView:Graph
+PREFIX gas: <http://www.bigdata.com/rdf/gas#>
+
+SELECT ?item ?itemLabel ?pic ?linkTo
+WHERE
+{
+  SERVICE gas:service {
+    gas:program gas:gasClass "com.bigdata.rdf.graph.analytics.SSSP" ;
+                gas:in wd:Q1968598;
+                gas:traversalDirection "Reverse" ;
+                gas:out ?item ;
+                gas:out1 ?depth ;
+                gas:maxIterations 3 ;
+                gas:linkType wdt:P171 .
+  }
+  OPTIONAL { ?item wdt:P171 ?linkTo }
+  OPTIONAL { ?item wdt:P18 ?pic }
+  SERVICE wikibase:label {bd:serviceParam wikibase:language "en" }
+}

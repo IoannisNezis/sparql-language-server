@@ -1,0 +1,10 @@
+SELECT ?char ?charName (GROUP_CONCAT(DISTINCT ?typeLabel;separator=", ") AS ?types) (GROUP_CONCAT(DISTINCT ?universeLabel;separator=", ") AS ?universes)
+WHERE {
+  ?char wdt:P1080 wd:Q931597;
+          wdt:P31 ?type ;
+          wdt:P1080 ?universe .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en".
+                         ?char rdfs:label ?charName .
+                         ?universe rdfs:label ?universeLabel .
+                         ?type rdfs:label ?typeLabel .}
+} GROUP BY ?char ?charName

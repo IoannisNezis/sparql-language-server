@@ -1,0 +1,18 @@
+SELECT ?state ?stateLabel ?borders
+WHERE
+{
+  {
+    SELECT ?state (COUNT(?otherState) as ?borders)
+    WHERE
+    {
+    ?state wdt:P31 wd:Q35657 .
+    ?otherState wdt:P47 ?state .
+    ?otherState wdt:P31 wd:Q35657 .
+    }
+    GROUP BY ?state
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}
+ORDER BY DESC(?borders)

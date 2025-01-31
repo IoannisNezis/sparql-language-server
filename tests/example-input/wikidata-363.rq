@@ -1,0 +1,12 @@
+#Locations of breweries in Germany
+#defaultView:Map
+SELECT ?breweryLabel ?breweryDescription ?coord
+WHERE
+{
+  ?brewery wdt:P31/wdt:P279* wd:Q131734 ;
+    wdt:P17 wd:Q183 ;
+    wdt:P625 ?coord .
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en, de" .
+  }
+}

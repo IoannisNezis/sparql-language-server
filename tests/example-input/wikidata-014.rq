@@ -1,0 +1,8 @@
+SELECT DISTINCT ?lang ?name WHERE {
+  ?article schema:about wd:Q5 . hint:Prior hint:runFirst true.
+  ?article schema:inLanguage ?lang ;
+    schema:name ?name ;
+    schema:isPartOf [ wikibase:wikiGroup "wikipedia" ] .
+  FILTER(?lang in ('en', 'uz', 'ru', 'ko')) .
+  FILTER (!CONTAINS(?name, ':')) .
+}

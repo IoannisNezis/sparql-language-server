@@ -1,0 +1,8 @@
+SELECT ?era ?eraLabel (YEAR(?start_time) AS ?start) (YEAR(?end_time) AS ?end) ?namedLabel ?namedDescription WHERE {
+?era wdt:P31 wd:Q11514315; wdt:P361 wd:Q130436; # eras of the history of Japan
+  wdt:P580 ?start_time.
+MINUS { ?era wdt:P2348/wdt:P361 wd:Q130436 } # exclude sub-eras
+OPTIONAL { ?era wdt:P582 ?end_time } # optional end-time to make sure we include the current era
+OPTIONAL { ?era wdt:P138 ?named }
+SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+} ORDER BY ?start DESC(?end)

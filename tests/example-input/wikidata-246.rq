@@ -1,0 +1,10 @@
+SELECT ?universe (SAMPLE(?label) AS ?label) (COUNT(?planet) AS ?count)
+WHERE
+{
+  ?planet wdt:P31 wd:Q2775969;
+          wdt:P1080 ?universe.
+  ?universe rdfs:label ?label.
+  FILTER(LANG(?label) = "en").
+}
+GROUP BY ?universe
+ORDER BY DESC(?count)

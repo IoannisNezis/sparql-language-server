@@ -1,0 +1,10 @@
+# Get 10 paintings that have a link to RKDimages (P350)
+# Use the formatter URL (P1630) to construct the links to RKDimages
+#defaultView:ImageGrid
+SELECT ?item ?image ?rkdurl WHERE {
+  wd:P350 wdt:P1630 ?formatterurl .
+  ?item wdt:P31 wd:Q3305213 .
+  ?item wdt:P18 ?image .
+  ?item wdt:P350 ?rkdid .
+  BIND(IRI(REPLACE(?rkdid, '^(.+)$', ?formatterurl)) AS ?rkdurl).
+  } LIMIT 10

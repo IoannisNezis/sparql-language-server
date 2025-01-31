@@ -1,0 +1,46 @@
+#defaultView:ScatterChart
+PREFIX var_muntype: <http://www.wikidata.org/entity/Q15284>
+PREFIX var_area: <http://www.wikidata.org/entity/Q6308>
+SELECT ?from ?kilometers ?to ?rank_group
+WHERE {
+  {
+    SELECT (SAMPLE(?mun) AS ?mun) (SAMPLE(?mun2) AS ?mun2) (SAMPLE(?distNum) AS ?kilometers)
+           (COUNT(*)-1 AS ?rg) (SUBSTR("00",1+STRLEN(STR(?rg))) AS ?rgpad)
+           (IF(FLOOR((?rg-(100*FLOOR(?rg/100)))/10)=1,0,?rg-(10*FLOOR(?rg/10))) AS ?rgmod)
+           (IF(?rgmod=1,"st",IF(?rgmod=2,"nd",IF(?rgmod=3,"rd","th"))) AS ?rgord)
+           (CONCAT(?rgpad,STR(?rg),?rgord,"-most farthest places") AS ?rank_group)
+    WHERE {
+      { SELECT ?mun (SAMPLE(?loc) AS ?loc)
+        WHERE { ?mun wdt:P31/wdt:P279* var_muntype:;
+                     wdt:P131 var_area:;
+                     wdt:P625 ?loc. }
+        GROUP BY ?mun
+      }
+      OPTIONAL {
+        { SELECT (?mun AS ?mun2) (SAMPLE(?loc) AS ?loc2)
+          WHERE { ?mun wdt:P31/wdt:P279* var_muntype:;
+                       wdt:P131 var_area:;
+                       wdt:P625 ?loc. }
+          GROUP BY ?mun
+        }
+      }
+      OPTIONAL {
+        { SELECT (?mun AS ?mun3) (SAMPLE(?loc) AS ?loc3)
+          WHERE { ?mun wdt:P31/wdt:P279* var_muntype:;
+                       wdt:P131 var_area:;
+                       wdt:P625 ?loc. }
+          GROUP BY ?mun
+        }
+      }
+      BIND(geof:distance(?loc, ?loc2) AS ?distNum).
+      BIND(geof:distance(?loc, ?loc3) AS ?d).
+      FILTER(?distNum >= ?d).
+    } GROUP BY ?mun ?mun2 ?distNum
+  }
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en".
+    ?mun rdfs:label ?from.
+    ?mun2 rdfs:label ?to.
+  }
+}
+ORDER BY ?rank_group ?kilometers ?from

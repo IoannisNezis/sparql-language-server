@@ -1,0 +1,15 @@
+#Lists emergency numbers and the total amount of people which can use them
+#defaultView:BubbleChart
+SELECT ?emergencyNumber ?emergencyNumberLabel ?tel ?population ?countries
+WHERE
+{
+ ?emergencyNumber wdt:P31 wd:Q694554 .
+  OPTIONAL{SELECT ?emergencyNumber (COUNT(?state) as ?countries) (SUM(?pop) as ?population) WHERE {
+    ?state wdt:P2852 ?emergencyNumber .
+    OPTIONAL{?state wdt:P1082 ?pop} .
+    ?state wdt:P31/wdt:P279* wd:Q6256
+  } GROUP BY ?emergencyNumber } .
+  OPTIONAL{?emergencyNumber wdt:P1329 ?tel }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}
+ORDER BY DESC(?population)

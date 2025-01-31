@@ -1,0 +1,9 @@
+SELECT ?taxon ?eponym ?taxonName ?eponymLabel
+WHERE
+{
+  ?taxon wdt:P31 wd:Q16521;
+         wdt:P225 ?taxonName;
+         wdt:P138 ?eponym.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+ORDER BY ?eponym

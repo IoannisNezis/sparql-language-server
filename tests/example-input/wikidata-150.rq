@@ -1,0 +1,12 @@
+#Kandidaten voor de Nederlandse TK verkiezingen van 2017
+#defaultView:Dimensions
+SELECT ?positie_op_lijst ?genderLabel ?occupationLabel ?politieke_partijLabel WHERE {
+  VALUES ?politieke_partij {wd:Q747910 wd:Q275441}
+  ?item p:P3602 ?node.
+  ?item wdt:P21 ?gender.
+  ?item wdt:P106 ?occupation.
+  ?node ps:P3602 wd:Q16061881.
+  ?node pq:P1545 ?positie_op_lijst.
+  ?node pq:P1268 ?politieke_partij.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],nl". }
+}

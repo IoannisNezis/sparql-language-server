@@ -1,0 +1,30 @@
+#title: Animals which are Threatened as per IUCN Red List
+# https://en.wikipedia.org/wiki/Conservation_status
+# Common names are in English only
+
+SELECT ?animal ?scientific_names ?common_names ?statusLabel where
+{
+  # hint:Prior hint:runLast true
+   {
+      SELECT DISTINCT ?animal (GROUP_CONCAT(DISTINCT ?scientific_name; separator=", ") as ?scientific_names) (GROUP_CONCAT(DISTINCT ?common_name; separator=", ") as ?common_names) WHERE
+      {
+
+        ?animal wdt:P141 ?status;
+                wdt:P225 ?scientific_name;
+                wdt:P1843 ?common_name.
+        filter( ?status
+           IN (
+               wd:Q11394,  #Endangered
+               wd:Q219127, #critcally endangered
+               wd:Q278113  #vulnurable
+              )
+          ).
+
+        # Only return common names in English
+        FILTER(LANGMATCHES(LANG(?common_name), "en"))
+      }
+      GROUP BY ?animal
+   }.
+   ?animal wdt:P141 ?status.
+   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}

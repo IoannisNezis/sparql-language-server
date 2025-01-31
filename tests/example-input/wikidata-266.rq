@@ -1,0 +1,7 @@
+SELECT ?thing ?thingLabel ?image
+WHERE
+{
+  ?thing wdt:P366 wd:Q132781 .
+  ?thing wdt:P18 ?image .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

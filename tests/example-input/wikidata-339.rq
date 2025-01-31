@@ -1,0 +1,11 @@
+#Map of all the paintings for which we know a location with the count per location
+#defaultView:Map
+SELECT ?locationLabel ?coord (count(*) as ?count)
+WHERE
+{
+    ?painting wdt:P31 wd:Q3305213 .
+    ?painting wdt:P276 ?location .
+  ?location wdt:P625 ?coord
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+GROUP BY ?locationLabel ?coord

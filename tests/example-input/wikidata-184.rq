@@ -1,0 +1,24 @@
+SELECT DISTINCT ?pathway ?pathwayLabel ?pwpart ?pwpartLabel ?variant ?variantLabel ?disease?diseaseLabel WHERE {
+
+   VALUES ?predictor {p:P3354 p:P3355 p:P3356 p:P3357 p:P3358 p:P3359}
+   VALUES ?predictorQualifier {pq:P2175}
+   VALUES ?wpID {"WP2828"}
+
+   ?pathway wdt:P2410 ?wpID ; # Pathways has a Wikipathways identifier
+          wdt:P527 ?pwpart . # which contains pathways parts
+
+   ?disease wdt:P279+ wd:Q504775 . # The disease is a subclass of urinary bladder cancer
+                                   # based on annotations in the Disease ontology
+   ?variant wdt:P3329 ?civicID ; # a variant known in CIViC
+             ?predictor ?node ; # has a predicting relation with diseases
+                                   # labeled as being a subclass of urinary bladder cancer
+             wdt:P3433 ?pwpart . # variant is biological variant of
+
+   {?node ?predictorStatement ?drug_label ;
+              ?predictorQualifier ?disease .}
+   UNION
+   {
+      ?node ?predictorStatement ?disease .
+   }
+   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

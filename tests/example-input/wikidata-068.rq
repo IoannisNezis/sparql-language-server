@@ -1,0 +1,16 @@
+SELECT ?person ?personLabel ?died ?sitelinks WHERE {
+  {
+    SELECT * WHERE {
+      ?person wdt:P31 wd:Q5 ;
+              wdt:P570 ?died .
+      FILTER (?died >= "2018-01-01T00:00:00Z"^^xsd:dateTime && ?died < "2019-01-01T00:00:00Z"^^xsd:dateTime)
+      ?person wikibase:sitelinks ?sitelinks .
+    }
+    ORDER BY DESC(?sitelinks)
+    LIMIT 100
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}
+ORDER BY DESC(?sitelinks)

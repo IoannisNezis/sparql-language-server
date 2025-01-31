@@ -1,0 +1,9 @@
+#title:Map of the world's sign languages with number of practicians
+#defaultView:Map
+SELECT ?sign_language ?sign_languageLabel ?indigenous_to ?coordinate_location ?practicians WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+  OPTIONAL { ?sign_language wdt:P1098 ?practicians. }
+  OPTIONAL { ?sign_language wdt:P17 ?country. }
+  OPTIONAL { ?country wdt:P625 ?coordinate_location. }
+  ?sign_language wdt:P31 wd:Q34228. 
+}

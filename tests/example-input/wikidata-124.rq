@@ -1,0 +1,5 @@
+SELECT ?item ?itemLabel ?inseeCode {
+  ?item wdt:P374 ?inseeCode .
+  FILTER (?inseeCode in ("75056", "69123", "13055"))
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

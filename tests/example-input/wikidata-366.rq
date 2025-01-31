@@ -1,0 +1,12 @@
+SELECT DISTINCT ?race ?raceLabel ?musherLabel
+WHERE
+{
+  { ?race wdt:P31/wdt:P279* wd:Q1968664 . }
+  UNION { ?race wdt:P31/wdt:P641* wd:Q1968664 . }
+  ?race p:P710 ?musherS . #here we have a full statement, not a value
+  ?musherS ps:P710 ?musher . #here we get the value
+  FILTER NOT EXISTS { ?musherS pq:P1352 ?rank }
+  FILTER NOT EXISTS { ?musherS pq:P793 ?event }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "fr,en" }
+}
+ORDER BY ?raceLabel

@@ -1,0 +1,9 @@
+#Children of librarians with the most number of sitelinks (as a proxy for fame)
+SELECT ?person ?personLabel ?parentLabel ?linkcount WHERE {
+    ?parent wdt:P106 wd:Q182436 .
+    ?parent wdt:P40 ?person .
+    ?person wikibase:sitelinks ?linkcount .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en,de,es,ar,fr" }
+}
+GROUP BY ?linkcount ?person ?personLabel ?parent ?parentLabel
+ORDER BY DESC(?linkcount)

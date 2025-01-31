@@ -1,0 +1,9 @@
+#title:Standard Mandarin Lexeme Forms missing Pinyin Transliteration
+#author:0xDeadbeef 2022-07-31
+SELECT ?lexemeId ?lemma ?form ?word WHERE {
+  ?lexemeId dct:language wd:Q727694;
+    wikibase:lemma ?lemma;
+    ontolex:lexicalForm ?form.
+  ?form ontolex:representation ?word.
+  FILTER(NOT EXISTS { ?form wdt:P1721 ?o. })
+}

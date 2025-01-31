@@ -1,0 +1,12 @@
+#defaultView:Map
+SELECT ?connectsairport ?connectsairportLabel ?place_served ?place_servedLabel ?coor
+WHERE
+{
+  VALUES ?airport { wd:Q17480 } # Antwerp international airport wd:Q17480
+  ?airport wdt:P81 ?connectsairport ;
+           wdt:P625 ?base_airport_coor .
+  ?connectsairport wdt:P931 ?place_served ;
+                   wdt:P625 ?coor .
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

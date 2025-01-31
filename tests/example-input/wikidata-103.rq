@@ -1,0 +1,26 @@
+#defaultView:ScatterChart
+PREFIX var_muntype: <http://www.wikidata.org/entity/Q15284>
+PREFIX var_area: <http://www.wikidata.org/entity/Q6308>
+SELECT ?from (?distNum AS ?kilometers) ?to (?to AS ?animation) WHERE {
+  { SELECT ?mun (SAMPLE(?loc) AS ?loc)
+    WHERE { ?mun wdt:P31/wdt:P279* var_muntype:;
+                 wdt:P131 var_area:;
+                 wdt:P625 ?loc. }
+    GROUP BY ?mun
+  }
+  OPTIONAL {
+    { SELECT (?mun AS ?mun2) (SAMPLE(?loc) AS ?loc2)
+      WHERE { ?mun wdt:P31/wdt:P279* var_muntype:;
+                   wdt:P131 var_area:;
+                   wdt:P625 ?loc. }
+      GROUP BY ?mun
+    }
+  }
+  BIND(geof:distance(?loc, ?loc2) AS ?distNum).
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en".
+    ?mun rdfs:label ?from.
+    ?mun2 rdfs:label ?to.
+  }
+}
+ORDER BY ?from ?kilometers

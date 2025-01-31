@@ -1,0 +1,6 @@
+#added 2017-08
+#defaultView:Map
+SELECT DISTINCT * WHERE {
+  ?item wdt:P31/wdt:P279* wd:Q16917;
+        wdt:P625 ?geo .
+}

@@ -1,0 +1,11 @@
+# Coordinates of the birth places of people named Antoine
+#defaultView:Map
+SELECT ?item ?itemLabel ?coord
+WHERE
+{
+  ?item wdt:P31 wd:Q5 . # human
+  ?item wdt:P735 wd:Q15235674.
+  ?item wdt:P19 ?place.
+  ?place wdt:P625 ?coord.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". }
+}

@@ -1,0 +1,22 @@
+SELECT ?senator ?senatorLabel ?districtLabel ?partyLabel ?assumedOffice (sample(?image) as ?image) where {
+  # Get all senators
+  ?senator p:P39 ?posheld; # With position held
+           p:P102 ?partystatement. # And with a certain party
+
+  # Get the party
+  ?partystatement ps:P102 ?party.
+  MINUS { ?partystatement pq:P582 ?partyEnd. } # but minus the ones the senator is no longer a member of
+  MINUS { ?party wdt:P361 ?partOf. } # and the 'Minnesota Democratic–Farmer–Labor Party' and such
+
+  # Check on the position in the senate
+  ?posheld ps:P39 wd:Q4416090; # Position held is in the senate
+           pq:P768 ?district;
+           pq:P580 ?assumedOffice. # And should have a starttime
+
+  MINUS { ?posheld pq:P582 ?endTime. } # But not an endtime
+
+  # Add an image
+  OPTIONAL { ?senator wdt:P18 ?image. }
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+} GROUP BY ?senator ?senatorLabel ?districtLabel ?partyLabel ?assumedOffice ORDER BY ?senatorLabel

@@ -1,0 +1,18 @@
+SELECT DISTINCT ?item ?name ?coord ?lat ?lon ?globe
+{
+   ?item wdt:P31 wd:Q429088 ;
+         p:P625 [
+           psv:P625 [
+             wikibase:geoLatitude ?lat ;
+             wikibase:geoLongitude ?lon ;
+             wikibase:geoGlobe ?globe ;
+           ] ;
+           ps:P625 ?coord
+         ]
+  FILTER ( ?globe != wd:Q2 )
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+    ?item rdfs:label ?name
+   }
+}
+ORDER BY ASC (?name)

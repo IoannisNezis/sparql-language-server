@@ -1,0 +1,11 @@
+#defaultView:BubbleChart
+SELECT ?occupationLabel (count(DISTINCT ?author) as ?count)
+WHERE
+{
+        ?object wdt:P31 wd:Q13442814 ;
+                wdt:P50 ?author .
+        ?author wdt:P106 ?occupation .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,fr" }
+}
+GROUP BY ?occupationLabel
+ORDER BY DESC(?count)

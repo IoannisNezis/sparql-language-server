@@ -1,0 +1,8 @@
+SELECT DISTINCT ?standard ?standardLabel ?website
+WHERE
+{
+        ?standard wdt:P1462 wd:Q37033 .
+        OPTIONAL{ ?standard wdt:P856 ?website }
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+ORDER BY ?standardLabel

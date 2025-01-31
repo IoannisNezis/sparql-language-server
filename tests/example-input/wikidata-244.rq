@@ -1,0 +1,20 @@
+#defaultView:Timeline
+SELECT
+  ?genderLabel
+  ?theorem
+  ?theoremLabel
+  ?nameLabel
+  ?death
+  ?formula
+WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en,de,pl". }
+  ?theorem wdt:P31 wd:Q65943;
+           wdt:P138 ?name.
+  ?name    wdt:P570 ?death;
+           wdt:P21 ?gender .
+  # OPTIONAL{
+  ?theorem wdt:P2534 ?formula.
+  # }
+}
+ORDER BY DESC(?death)
+LIMIT 100

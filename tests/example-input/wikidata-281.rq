@@ -1,0 +1,9 @@
+#defaultView:Map
+SELECT ?item ?itemLabel ?coordinates
+WHERE
+{
+  ?item wdt:P31/wdt:P279* wd:Q33506 ;
+        wdt:P131 wd:Q12892 ;
+        wdt:P625 ?coordinates .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "nl, en" }
+  }

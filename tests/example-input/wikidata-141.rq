@@ -1,0 +1,41 @@
+# Select the desired columns and get labels
+SELECT ?occ ?occLabel ?avgAge ?avgBirthYear ?count
+WHERE
+{
+  {
+    # Group the people by their occupation and calculate age
+    SELECT
+      ?occ
+        (count(?p) as ?count)
+        (round(avg(?birthYear)) as ?avgBirthYear)
+        (avg(?deathYear - ?birthYear) as ?avgAge)
+    WHERE {
+      {
+        # Get people with occupation + birth/death dates; combine multiple birth/death dates using avg
+        SELECT
+          ?p
+            ?occ
+            (avg(year(?birth)) as ?birthYear)
+            (avg(year(?death)) as ?deathYear)
+        WHERE {
+           ?p wdt:P31 wd:Q5 ;
+              wdt:P106 ?occ ;
+              p:P569/psv:P569 [
+                wikibase:timePrecision "9"^^xsd:integer ; # precision of at least year
+                wikibase:timeValue ?birth ;
+              ] ;
+              p:P570/psv:P570 [
+                wikibase:timePrecision "9"^^xsd:integer ; # precision of at least year
+                wikibase:timeValue ?death ;
+              ] .
+        }
+        GROUP BY ?p ?occ
+      }
+    }
+    GROUP BY ?occ
+  }
+
+  FILTER (?count > 300) # arbitrary number to weed out values with 'few' observations
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+}
+ORDER BY ASC(?avgAge)

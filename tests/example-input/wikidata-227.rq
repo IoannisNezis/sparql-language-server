@@ -1,0 +1,14 @@
+#added in 2016-10
+
+#Authors of scientific articles who received a Nobel prize
+SELECT ?item ?itemLabel ?person ?personLabel ?_image ?award ?awardLabel
+WHERE {
+  ?person wdt:P166 ?award ; #person received an award
+          wdt:P31 wd:Q5 . #person is instance of human
+  ?award wdt:P31/wdt:P279* wd:Q7191 . #award is a Nobel Prize
+  ?item wdt:P50 ?person ; #person is an author of item
+        wdt:P31 wd:Q13442814 . #item is a scientific article
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+
+OPTIONAL { ?person wdt:P18 ?_image. } #Wikimedia Commons has an image of person
+}

@@ -1,0 +1,6 @@
+#defaultView:ImageGrid
+SELECT ?compound ?compoundLabel ?image WHERE {
+  ?compound wdt:P279+|wdt:P31+ wd:Q421948 ;
+            wdt:P18|wdt:P117 ?image .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

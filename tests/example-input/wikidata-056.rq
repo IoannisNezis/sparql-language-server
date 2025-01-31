@@ -1,0 +1,58 @@
+#defaultView:Tree
+SELECT ?root ?rootLabel ?item ?itemL ?itemImage ?item2 ?itemL2 ?itemImage2 ?item3 ?itemL3 ?itemImage3 ?item4 ?itemL4 ?itemImage4 ?item5 ?itemL5 ?itemImage5 ?item6 ?itemL6 ?itemImage6 ?item7 ?itemL7 ?itemImage7 WHERE {
+  BIND(wd:Q18616576 AS ?root)
+  BIND(wdt:P279 AS ?property)
+  ?item ?property ?root.
+  OPTIONAL { ?item wdt:P18 ?itemImage. }
+  OPTIONAL {
+    ?item2 ?property ?item.
+    OPTIONAL { ?item2 wdt:P18 ?itemImage2. }
+    OPTIONAL {
+      ?item3 ?property ?item2.
+      OPTIONAL { ?item3 wdt:P18 ?itemImage3. }
+      OPTIONAL {
+        ?item4 ?property ?item3.
+        OPTIONAL { ?item4 wdt:P18 ?itemImage4. }
+        OPTIONAL {
+          ?item5 ?property ?item4.
+          OPTIONAL { ?item5 wdt:P18 ?itemImage5. }
+          OPTIONAL {
+            ?item6 ?property ?item5.
+            OPTIONAL { ?item6 wdt:P18 ?itemImage6. }
+            OPTIONAL {
+              ?item7 ?property ?item6.
+              OPTIONAL { ?item7 wdt:P18 ?itemImage7. }
+            }
+          }
+        }
+      }
+    }
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en,es,fr,de,mul".
+    ?root rdfs:label ?rootLabel.
+    ?item rdfs:label ?itemLabel;
+      schema:description ?itemDescription.
+    ?item2 rdfs:label ?itemLabel2;
+      schema:description ?itemDescription2.
+    ?item3 rdfs:label ?itemLabel3;
+      schema:description ?itemDescription3.
+    ?item4 rdfs:label ?itemLabel4;
+      schema:description ?itemDescription4.
+    ?item5 rdfs:label ?itemLabel5;
+      schema:description ?itemDescription5.
+    ?item6 rdfs:label ?itemLabel6;
+      schema:description ?itemDescription6.
+    ?item7 rdfs:label ?itemLabel7;
+      schema:description ?itemDescription7.
+  }
+  BIND(CONCAT(?itemLabel, ": ", COALESCE(?itemDescription, "")) AS ?itemL)
+  BIND(CONCAT(?itemLabel2, ": ", COALESCE(?itemDescription2, "")) AS ?itemL2)
+  BIND(CONCAT(?itemLabel3, ": ", COALESCE(?itemDescription3, "")) AS ?itemL3)
+  BIND(CONCAT(?itemLabel4, ": ", COALESCE(?itemDescription4, "")) AS ?itemL4)
+  BIND(CONCAT(?itemLabel5, ": ", COALESCE(?itemDescription5, "")) AS ?itemL5)
+  BIND(CONCAT(?itemLabel6, ": ", COALESCE(?itemDescription6, "")) AS ?itemL6)
+  BIND(CONCAT(?itemLabel7, ": ", COALESCE(?itemDescription7, "")) AS ?itemL7)
+}
+ORDER BY (?itemL) (?itemL2) (?itemL3) (?itemL4) (?itemL5) (?itemL6) (?itemL7)
+LIMIT 20000

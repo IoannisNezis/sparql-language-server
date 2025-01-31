@@ -1,0 +1,23 @@
+SELECT ?year ?pope1Label ?pope2Label ?pope3Label
+WHERE
+{
+  ?pope2 p:P39 [
+           ps:P39 wd:Q19546;
+           pq:P580 ?p2s;
+           pq:P582 ?p2e;
+           pq:P1365 ?pope1;
+           pq:P1366 ?pope3
+         ].
+  ?pope1 p:P39 [
+           ps:P39 wd:Q19546;
+           pq:P582 ?p1e
+         ].
+  ?pope3 p:P39 [
+           ps:P39 wd:Q19546;
+           pq:P580 ?p3s
+         ].
+  BIND(YEAR(?p2s) AS ?year).
+  FILTER(YEAR(?p2e) = ?year && YEAR(?p1e) = ?year && YEAR(?p3s) = ?year).
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY ?year

@@ -1,0 +1,10 @@
+SELECT ?item ?itemLabel ?twitter ?LinkedIN ?politieke_partij ?politieke_partijLabel ?positie_op_lijst WHERE {
+  ?item p:P3602 ?node.
+  ?item wdt:P551 wd:Q12892.
+  OPTIONAL { ?item wdt:P2002 ?twitter. }
+  OPTIONAL { ?item wdt:P2035 ?LinkedIN. }
+  ?node ps:P3602 wd:Q16061881.
+  OPTIONAL { ?node pq:P1545 ?positie_op_lijst. }
+  OPTIONAL { ?node pq:P1268 ?politieke_partij. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],nl". }
+}

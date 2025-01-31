@@ -1,0 +1,37 @@
+SELECT DISTINCT ?chemical ?chemicalLabel ?value ?units ?unitsLabel ?solvent ?solventLabel ?temperature ?temperatureUnit ?temperatureUnitLabel ?source ?sourceLabel ?doi WHERE {
+  {
+    SELECT DISTINCT ?chemical ?value ?units ?source ?doi ?solvent ?temperature ?temperatureUnit WHERE {
+      ?chemical ?propp ?statement .
+      ?statement a wikibase:BestRank ;
+                 ?proppsv [
+        wikibase:quantityAmount ?value ;
+        wikibase:quantityUnit ?units
+      ] .
+      OPTIONAL {
+        ?statement prov:wasDerivedFrom/pr:P248 ?source .
+        OPTIONAL {
+          ?source wdt:P356 ?doi .
+        }
+      }
+      ?property wikibase:claim ?propp ;
+                wikibase:statementValue ?proppsv ;
+                wdt:P1629 wd:Q170731 ;
+                wdt:P31 wd:Q21077852 .
+      OPTIONAL {
+        ?statement pqv:P2076 ?temperatureNode .
+        ?temperatureNode wikibase:quantityAmount ?temperature ;
+                         wikibase:quantityUnit ?temperatureUnit .
+      }
+      OPTIONAL {
+        wd:P2178 wikibase:qualifier ?qualifierS .
+        ?qualifierS a owl:ObjectProperty .
+        ?statement ?qualifierS ?solvent .
+      }
+    }
+    GROUP BY ?chemical ?value ?units ?temperature ?temperatureUnit ?solvent ?source ?doi
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}
+ORDER BY ASC(?propEntityLabel)

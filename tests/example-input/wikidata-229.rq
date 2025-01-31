@@ -1,0 +1,18 @@
+#Female scientists with most number of sitelinks (but not English Wikipedia)
+#PREFIX schema: <http://schema.org/>
+
+SELECT ?item ?itemLabel ?linkcount WHERE {
+    ?item wdt:P31 wd:Q5 .
+    ?item wdt:P21 wd:Q6581072 .
+    ?item wdt:P106 wd:Q901 .
+    ?item wikibase:sitelinks ?linkcount .
+  FILTER (?linkcount >= 1) . # only include items with 1 or more sitelinks
+  FILTER NOT EXISTS {
+    ?article schema:about ?item .
+    ?article schema:inLanguage "en" .
+    ?article schema:isPartOf <https://en.wikipedia.org/>
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,de,es,ar,fr" }
+}
+GROUP BY ?item ?itemLabel ?linkcount
+ORDER BY DESC(?linkcount)

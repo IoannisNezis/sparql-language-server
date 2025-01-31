@@ -1,0 +1,10 @@
+#defaultView:ImageGrid
+SELECT DISTINCT ?item ?image {
+  hint:Query hint:optimizer "None" .
+  ?object wdt:P279* wd:Q34379 .
+  ?item wdt:P180 ?object .
+  ?item wdt:P31/wdt:P279* wd:Q3305213 .
+  ?item wdt:P18 ?image .
+  ?item ?prop ?hhlink .
+  ?hhlink ?prop2 wd:Q1055 .
+}

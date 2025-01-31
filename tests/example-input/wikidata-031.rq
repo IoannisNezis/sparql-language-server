@@ -1,0 +1,11 @@
+#title: Get the lemma for an inflected word in English
+# Author: So9q
+# 2021-07-25
+# inspired by https://sinaahmadi.github.io/posts/10-essential-sparql-queries-for-lexicographical-data-on-wikidata.html
+SELECT DISTINCT ?l ?word ?lemma WHERE {
+  VALUES ?word { "bought"@en }
+  ?l dct:language wd:Q1860 ;
+     wikibase:lemma ?lemma ;
+     ontolex:lexicalForm ?form .
+  ?form ontolex:representation ?word .
+}

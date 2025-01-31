@@ -1,0 +1,14 @@
+#title: Senses on Swedish phrase lexemes with a synonym
+# date: 2024-04-25
+# author: So9q
+# note: Thanks to Nikki and Ainali for help with selecting the synonym lexeme 
+SELECT ?l ?sense ?lemma ?synonym ?synonym_lemma WHERE {
+  ?l   ontolex:sense ?sense ; # the sense
+       dct:language wd:Q9027 ; # the language
+       wikibase:lemma ?lemma ; # and the lemma
+       wikibase:lexicalCategory ?category.
+  ?category wdt:P279/wdt:P31* wd:Q187931. # subclass of phrase
+  ?sense wdt:P5973 ?synonym_sense .
+  ?synonym ontolex:sense ?synonym_sense . # select synonym lexeme
+  ?synonym wikibase:lemma ?synonym_lemma . # get the synonym lemma
+}

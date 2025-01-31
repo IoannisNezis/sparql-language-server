@@ -1,0 +1,13 @@
+#title:Impressionist painters by number of exhibitions
+SELECT DISTINCT ?painter ?painterLabel (count (DISTINCT ?exhibition) as ?exhibition_count)
+(group_concat(DISTINCT ?exhibitionLabel; separator=", ") as ?exhibitions)
+WHERE {
+  ?painter wdt:P106 wd:Q1028181 . #give me all people with occupation (P106) painter (Q1028181)
+  ?painter wdt:P135 wd:Q40415 . #who belonged to the impressionist (Q40415) movement (P135)
+  ?painting wdt:P170 ?painter . #the paintings created by (P170) the painter
+  ?painting wdt:P608 ?exhibition . #have an exhibition history (P608) at an exhibition
+  ?exhibition rdfs:label ?exhibitionLabel . #give me the english Labels of these exhibitions, if possible
+  FILTER (lang(?exhibitionLabel) = "en")
+
+  SERVICE wikibase:label {bd:serviceParam wikibase:language "en".}
+} GROUP BY ?painter ?painterLabel

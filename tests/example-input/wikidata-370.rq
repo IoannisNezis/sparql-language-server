@@ -1,0 +1,7 @@
+SELECT DISTINCT ?wikiciteLabel ?doi WHERE {
+   ?wikicite p:P356/ps:P356 ?doi .
+   ?statement prov:wasDerivedFrom ?ref .
+   ?ref pr:P356 ?doi .
+   FILTER (CONTAINS(lcase(?doi), "figshare"))
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

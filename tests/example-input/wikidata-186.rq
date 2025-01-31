@@ -1,0 +1,13 @@
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+SELECT DISTINCT ?item ?pw_annotation WHERE {
+  VALUES ?wpid {"WP716"}
+  ?item wdt:P2410 ?wpid ;
+        wdt:P2888 ?source_pathway .
+
+  SERVICE <http://sparql.wikipathways.org/sparql> {
+     ?wp_pathway dc:identifier ?source_pathway .
+     ?wp_pathway wp:ontologyTag ?pw_annotation .
+     # ?pw_annotation rdfs:label ?annotation_label .
+   }
+}

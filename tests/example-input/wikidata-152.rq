@@ -1,0 +1,14 @@
+SELECT DISTINCT ?item ?title ?seats ?jurisdiction (YEAR(?inception) AS ?start) (YEAR(?dissolution) AS ?end)
+WHERE
+{
+  ?item wdt:P31/wdt:P279* wd:Q1752346 .
+  OPTIONAL { ?item wdt:P1342 ?seats . }
+  OPTIONAL {
+    ?item wdt:P1001 ?j .
+    ?j rdfs:label ?jurisdiction FILTER (lang(?jurisdiction) = "en") .
+  }
+  OPTIONAL { ?item wdt:P571 ?inception . }
+  OPTIONAL { ?item wdt:P576 ?dissolution . }
+  OPTIONAL { ?item rdfs:label ?title FILTER (lang(?title) = "en") . }
+}
+ORDER BY DESC(?seats) ?title

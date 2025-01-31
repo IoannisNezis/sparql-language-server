@@ -1,0 +1,14 @@
+#defaultView:BubbleChart
+SELECT ?cid ?firstname (COUNT(*) AS ?count)
+WHERE
+{
+  ?pid wdt:P19 wd:Q64.
+  ?pid wdt:P735 ?cid.
+  OPTIONAL {
+    ?cid rdfs:label ?firstname
+    FILTER((LANG(?firstname)) = "en")
+  }
+}
+GROUP BY ?cid ?firstname
+ORDER BY DESC(?count) ?firstname
+LIMIT 50

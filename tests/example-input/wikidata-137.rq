@@ -1,0 +1,12 @@
+#title: Ten largest islands in the world
+# Inspired by this infographic: https://redd.it/a6423t
+
+#defaultView:ImageGrid
+SELECT DISTINCT ?island ?islandLabel ?islandImage WHERE {
+  ?island (wdt:P31/(wdt:P279*)) wd:Q23442.
+  OPTIONAL { ?island wdt:P18 ?islandImage. }
+  ?island (p:P2046/psn:P2046/wikibase:quantityAmount) ?islandArea.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY DESC (?islandArea)
+LIMIT 10

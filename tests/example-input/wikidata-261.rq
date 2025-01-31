@@ -1,0 +1,17 @@
+SELECT ?father ?fatherLabel (SAMPLE(?picture_) AS ?picture) ?children WHERE {
+  SELECT ?father (COUNT(?father) AS ?children) WHERE {
+    ?subj wdt:P22 ?father .
+  }
+  GROUP BY ?father
+  ORDER BY DESC(?children)
+  LIMIT 50
+}
+  INCLUDE %get_fathers
+  OPTIONAL  {
+  ?father wdt:P18 ?picture_ .
+}
+  SERVICE wikibase:label {
+  bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en"
+}}
+GROUP BY ?father ?fatherLabel ?children
+ORDER BY DESC(?children)

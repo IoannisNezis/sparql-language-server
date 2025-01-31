@@ -1,0 +1,12 @@
+SELECT ?elementLabel ?_boiling_point ?_melting_point ?_electronegativity ?_density ?_mass
+WHERE
+{
+  ?element wdt:P31 wd:Q11344.
+  ?element wdt:P2102 ?_boiling_point.
+  ?element wdt:P2101 ?_melting_point.
+  ?element wdt:P1108 ?_electronegativity.
+  ?element wdt:P2054 ?_density.
+  ?element wdt:P2067 ?_mass.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+LIMIT 100

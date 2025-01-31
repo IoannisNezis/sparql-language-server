@@ -1,0 +1,7 @@
+SELECT ?sitelink ?itemLabel WHERE {
+  ?item wdt:P31 wd:Q6256.
+  ?sitelink schema:isPartOf <https://ru.wikipedia.org/>;
+     schema:about ?item;
+     wikibase:badge wd:Q17437796 . # Sitelink is badged as a Featured Article
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" } .
+} ORDER BY ?itemLabel

@@ -1,0 +1,10 @@
+#title: Lexemes in Swedish with usage example that demonstrates both a form and a sense
+# So9q 23-12-2020
+SELECT ?lexemeId ?lemma ?example WHERE {
+  ?lexemeId dct:language wd:Q9027;
+            wikibase:lemma ?lemma.
+  ?lexemeId p:P5831 ?statement.
+  ?statement ps:P5831 ?example;
+             pq:P6072 [];
+             pq:P5830 [].
+}

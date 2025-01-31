@@ -1,0 +1,9 @@
+#title:The Swedish alphabet
+# Author: So9q
+# 2021-07-22
+SELECT ?lexemeId ?lemma WHERE {
+  ?lexemeId dct:language wd:Q9027;
+            wikibase:lemma ?lemma.
+  ?lexemeId wikibase:lexicalCategory wd:Q9788
+}
+ORDER BY ?lemma

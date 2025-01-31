@@ -1,0 +1,12 @@
+#defaultView:BubbleChart
+SELECT ?cid ?cause (count(*) as ?count)
+WHERE
+{
+  ?pid wdt:P39 wd:Q11696 .
+  ?pid wdt:P509 ?cid .
+  OPTIONAL {
+    ?cid rdfs:label ?cause FILTER (lang(?cause) = "en") .
+  }
+}
+GROUP BY ?cid ?cause
+ORDER BY DESC(?count) ASC(?cause)

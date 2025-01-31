@@ -1,0 +1,13 @@
+#title: Popular eye colors among humans
+# illustrates bubblechart view, count
+#defaultView:BubbleChart
+SELECT ?eyeColor ?eyeColorLabel ?rgb (COUNT(?human) AS ?count)
+WHERE
+{
+  ?human wdt:P31 wd:Q5.
+  ?human wdt:P1340 ?eyeColor.
+  OPTIONAL { ?eyeColor wdt:P465 ?rgb. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+GROUP BY ?eyeColor ?eyeColorLabel ?rgb
+ORDER BY DESC(?count)

@@ -1,0 +1,11 @@
+#defaultView:ImageGrid
+SELECT ?item ?itemLabel ?coord ?elev ?picture
+{
+  ?item p:P2044/psn:P2044/wikibase:quantityAmount ?elev ; # normalized height
+        wdt:P625 ?coord ;
+        wdt:P17 wd:Q38 ;
+        wdt:P18 ?picture
+  FILTER(?elev > 4000)
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "it" }
+}

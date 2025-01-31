@@ -1,0 +1,10 @@
+#old method for sitelink count
+SELECT ?s ?desc ?linkcount
+WHERE
+{
+  ?s wdt:P31 wd:Q37484 .
+  ?s wikibase:sitelinks ?linkcount .
+  OPTIONAL {
+     ?s rdfs:label ?desc FILTER (lang(?desc) = "en").
+   }
+ } GROUP BY ?s ?desc ?linkcount ORDER BY DESC(?linkcount)

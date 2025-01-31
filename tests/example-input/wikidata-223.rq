@@ -1,0 +1,6 @@
+#defaultView:ImageGrid
+SELECT ?exoplanet ?exoplanetLabel ?image WHERE {
+  ?exoplanet wdt:P31 wd:Q44559 ;
+             wdt:P18 ?image .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

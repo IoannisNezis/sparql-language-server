@@ -1,0 +1,13 @@
+SELECT ?place ?placeLabel ?location ?instanceLabel
+WHERE
+{
+  wd:Q9188 wdt:P625 ?loc .
+  SERVICE wikibase:around {
+      ?place wdt:P625 ?location .
+      bd:serviceParam wikibase:center ?loc .
+      bd:serviceParam wikibase:radius "1" .
+  }
+  OPTIONAL { ?place wdt:P31 ?instance }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+  BIND(geof:distance(?loc, ?location) as ?dist)
+} ORDER BY ?dist

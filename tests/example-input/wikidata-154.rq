@@ -1,0 +1,8 @@
+SELECT ?cc (COUNT(DISTINCT ?child) AS ?number) {
+  ?child wdt:P31 wd:Q5 ; # Looking for real humans and not fictional ones
+         wdt:P39/wdt:P279* wd:Q83307 ;
+         (wdt:P22|wdt:P25) [wdt:P39/wdt:P279* wd:Q83307] ;
+         wdt:P27/wdt:P901 ?cc
+}
+GROUP BY ?cc
+ORDER BY DESC(?number)

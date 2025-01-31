@@ -1,0 +1,13 @@
+#defaultView:ImageGrid
+SELECT ?building ?buildingLabel ?country ?countryLabel ?picture
+WHERE
+{
+  ?building wdt:P31 wd:Q7138926 .
+  ?building wdt:P18 ?picture .
+  OPTIONAL { ?building wdt:P17 ?country } . #if available
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en" .
+  }
+}
+ORDER BY ?countryLabel
+LIMIT 188

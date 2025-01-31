@@ -1,0 +1,11 @@
+#Wikisource pages for authors of scientific articles, ordered by Wikisource language
+#added in 2017-09
+SELECT DISTINCT ?item ?wikisourceSitelink ?wikisourceLanguage WHERE {
+  ?wikisourceSitelink schema:isPartOf [ wikibase:wikiGroup "wikisource" ];
+                      schema:inLanguage ?wikisourceLanguage;
+                      schema:about ?item.
+  ?paper wdt:P31 wd:Q13442814;
+         wdt:P50 ?item.
+}
+ORDER BY ?wikisourceLanguage
+LIMIT 300

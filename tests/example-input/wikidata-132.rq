@@ -1,0 +1,15 @@
+SELECT ?item ?itemLabel ?count
+WHERE
+{
+  {
+    SELECT ?item (COUNT(DISTINCT ?country) AS ?count) WHERE {
+      ?item wdt:P31/wdt:P279* wd:Q41176 .
+      ?item wdt:P17 ?country .
+      FILTER NOT EXISTS { ?country wdt:P576 ?end }
+    }
+    GROUP BY ?item
+  }
+  FILTER ( ?count > 1 )
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+}
+ORDER BY DESC(?count) ?itemL

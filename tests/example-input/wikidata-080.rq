@@ -1,0 +1,8 @@
+#papers about Wikidata
+SELECT ?item ?itemLabel
+WHERE {
+  ?item wdt:P921 wd:Q2013. hint:Prior hint:runFirst true.
+  ?item wdt:P31/wdt:P279* wd:Q191067.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+LIMIT 100

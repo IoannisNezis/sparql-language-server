@@ -1,0 +1,10 @@
+#defaultView:Timeline
+SELECT DISTINCT ?item ?itemLabel ?when (YEAR(?when) as ?date) ?pic
+WHERE {
+  ?item p:P166 ?awardStat . # … with an awarded(P166) statement
+  ?awardStat ps:P166 wd:Q44585 . # … that has the value Nobel Prize in Chemistry (Q44585)
+  ?awardStat pq:P585 ?when . # when did they receive the Nobel prize
+
+SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+OPTIONAL { ?item wdt:P18 ?pic }
+}

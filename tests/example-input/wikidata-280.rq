@@ -1,0 +1,18 @@
+#All museums (including subclass of museum) in Barcelona with coordinates
+SELECT DISTINCT ?item ?name ?coord ?lat ?lon
+WHERE
+{
+ hint:Query hint:optimizer "None" .
+ ?item wdt:P131* wd:Q1492 .
+ ?item wdt:P31/wdt:P279* wd:Q33506 .
+ ?item wdt:P625 ?coord .
+ ?item p:P625 ?coordinate .
+ ?coordinate psv:P625 ?coordinate_node .
+ ?coordinate_node wikibase:geoLatitude ?lat .
+ ?coordinate_node wikibase:geoLongitude ?lon .
+ SERVICE wikibase:label {
+ bd:serviceParam wikibase:language "ca" .
+ ?item rdfs:label ?name
+ }
+}
+ORDER BY ASC (?name)

@@ -1,0 +1,12 @@
+#title:Elevations over 8000 meter
+SELECT ?elevation ?item ?itemLabel ?itemDescription ?coord WHERE {
+  hint:Query hint:optimizer "None".
+  ?st psn:P2044 ?psn .
+  ?psn wikibase:quantityAmount ?elevation . FILTER(?elevation > 8000) .
+  ?psn wikibase:quantityUnit wd:Q11573 .
+  ?st wikibase:rank ?rank . FILTER(?rank != wikibase:DeprecatedRank) .
+  ?item p:P2044 ?st .
+  ?item wdt:P625 ?coord .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY DESC(?elevation)

@@ -1,0 +1,8 @@
+SELECT DISTINCT ?state WHERE {
+  ?state wdt:P31/wdt:P279* wd:Q3624078;
+         p:P463 ?memberOfStatement.
+  ?memberOfStatement a wikibase:BestRank;
+                     ps:P463 wd:Q1065.
+  MINUS { ?memberOfStatement pq:P582 ?endTime. }
+  MINUS { ?state wdt:P576|wdt:P582 ?end. }
+}

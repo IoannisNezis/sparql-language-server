@@ -1,0 +1,27 @@
+#TEMPLATE={"template":"metro station of ?city","variables":{"?city":{"query":"SELECT DISTINCT ?cityLabel where {?city wdt:P31/wdt:P279* wd:Q1637706. SERVICE wikibase:label { bd:serviceParam wikibase:language \"[AUTO_LANGUAGE],mul,en\"} }"} } }
+#defaultView:Map{"hide":["?comm1Label","?coord1", "?comm2","coord2","?layer","?str","?line", "?rgb"],"layer":"?connectingLine1Label"}
+SELECT ?comm1 ?comm1Label ?coord1 ?comm2 ?coord2 ?line ?connectingLine1 ?connectingLine1Label ?layer ?rgb WHERE {
+  BIND(wd:Q8686 AS ?city)
+  ?comm1 wdt:P31/wdt:P279* wd:Q928830 ;
+         wdt:P131*/wdt:P279* ?city;
+         wdt:P625 ?coord1 ;
+         wdt:P81 ?connectingLine1;
+         wdt:P197 ?comm2 .
+  ?connectingLine1 wdt:P465 ?rgb.
+  ?comm2 wdt:P81 ?connectingLine2;
+         wdt:P625 ?coord2 .
+  FILTER (?connectingLine1 = ?connectingLine2)
+
+  ?comm1 p:P625 [# ps:P625 [];
+                  psv:P625 [ wikibase:geoLongitude ?coord1lon; wikibase:geoLatitude ?coord1lat; ] ] .
+  ?comm2 p:P625 [# ps:P625 [];
+                  psv:P625 [ wikibase:geoLongitude ?coord2lon; wikibase:geoLatitude ?coord2lat; ] ] .
+
+  BIND(CONCAT('LINESTRING (', STR(?coord1lon), ' ', STR(?coord1lat), ',', STR(?coord2lon), ' ', STR(?coord2lat), ')') AS ?str) .
+  BIND(STRDT(?str, geo:wktLiteral) AS ?line) .
+  BIND(?connectingLine1 AS ?layer)
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+
+ORDER BY (?connectingLine1Label)

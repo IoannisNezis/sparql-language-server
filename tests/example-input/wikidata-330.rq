@@ -1,0 +1,13 @@
+#title:Paintings depicting woodwind instruments
+#defaultView:ImageGrid
+SELECT ?item ?itemLabel ?object ?objectLabel ?artistLabel ?image
+WHERE
+{
+  ?item wdt:P31/wdt:P279* wd:Q3305213 . # Painting or sub-type of painting
+  ?item wdt:P180 ?object .
+  ?object wdt:P279* wd:Q181247 .
+  OPTIONAL {?item wdt:P170 ?artistitem}
+  BIND (IF(wikibase:isSomeValue(?artistitem), "Artist unknown", ?artistitem) AS ?artist).
+  ?item wdt:P18 ?image .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

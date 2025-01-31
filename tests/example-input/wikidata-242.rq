@@ -1,0 +1,17 @@
+SELECT ?journal ?journalLabel ?editor ?editorLabel ?twitter ?ex_publisher ?ex_publisherLabel WHERE {
+  {
+    SELECT ?journal ?editor ?twitter (SAMPLE(?publisher) AS ?ex_publisher) WHERE {
+      ?journal wdt:P31 wd:Q5633421 ;
+               wdt:P98 ?editor .
+      OPTIONAL {
+        ?journal wdt:P123 ?publisher
+      }
+      ?editor wdt:P2002 ?twitter .
+    }
+    GROUP BY ?journal ?editor ?twitter
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}
+ORDER BY ?journalLabel

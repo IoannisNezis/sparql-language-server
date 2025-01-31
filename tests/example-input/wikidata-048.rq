@@ -1,0 +1,8 @@
+#author: Elwinlhq 2022-11-20
+#contact: Yug
+SELECT ?id ?label WHERE {
+  ?l a ontolex:LexicalEntry ; dct:language wd:Q5218 ; wikibase:lexicalCategory wd:Q24905 ; ontolex:lexicalForm ?id .
+  ?id ontolex:representation ?label .
+  FILTER NOT EXISTS { ?id wdt:P443 ?audio. }  
+  FILTER (LANG(?label) = "qu-x-q7260479"). # retrieve Puno Quechua lexemes/forms: qu-x-Q7260479 !!Lowercase
+}

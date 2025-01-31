@@ -1,0 +1,12 @@
+SELECT ?item ?itemLabel ?itemDescription (SAMPLE(?img) AS ?image) (SAMPLE(?dob) AS ?dob) ?sl
+WHERE {
+  ?item wdt:P106 wd:Q33999 ;
+          wdt:P27 wd:Q668 ;
+          wdt:P21 wd:Q6581072 .
+  MINUS { ?item wdt:P570 [] }
+  OPTIONAL { ?item wdt:P18 ?img }
+  OPTIONAL { ?item wdt:P569 ?dob }
+  OPTIONAL { ?item wikibase:sitelinks ?sl }
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en"}
+} GROUP BY ?item ?itemLabel ?itemDescription ?sl
+ORDER BY DESC(?sl)

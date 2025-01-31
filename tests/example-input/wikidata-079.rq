@@ -1,0 +1,21 @@
+#Interesting maintenance query that shows the relative prominence of a country's current (living) population on Wikidata. The query tends to time out when using all countries at once, but it might be possible to get the figures for each individual country by using uncommenting the line as indicated below
+SELECT
+  ?country ?countryLabel
+  ?wikiPersons
+  ?population
+  (ROUND(?wikiPersons/?population*1000000) AS ?wikiPersonsPerM)
+WHERE
+{
+  { SELECT ?country (count(*) as ?wikiPersons) WHERE {
+    {SELECT DISTINCT ?person ?country WHERE {
+      wd:Q458 wdt:P150 ?country . # European Union contains administrative territorial entity
+      # BIND( wd:Q30 AS ?country ) # use instead of previous line to check individual countries
+      ?person wdt:P31 wd:Q5 .
+      ?person wdt:P27 ?country .
+      FILTER NOT EXISTS{ ?person wdt:P570 ?date } # only count living people
+    } }
+  } GROUP BY ?country }
+  ?country wdt:P1082 ?population
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}
+ORDER BY DESC(?wikiPersonsPerM)

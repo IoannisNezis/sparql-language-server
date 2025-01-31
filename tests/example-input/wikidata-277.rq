@@ -1,0 +1,10 @@
+#defaultView:Map{"layer": "?pbLabel"}
+SELECT ?item ?itemLabel ?pbLabel (SAMPLE(?cat) AS ?cat) (SAMPLE(?coord) AS ?coord) (SAMPLE(?img) AS ?img)
+WHERE {
+  wd:Q75849591 wdt:P527 [ wdt:P527 ?item; wdt:P361 ?pb ].
+  ?pb wdt:P31 wd:Q76598130.
+  ?item wdt:P625 ?coord.
+  OPTIONAL { ?item wdt:P373 ?cat. }
+  OPTIONAL { ?item wdt:P18 ?img. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "de". }
+} GROUP BY ?item ?itemLabel ?pbLabel

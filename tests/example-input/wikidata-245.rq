@@ -1,0 +1,10 @@
+SELECT DISTINCT *
+WHERE
+{
+  ?item wdt:P31 wd:Q8513 ;
+    rdfs:label ?name .
+  OPTIONAL { ?item wdt:P275 ?licenseItem .
+      ?licenseItem rdfs:label ?license .
+      FILTER (LANG(?license) = "en")}
+  FILTER (LANG(?name) = "en")
+}

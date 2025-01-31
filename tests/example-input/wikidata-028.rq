@@ -1,0 +1,14 @@
+#title: Senses on English lexemes with an offensive or profanity style statement
+# date: 2024-01-25
+# author: So9q
+SELECT ?l ?sense ?lemma ?swearLabel WHERE {
+  ?l ontolex:sense ?sense ; # the sense
+     dct:language wd:Q1860 ; # the language
+     wikibase:lemma ?lemma . # and the lemma
+  VALUES ?swear {
+    wd:Q184439
+    wd:Q545779
+  }
+  ?sense wdt:P6191 ?swear .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" . }
+}

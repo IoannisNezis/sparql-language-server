@@ -1,0 +1,14 @@
+SELECT ?order ?item ?itemLabel ?yandex ?apple
+(URI(CONCAT("https://open.spotify.com/track/", ?spotify_id)) AS ?spotify)
+(URI(CONCAT("https://www.amazon.com/dp/", ?amazon_id)) AS ?amazon)
+{
+  wd:Q105834355 p:P658 ?st . ?st ps:P658 ?item .
+
+  OPTIONAL { ?st pq:P1545 ?order } .
+  OPTIONAL {?item p:P750 [ps:P750 wd:Q4537983 ; pq:P2699 ?yandex ] .}
+  OPTIONAL {?item p:P750 [ps:P750 wd:Q20056642 ; pq:P2699 ?apple ] .}
+  OPTIONAL {?item wdt:P5749 ?amazon_id .}
+  OPTIONAL {?item wdt:P2207 ?spotify_id .}
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],ru,en" }
+} ORDER BY xsd:integer(?order)

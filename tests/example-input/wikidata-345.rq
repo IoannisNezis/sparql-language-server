@@ -1,0 +1,14 @@
+# Make a list of the most used authority control properties for works for paintings
+SELECT ?propertyLabel ?propertyDescription (COUNT(?propertyclaim) AS ?count) WHERE {
+  ?item wdt:P31 wd:Q3305213 .
+
+  ?property wikibase:propertyType wikibase:ExternalId .
+  ?property wdt:P31 wd:Q44847669 .
+  ?property wikibase:claim ?propertyclaim .
+
+  ?item ?propertyclaim [] .
+  SERVICE wikibase:label { # ... include the labels
+    bd:serviceParam wikibase:language "en" .
+  }
+} GROUP BY ?propertyLabel ?propertyDescription ORDER BY DESC (?count)
+LIMIT 100

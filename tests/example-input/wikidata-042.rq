@@ -1,0 +1,18 @@
+# by So9q, 2019-11-21
+#defaultView:BubbleChart
+SELECT ?meaning ?meaningLabel ?count WHERE {
+  {
+    SELECT ?meaning (COUNT(?l) AS ?count) WHERE {
+      ?l a ontolex:LexicalEntry ;
+         ontolex:sense ?sense .
+      ?sense wdt:P5137 ?meaning .
+    }
+    GROUP BY ?meaning
+    ORDER BY DESC(?count)
+    LIMIT 100
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}
+ORDER BY DESC(?count)

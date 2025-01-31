@@ -1,0 +1,12 @@
+SELECT ?compound ?compoundLabel ?pKa ?source ?sourceLabel ?doi
+WHERE
+{
+  ?compound wdt:P31 wd:Q11173 ; p:P1117 ?statement .
+  ?statement rdf:type wikibase:BestRank ;
+    ps:P1117 ?pKa .
+  OPTIONAL {
+    ?statement prov:wasDerivedFrom/pr:P248 ?source .
+    OPTIONAL { ?source wdt:P356 ?doi . }
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } #English label
+}

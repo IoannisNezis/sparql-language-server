@@ -1,0 +1,9 @@
+#defaultView:Map
+SELECT ?label ?coord ?subj
+WHERE
+{
+   ?subj wdt:P170 wd:Q5593 .
+  OPTIONAL {?subj wdt:P276 ?loc .
+    ?loc wdt:P625 ?coord } .
+   ?subj rdfs:label ?label FILTER (lang(?label) = "en")
+}

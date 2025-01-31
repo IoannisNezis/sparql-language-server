@@ -1,0 +1,17 @@
+#title: All languages with a Wikimedia language code (P424)
+# Date: 2021-09-24
+SELECT DISTINCT ?lang_code ?itemLabel ?item
+WHERE
+{
+  # ?lang is one of these options
+  VALUES ?lang {
+    wd:Q34770   # language
+    wd:Q436240  # ancient language
+    wd:Q1288568 # modern language
+    wd:Q33215   # constructed language
+  }
+  ?item wdt:P31 ?lang ;
+    # get the language code
+    wdt:P424 ?lang_code .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+} ORDER BY ?lang_code

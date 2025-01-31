@@ -1,0 +1,15 @@
+SELECT ?discoverer ?discovererLabel ?countWITH  AS %i WHERE {
+  {
+    SELECT ?discoverer (COUNT(?asteroid) AS ?count) WHERE {
+      ?asteroid wdt:P31 wd:Q3863 ;
+                wdt:P61 ?discoverer .
+    }
+    GROUP BY ?discoverer
+    ORDER BY DESC(?count)
+    LIMIT 20
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}
+ORDER BY DESC(?count)

@@ -1,0 +1,10 @@
+SELECT ?item ?itemLabel ?placeLabel ?coords ?image
+WHERE
+{
+  ?item wdt:P31 wd:Q2977 .
+  ?item wdt:P131 ?place .
+  ?place wdt:P131 wd:Q90 .
+  OPTIONAL { ?item wdt:P625 ?coords . }
+  OPTIONAL { ?item wdt:P18 ?image . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "fr" . }
+} ORDER BY ?placeLabel ?itemLabel

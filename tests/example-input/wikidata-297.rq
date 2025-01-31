@@ -1,0 +1,21 @@
+#added 2017-03-25 (46 results)
+SELECT ?sitelink
+WHERE
+{
+  # gender = female
+    ?item wdt:P21 wd:Q6581072 .
+
+    # country = Pakistan (Q25)
+    { ?item wdt:P27 wd:Q843 }
+
+        # occupation = actress (Q33999)
+    { ?item wdt:P106 wd:Q33999 }
+
+  # look for articles (sitelinks) in Punjabi ("pa")
+    { ?sitelink schema:about ?item . ?sitelink schema:inLanguage "pa" }
+
+  # humans only
+    ?item wdt:P31 wd:Q5 .
+}
+#Listeria can only handle up to 5000
+LIMIT 5000

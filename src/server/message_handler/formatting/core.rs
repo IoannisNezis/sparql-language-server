@@ -100,7 +100,8 @@ fn merge_comments(
                 if edit.range.contains(comment.position) {
                     let (before, after) = edit.new_text.split_at(
                         // BUG: This is very questionable!
-                        // What happens if the charakters not 1 utd8 m
+                        // What happens if the charakters not 1 utf8 byte long.
+                        // What happens if the edit is longer thatn 1 line.
                         (comment.position.character - edit.range.start.character) as usize,
                     );
                     acc.push(TextEdit::new(
@@ -289,6 +290,9 @@ pub(self) fn collect_format_edits(
                     &get_linebreak(&indentation, indent_base),
                 )),
                 Seperator::Space => Some(TextEdit::new(Range::between(node1, node2), " ")),
+                Seperator::Empty if node2.kind() == "ERROR" => {
+                    Some(TextEdit::new(Range::between(node1, node2), " "))
+                }
                 Seperator::Empty => Some(TextEdit::new(Range::between(node1, node2), "")),
                 Seperator::Unknown => None,
             });

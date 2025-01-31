@@ -1,0 +1,17 @@
+# To filter by country add FILTER (?country = wd:Qxx)
+#defaultView:Map
+# To show the cities of several countries use FILTER (?country IN (wd:Qxx, wd:Qyy))
+# To obtain cities that are part of a particular continent or territory ?country
+# should not be optional and add "?country wdt:P361 wd:Qxx ."
+
+SELECT ?border_city ?border_cityLabel ?countryLabel ?coords
+WHERE {
+  ?border_city wdt:P31 wd:Q902814.
+  OPTIONAL { ?border_city wdt:P17 ?country. }
+  OPTIONAL { ?border_city wdt:P625 ?coords. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en".
+                         ?border_city rdfs:label ?border_cityLabel.
+                         ?country rdfs:label ?countryLabel.}
+}
+GROUP BY ?border_city ?border_cityLabel ?countryLabel ?coords
+ORDER BY ?countryLabel ?border_cityLabel

@@ -1,0 +1,10 @@
+SELECT DISTINCT ?language ?languageLabel ?wikipediaLabel where {
+  ?language wdt:P31 ?instance;
+            wdt:P17 wd:Q55.
+  FILTER (?instance in (wd:Q34770, wd:Q33384)).
+  OPTIONAL {
+    ?wikipedia wdt:P31 wd:Q10876391;
+               wdt:P407 ?language.
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,nl,en". }
+} GROUP BY ?language ?languageLabel ?wikipediaLabel

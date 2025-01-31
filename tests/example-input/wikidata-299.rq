@@ -1,0 +1,7 @@
+#defaultView:Map
+SELECT ?movie ?movieLabel ?narrative_location ?narrative_locationLabel ?coordinates WHERE {
+   ?movie wdt:P840 ?narrative_location ;
+          wdt:P31 wd:Q11424 .
+   ?narrative_location wdt:P625 ?coordinates .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

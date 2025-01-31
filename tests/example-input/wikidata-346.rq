@@ -1,0 +1,17 @@
+# Make a list of the most used authority control properties for people for painters
+SELECT ?propertyLabel ?propertyDescription ?count WHERE {
+  {
+    SELECT ?propertyclaim (COUNT(*) AS ?count) where {
+      ?item wdt:P106 wd:Q1028181 .
+      ?item wdt:P31 wd:Q5 .
+      ?item ?propertyclaim [] .
+    } GROUP BY ?propertyclaim
+  }
+  ?property wikibase:propertyType wikibase:ExternalId .
+  ?property wdt:P31 wd:Q19595382 .
+  ?property wikibase:claim ?propertyclaim .
+  SERVICE wikibase:label { # ... include the labels
+    bd:serviceParam wikibase:language "en" .
+  }
+} ORDER BY DESC (?count)
+LIMIT 100

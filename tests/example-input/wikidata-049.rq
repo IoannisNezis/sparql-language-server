@@ -1,0 +1,9 @@
+#Properties grouped by their parent property
+#TODO: should display links and numeric ids
+#defaultView:Tree
+SELECT ?property2 ?property2Label ?property1 ?property1Label WHERE {
+  ?property1 rdf:type wikibase:Property. #not replaceable with wikibase:Item, wikibase:Statement, wikibase:Reference at WDQS
+                                         #https://www.mediawiki.org/wiki/Wikibase/Indexing/RDF_Dump_Format#WDQS_data_differences
+  ?property1 wdt:P1647 ?property2.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

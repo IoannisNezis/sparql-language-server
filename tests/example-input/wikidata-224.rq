@@ -1,0 +1,9 @@
+SELECT ?gender (count(DISTINCT ?human) as ?number)
+WHERE
+{
+  ?human wdt:P31 wd:Q5 ;
+         wdt:P21 ?gender ;
+         wdt:P106/wdt:P279* wd:Q901 .
+}
+GROUP BY ?gender
+LIMIT 10

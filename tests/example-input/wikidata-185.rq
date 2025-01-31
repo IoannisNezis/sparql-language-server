@@ -1,0 +1,15 @@
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+SELECT DISTINCT ?interaction_type WHERE {
+  VALUES ?wpid {"WP716"}
+  ?item wdt:P2410 ?wpid ;
+        wdt:P2888 ?source_pathway .
+
+  SERVICE <http://sparql.wikipathways.org/sparql> {
+     ?wp_pathway dc:identifier ?source_pathway .
+     ?s dcterms:isPartOf ?wp_pathway, ?interaction .
+     ?interaction rdf:type wp:Interaction .
+     ?interaction rdf:type ?interaction_type .
+     ?interaction wp:participants ?participants .
+  }
+}

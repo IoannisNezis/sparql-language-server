@@ -1,0 +1,9 @@
+# author: Yug 2024-12-11
+# https://w.wiki/CNrc
+SELECT ?id ?label
+WHERE {
+  ?id wdt:P31 wd:Q484170;  # item is `commune de france` (Q484170)
+      wdt:P131 wd:Q3389.   # item is `located in administrative entity` (P131) of `finistere` (Q3389)
+  ?id rdfs:label ?label.   # fetch labels
+  FILTER(lang(?label) = "fr") # keep French ones
+}

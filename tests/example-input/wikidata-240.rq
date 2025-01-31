@@ -1,0 +1,9 @@
+#title:Most popular subjects of scientific articles
+SELECT (count(?work) as ?count) ?subject ?subjectLabel where {
+  ?work wdt:P31 wd:Q13442814;
+        wdt:P921 ?subject .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+GROUP BY ?subject ?subjectLabel
+ORDER BY desc(?count)
+LIMIT 200

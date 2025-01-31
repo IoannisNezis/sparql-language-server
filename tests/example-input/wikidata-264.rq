@@ -1,0 +1,11 @@
+SELECT ?person ?personLabel ?personDescription ?birth ?death ?age
+{
+  ?person wdt:P31 wd:Q5. # instance of human
+  ?person wdt:P569 ?birth . # birth date
+  ?person wdt:P570 ?death . # death date
+  hint:Prior hint:rangeSafe true . # tell the optimizer that fields doesn’t mix dates, strings, integers or other data types, which simplifies the range comparison
+  FILTER (?birth > "1452-04-15"^^xsd:dateTime && ?death < "1519-05-02"^^xsd:dateTime) # And between these two dates
+  bind( year(?death)-year(?birth) as ?age ) # Make a new variable called ?age that we can use
+  FILTER (?age > 10 && ?age < 100) # Only find people with realistic ages
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". } # used to display a label
+}

@@ -1,0 +1,11 @@
+SELECT (COUNT(?disease) AS ?total) (SUM(?ref) AS ?byDO) (100*?byDO/?total AS ?percent)
+WHERE
+{
+  {?disease wdt:P31 wd:Q12136 }
+  UNION
+  {?disease wdt:P279 wd:Q12136 .}
+  OPTIONAL {
+    ?disease p:P699 ?statement.
+    BIND(1 AS ?ref).
+  }
+}

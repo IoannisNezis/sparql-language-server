@@ -1,0 +1,54 @@
+SELECT
+  ?item
+  (SAMPLE (?titleL) AS ?title)
+  (group_concat(DISTINCT ?creatorL ; separator = ", ") as ?creator)
+  (group_concat(DISTINCT ?genreL ; separator = ", ") as ?genre)
+  (group_concat(DISTINCT ?placeL ; separator = ", ") as ?place)
+  (group_concat(DISTINCT ?arr ; separator = ", ") as ?arrondissement)
+  (SAMPLE (?img) AS ?image)
+  (SAMPLE (?coord) AS ?coordinates) {
+
+    {
+      SELECT DISTINCT ?item { {
+        ?item wdt:P136 wd:Q557141 ;     # genre: public art
+              wdt:P131 wd:Q90           # located in: Paris
+      } UNION { # or
+        ?item wdt:P136 wd:Q557141 ;     # genre: public art
+              wdt:P131/wdt:P131* wd:Q90 # located in an arrondissement of Paris
+      } }
+    }
+
+    # title
+    OPTIONAL { ?item rdfs:label ?titleL FILTER (lang(?titleL) = "fr") }
+
+    # creators
+    OPTIONAL { ?item wdt:P170 [rdfs:label ?creatorL] FILTER (lang(?creatorL) = "fr") }
+
+    #genre
+    OPTIONAL {
+      {
+        ?item wdt:P136 ?g FILTER (STR(?g) != 'http://www.wikidata.org/entity/Q557141')
+      } UNION {
+        ?item wdt:P31 ?g .
+      }
+      ?g rdfs:label ?genreL FILTER (lang(?genreL) = "fr") .
+    }
+
+    # place
+    OPTIONAL {
+      ?item wdt:P276 [rdfs:label ?placeL] FILTER (lang(?placeL) = "fr") .
+    }
+
+    # arrondissement
+    OPTIONAL {
+      ?item wdt:P131 [wdt:P131 wd:Q90 ; rdfs:label ?arrL] FILTER (lang(?arrL) = "fr").
+      BIND(REPLACE(?arrL, '^([0-9]+).*$', "$1", "si") AS ?arr)
+    }
+
+    # image
+    OPTIONAL { ?item wdt:P18 ?img }
+
+    # coordinates
+    OPTIONAL { ?item wdt:P625 ?coord }
+
+} GROUP BY ?item

@@ -1,0 +1,13 @@
+SELECT ?lang (COUNT(DISTINCT ?article) AS ?count) WHERE {
+  hint:Query hint:optimizer "None".
+  ?item wdt:P1367 ?yp_id .
+  ?article schema:about ?item . # find articles about things with an Art UK artist identifier
+  ?article schema:isPartOf / wikibase:wikiGroup "wikipedia" . # only Wikipedia articles
+  hint:Prior hint:gearing "forward" .
+  # This hint says to search the property chain above from left to right ("forward"),
+  # i.e. it is checked if each previously found value for ?article is linked to a Wikipedia.
+  # The default ("reverse") would be to search it from right to left, i.e. find all Wikipedia
+  # articles first, and then select the intersection with the previously found values of ?article.
+  ?article schema:inLanguage ?lang .
+} GROUP BY ?lang
+ORDER BY DESC (?count)

@@ -1,0 +1,31 @@
+SELECT ?item ?itemLabel ?DOI ?PMID WHERE {INCLUDE
+  {
+    SELECT ?item WHERE {INCLUDE %p
+      BIND (CONCAT("haswbstatement:P31=Q13442814 ", ?searchfor) AS ?searchstr)
+      SERVICE wikibase:mwapi {
+        bd:serviceParam wikibase:endpoint "www.wikidata.org" .
+        bd:serviceParam wikibase:api "Generator" .
+        bd:serviceParam mwapi:generator "search" .
+        bd:serviceParam mwapi:gsrsearch ?searchstr .
+        bd:serviceParam mwapi:gsrlimit "max" .
+        bd:serviceParam mwapi:gsrnamespace "0" .
+        bd:serviceParam mwapi:gsrprop "" .
+        ?item wikibase:apiOutputItem mwapi:title .
+      }
+    }
+  }
+  {
+    SELECT * WHERE {
+      BIND ("zika" AS ?searchfor)
+    }
+  }
+  ?item rdfs:label ?itemLabel .
+  FILTER (LANG(?itemLabel) = "en")
+  FILTER (CONTAINS(LCASE(?itemLabel),?searchfor))
+  OPTIONAL {
+    ?item wdt:P698 ?PMID .
+  }
+  OPTIONAL {
+    ?item wdt:P356 ?DOI .
+  }
+}

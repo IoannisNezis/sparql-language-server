@@ -1,0 +1,10 @@
+SELECT ?country ?countryLabel ?article WHERE {
+
+    ?country wdt:P31 wd:Q3624078 . # sovereign state
+    ?article schema:about ?country .
+    ?article schema:isPartOf <https://en.wikipedia.org/>.
+
+    SERVICE wikibase:label {
+       bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en"
+    }
+}

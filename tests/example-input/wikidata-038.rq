@@ -1,0 +1,42 @@
+# German picture dictionary for young children
+# NB: when 2 or more pictures occur for the same lemma a preferred rank is missing on the Q-item.
+# Please fix that if you know how.
+# If any inapproriate terms show up it is probably because the sense is missing a correct P5137
+# by So9q
+#defaultView:ImageGrid
+SELECT DISTINCT ?lexemeId ?lemma ?q_concept ?q_conceptDescription ?picture
+WHERE {
+  ?lexemeId dct:language wd:Q188; # change language here
+            wikibase:lemma ?lemma;
+            ontolex:sense ?sense.
+  ?sense wdt:P5137 ?q_concept.
+  ?q_concept wdt:P18 ?picture.
+  ############
+  # Exclusions
+  ############
+  # Exclude out of scope concepts
+  MINUS {?q_concept wdt:P31 wd:Q3624078.}. # countries
+
+  # Exclude non suitable concepts
+  VALUES ?minus {
+  wd:Q47092 # rape
+  wd:Q198   # war
+  wd:Q124490 # violence
+  wd:Q170382 # revolver
+  wd:Q1576   # cigar
+  #... add yours here
+  }.
+  MINUS {?sense wdt:P5137 ?minus.}.
+
+  # Exclude senses not suitable for young children:
+  VALUES ?filter {
+  wd:Q8102
+  wd:Q545779
+  wd:Q1521634
+  wd:Q184439}.
+  FILTER NOT EXISTS {?sense wdt:P6191 ?filter.}.
+  # if you wish to only browse certain items you can insert a FILTER
+  # regular expression here, like in the example above.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en,mul". }
+}
+ORDER BY lcase(?lemma) # order a-z

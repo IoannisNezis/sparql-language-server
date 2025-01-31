@@ -1,0 +1,7 @@
+#added 2021-12
+#defaultView:Map{"layer":"?country"}
+SELECT DISTINCT * WHERE {
+  ?item wdt:P31 wd:Q1032372 ;
+        wdt:P625 ?geo ;
+        wdt:P17 ?country
+}

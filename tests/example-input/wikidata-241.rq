@@ -1,0 +1,14 @@
+#title:Galaxies ordered by the ones that are most linked from scientific articles
+#author: So9q
+#date:2021-10-27
+#note:I deliberately choose a smaller subgraph (galaxies) to prevent a timeout on WDQS
+SELECT ?main_subject ?main_subjectLabel (count(?item) as ?c)
+WHERE
+{
+  ?item wdt:P31 wd:Q13442814;
+        wdt:P921 ?main_subject.
+  ?main_subject wdt:P31/wdt:P279* wd:Q318.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+GROUP BY ?main_subject ?main_subjectLabel
+ORDER BY DESC(?c)

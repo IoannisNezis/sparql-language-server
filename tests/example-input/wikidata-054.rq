@@ -1,0 +1,7 @@
+SELECT ?p ?pLabel (count (*) as ?count) {
+  ?s ?pd ?o .
+  ?p wikibase:directClaim ?pd .
+  ?s wdt:P31/wdt:P279* wd:Q729 .
+  ?o wdt:P31/wdt:P279* wd:Q43501 .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+} GROUP BY ?p ?pLabel ORDER BY desc(?count)

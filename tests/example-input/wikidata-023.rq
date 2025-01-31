@@ -1,0 +1,14 @@
+#defaultView:ImageGrid
+# Brightest celestial bodies
+SELECT ?star ?starLabel ?images ?apparent_magnitude
+WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+  { SELECT  ?star ?apparent_magnitude ?images
+    WHERE {   
+      ?star wdt:P31 wd:Q523;
+            wdt:P1215 ?apparent_magnitude;
+            wdt:P18 ?images .
+      FILTER(?apparent_magnitude < 1)
+    } LIMIT 10 
+  }
+} ORDER BY (?apparent_magnitude)

@@ -1,0 +1,6 @@
+SELECT DISTINCT ?instance_of ?instance_ofDescription ?instance_ofLabel ?official_website WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+  ?instance_of wdt:P31/wdt:P279* wd:Q341
+  OPTIONAL { ?instance_of wdt:P856 ?official_website. }
+  ?instance_of wdt:P277 wd:Q37227.
+}

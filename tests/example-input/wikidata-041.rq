@@ -1,0 +1,13 @@
+# By So9q
+# Lexemes that means (liquid) water
+SELECT ?l ?sense ?lemma ?languageLabel WHERE {
+  ?l a ontolex:LexicalEntry ; # get from the special LexicalEntry
+       ontolex:sense ?sense ; # the sense
+       dct:language ?language ; # the language
+       wikibase:lemma ?lemma. # and the lemma
+  ?sense wdt:P5137 wd:Q29053744 .
+                   # change Q29053744 to anything you want
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+# Lower case before order
+ORDER BY (LCASE(?languageLabel))

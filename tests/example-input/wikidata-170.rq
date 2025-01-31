@@ -1,0 +1,10 @@
+#defaultView:BarChart
+SELECT ?variant_typeLabel (count(?variant_typeLabel) as ?counts)
+WHERE
+{
+  ?item wdt:P3329 ?civic_id ;
+          wdt:P31 ?variant_type .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}
+GROUP BY ?variant_typeLabel
+ORDER BY ?counts

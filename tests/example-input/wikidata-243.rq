@@ -1,0 +1,6 @@
+SELECT ?proof ?proofLabel
+WHERE
+{
+  ?proof wdt:P31 wd:Q11538.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}

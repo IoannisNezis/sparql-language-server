@@ -1,0 +1,8 @@
+# Business listed on NYSE and NASDAQ along with their ticker symbols
+SELECT DISTINCT ?id ?idLabel ?exchangesLabel ?ticker WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+  ?id p:P414 ?exchange.
+  VALUES ?exchanges { wd:Q13677 wd:Q82059 }
+  ?exchange ps:P414 ?exchanges;
+    pq:P249 ?ticker.
+}

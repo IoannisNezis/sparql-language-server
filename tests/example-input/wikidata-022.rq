@@ -1,0 +1,13 @@
+#defaultView:ImageGrid
+# Items in the Messier Catalog
+SELECT DISTINCT ?item ?itemLabel ?numero (SAMPLE(?image) AS ?image)
+WHERE {
+  ?item p:P528 ?catalogStatement .
+  ?catalogStatement ps:P528 ?numero .
+  ?catalogStatement pq:P972 wd:Q14530 .
+  OPTIONAL {?item wdt:P18 ?image . }
+
+	SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}
+GROUP BY ?item ?itemLabel ?numero 
+ORDER BY ?numero

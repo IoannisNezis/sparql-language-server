@@ -1,0 +1,21 @@
+# variants that are associated with renal cell carcinoma
+SELECT DISTINCT ?civic_id ?item ?itemLabel
+WHERE
+{
+  VALUES ?property {
+                      wdt:P3356 # positive diagnostic predictor
+                      wdt:P3357 # negative diagnostic predictor
+                      wdt:P3358 # positive prognostic predicator
+                      wdt:P3359 # negative prognostic predictor
+                     }
+    ?item wdt:P3329 ?civic_id .
+    {?item ?property wd:Q1164529.} # wd:Q1164529 = renal cell carcinoma
+    UNION
+    {?item p:P3354 ?o . # positive therapeutic predictor
+     ?o pq:P2175 wd:Q1164529 .}
+    UNION
+    {?item p:P3354 ?o . # negative therapeutic predictor
+     ?o pq:P2175 wd:Q1164529 .}
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

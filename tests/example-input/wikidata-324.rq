@@ -1,0 +1,8 @@
+SELECT ?tonalityLabel (COUNT(?tonalityLabel) as ?count)
+WHERE
+{
+  ?work wdt:P826 ?tonality.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+GROUP BY ?tonalityLabel
+ORDER BY DESC(?count)

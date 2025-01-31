@@ -1,0 +1,12 @@
+SELECT ?place ?placeLabel ?location
+WHERE
+{
+  wd:Q24041662 wdt:P625 ?loc00 .
+  SERVICE wikibase:around {
+    ?place wdt:P625 ?location .
+    bd:serviceParam wikibase:center ?loc00 .
+    bd:serviceParam wikibase:radius "0.001" .
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+}
+ORDER BY ?placeLabel

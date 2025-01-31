@@ -1,0 +1,45 @@
+#defaultView:Map
+SELECT (SAMPLE(?bridge) AS ?bridge) (SAMPLE(?bridgeLabel) AS ?bridgeLabel)
+       (SAMPLE(?watercourse) AS ?watercourse) (SAMPLE(?watercourseLabel) AS ?watercourseLabel)
+       (SAMPLE(?loc) AS ?loc) (SAMPLE(?pic) AS ?pic)
+       (CONCAT(SAMPLE(?sKey),": ",STR(YEAR(SAMPLE(?s)))) AS ?start)
+       (CONCAT(SAMPLE(?eKey),": ",STR(YEAR(SAMPLE(?e)))) AS ?end)
+       (SAMPLE(?article) AS ?article) (IF(BOUND(?article),CONCAT(?bridgeLabel," in Wikipedia"),1/0) AS ?articleLabel)
+WHERE {
+  {
+    SELECT ?bridge ?watercourse WHERE {
+      ?bridge wdt:P31/wdt:P279* wd:Q12280; wdt:P177 ?watercourse.
+      ?watercourse wdt:P31/wdt:P279* wd:Q355304.
+      # the following actually yields a perf penalty atm
+      #?bridge wdt:P17 wd:Q183.
+      #OPTIONAL { ?bridge wdt:P17 ?country. }. FILTER(!BOUND(?country) || ?country = wd:Q183).
+    }
+  }
+
+  # wd:Q1202, wd:Q183 work as well atm and take progressively more time to complete
+  ?bridge (p:P131|ps:P131)+ wd:Q24186.
+
+  OPTIONAL { ?bridge wdt:P625 ?loc. }.
+  OPTIONAL { ?bridge wdt:P18 ?pic. }.
+  OPTIONAL { ?bridge wdt:P571 ?s. }.
+  OPTIONAL { ?bridge wdt:P576 ?e. }.
+
+  OPTIONAL {
+    ?article schema:about ?bridge.
+    FILTER (IF(EXISTS {?article schema:inLanguage "[AUTO_LANGUAGE]".},
+               SUBSTR(str(?article), 1, 25) = "https://[AUTO_LANGUAGE].wikipedia.org/",
+               IF(EXISTS {?article schema:inLanguage "en".},
+                  SUBSTR(str(?article), 1, 25) = "https://en.wikipedia.org/",
+                  SUBSTR(str(?article), 1, 25) = "https://de.wikipedia.org/"
+               )
+            )).
+  }
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en,de".
+    ?bridge rdfs:label ?bridgeLabel.
+    ?watercourse rdfs:label ?watercourseLabel.
+    wd:P571 rdfs:label ?sKey.
+    wd:P576 rdfs:label ?eKey.
+  }
+}
+GROUP BY ?bridge ?watercourse

@@ -1,0 +1,13 @@
+SELECT ?object ?objectLabel ?mass WHERE {
+  {
+    SELECT ?object (MAX(?mass) AS ?mass) WHERE {
+      ?object p:P2067/psn:P2067/wikibase:quantityAmount ?mass.
+      MINUS { ?object wdt:P31 wd:Q3647172. }
+    }
+    GROUP BY ?object
+    ORDER BY DESC(?mass)
+    LIMIT 100
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+ORDER BY DESC(?mass)

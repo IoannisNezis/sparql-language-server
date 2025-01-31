@@ -1,0 +1,59 @@
+prefix void:  <http://rdfs.org/ns/void#>
+prefix pav:   <http://purl.org/pav/>
+prefix xsd:   <http://www.w3.org/2001/XMLSchema#>
+prefix freq:  <http://purl.org/cld/freq/>
+prefix biopax: <http://www.biopax.org/release/biopax-level3.owl#>
+prefix skos:  <http://www.w3.org/2004/02/skos/core#>
+prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix gpml:  <http://vocabularies.wikipathways.org/gpml#>
+prefix wp:    <http://vocabularies.wikipathways.org/wp#>
+prefix dcterms: <http://purl.org/dc/terms/>
+prefix wprdf: <http://rdf.wikipathways.org/>
+prefix prov:  <http://www.w3.org/ns/prov#>
+prefix foaf:  <http://xmlns.com/foaf/0.1/>
+prefix dc:    <http://purl.org/dc/elements/1.1/>
+
+SELECT DISTINCT ?biomarkerLabel ?proteinLabel ?geneID ?WP_gene ?PathwayID ?PathwayName #results that are displayed.
+WHERE {
+  VALUES ?biomarker {wd:Q420633 wd:Q27125809 wd:Q422462} #you can add more biomarkers here if needed, separated by a space.
+  ?biomarker wdt:P31 wd:Q11173. #Stating that all biomarkers have to be "instance of" "chemical compound" (you could ommit this, but query will probably take longer).
+  ?biomarker wdt:P638 ?pdbID . #Checking if a biomarker has a Protein Databank ID (PDB) -> meaning the metabolite can interact with a protein.
+  ?protein wdt:P31 wd:Q8054 . #Stating that all proteins are "instance of" "protein"
+  ?protein wdt:P638 ?pdbID . #Checking which proteins have a PDB ID, which we queried previously in relationship to the biomarkers.
+  ?protein wdt:P702 ?gene . #Connecting the protein to a gene ("encoded by" relationship) -> to get an identifier we can use later in federated WikiPathways query.
+  ?gene wdt:P703 wd:Q15978631 . #Now removing all genes that are not found in species "Homo sapiens". -> This info is not always available for proteins in WikiData.
+  ?gene wdt:P2888 ?geneID . #Getting the "exact match" identifier for the gene, related to the protein, related to the biomarker.
+
+  ##The IRI from Wikidata starts with http:// , where the one from WikiPathways starts with https:// , so we need to rewrite the IRI
+    BIND(                      # Bind the created IRI into a new variable (called ?newIRI)
+        IRI(                   # Convert the string back to an IRI
+          CONCAT(              # Concatenate item 1 and 2 together as one string
+               "https",        # First item to concat (more items can be added with a comma
+              #Second item to concat:
+               SUBSTR(         # Obtain a substring
+                 STR(?geneID), # Convert the geneID IRI from Wikidata to a string,
+                 5)            # removing the first 5 characters (<http)
+        )) AS ?newIRI          # Name for the new variable
+    )
+
+  SERVICE <http://sparql.wikipathways.org/sparql> { #Connecting to the WikiPathways SPARQL endpoint.
+     ?WP_pathway a wp:Pathway . #Stating a ?WP_pathway is indeed a pathway in the WikiPathways RDF .
+     ?WP_pathway wp:organismName "Homo sapiens" . #Removing all PWs not for species Homo sapiens.
+     ?WP_pathway dc:identifier ?PathwayID . #Query the identifier of the pathway in WPs.
+     ?WP_pathway dc:title ?PathwayName . #Obtaining the name of the pathway.
+
+     ?WP_gene a wp:Protein . #Stating that a ?WP_gene is a Protein DataNode (you could ommit this, to also get all DataNodes modeled as GeneProducts out, but query will take longer).
+     ?WP_gene wp:bdbEntrezGene ?newIRI . #Connecting the previously queried "exact match" from WikiData to the NCBI/Entrez Gene ID in WPs.
+     ?WP_gene dcterms:isPartOf ?WP_pathway . #Connecting the WP_gene to the WP_pathway.
+
+   }
+ OPTIONAL {?biomarker rdfs:label ?biomarkerLabel. #Create a label (aka name) for the biomarkers in WikiData, without using the service query.
+FILTER(LANG(?biomarkerLabel) = "en").
+}
+   OPTIONAL {?protein rdfs:label ?proteinLabel. #Create a label(aka name) for the proteins in WikiData, without using the service query.
+FILTER(LANG(?proteinLabel) = "en").
+}
+
+}
+ORDER BY DESC (?biomarkerLabel) #Order results for biomarkers

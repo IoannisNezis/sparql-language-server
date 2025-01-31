@@ -1,0 +1,8 @@
+SELECT ?geneLabel ?variantLabel
+WHERE
+{
+  VALUES ?disease {wd:Q188874}
+    ?variant wdt:P3358 ?disease ; # P3358 Positive prognostic predictor
+          wdt:P3433 ?gene . # P3433 biological variant of
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

@@ -1,0 +1,8 @@
+#defaultView:ImageGrid
+SELECT *
+WHERE
+{
+  ?item wdt:P31 wd:Q3305213 .
+  ?item wdt:P170 wd:Q34661 .
+  ?item wdt:P18 ?pic .
+}

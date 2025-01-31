@@ -1,0 +1,16 @@
+SELECT ?h ?hLabel ?location (CONCAT("injured: ",str(?injured)) as ?injuredl) (concat("dead: ",str(?dead)) as ?deadl) ?date ?image
+WHERE
+{
+        ?h wdt:P31 ?attack.
+    values (?attack) {
+      (wd:Q18493502)
+      (wd:Q217327)
+
+    }
+    OPTIONAL { ?h wdt:P1339 ?injured . }
+    OPTIONAL { ?h wdt:P1120 ?dead. }
+    OPTIONAL { ?h wdt:P276?/wdt:P625 ?location }
+    OPTIONAL { ?h wdt:P585 ?date }
+    OPTIONAL { ?h wdt:P18 ?image }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

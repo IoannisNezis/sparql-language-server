@@ -1,0 +1,23 @@
+SELECT (GROUP_CONCAT(?classLabel; SEPARATOR = "; ") AS ?classes) ?propLabel ?i ?iLabel ?iDescription WHERE {
+  {
+    SELECT ?i ?prop ?class WHERE {
+      {
+        SELECT ?prop ?p WHERE {
+          ?prop wikibase:directClaim ?p;
+            (wdt:P31/(wdt:P279*)) wd:Q18636219.
+        }
+      }
+      ?i ?p "2001-5-11"^^xsd:dateTime.
+      OPTIONAL { ?i wdt:P31 ?class }
+    }
+    LIMIT 1000
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en".
+    ?class rdfs:label ?classLabel.
+    ?prop rdfs:label ?propLabel.
+    ?i rdfs:label ?iLabel;
+      schema:description ?iDescription.
+  }
+}
+GROUP BY ?propLabel ?i ?iLabel ?iDescription

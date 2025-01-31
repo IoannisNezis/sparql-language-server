@@ -1,0 +1,16 @@
+#title: Lexeme languages by number of usage examples
+# by Vesihiisi
+# improved by So9q 23-02-2020 to only show those with both a form and a sense,
+# because that's what we really want
+
+#defaultView:BubbleChart
+SELECT ?languageLabel (COUNT(?example) AS ?count) WHERE {
+  ?l dct:language ?language;
+     p:P5831 ?statement.
+  ?statement ps:P5831 ?example;
+             pq:P6072 [];
+             pq:P5830 [].
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+GROUP BY ?languageLabel
+ORDER BY DESC(?count)

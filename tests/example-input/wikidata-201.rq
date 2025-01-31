@@ -1,0 +1,26 @@
+SELECT DISTINCT
+    ?game
+    ?gameLabel
+    (MIN(?publication_date) as ?publicationDateMin)
+    (GROUP_CONCAT(?genre_label; SEPARATOR=", ") as ?genres) 
+    ?gameDescription
+    ?steamLink
+    ?official_website
+WHERE {
+    ?game wdt:P31 wd:Q7889.
+    ?game wdt:P400 wd:Q1406.
+    ?game wdt:P275 wd:Q178285.
+    OPTIONAL { ?game wdt:P577 ?publication_date }
+    OPTIONAL {
+        ?game wdt:P136 ?genre .
+        ?genre rdfs:label ?genre_label FILTER (lang(?genre_label) = "en").
+    }
+    OPTIONAL { ?game wdt:P1733 ?steam }
+    BIND(URI(CONCAT("https://store.steampowered.com/app/", ?steam)) as ?steamLink)
+    OPTIONAL { ?game wdt:P856 ?official_website }
+    SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "en".
+    }
+}
+GROUP BY ?game ?gameLabel ?publicationDateMin ?genres ?gameDescription ?steamLink ?official_website
+ORDER BY DESC(?publicationDateMin)

@@ -1,0 +1,20 @@
+# Show the names of 100 cities with a population larger than 1000000 in the native languages of their countries
+SELECT ?city ?cityLabel ?country ?countryLabel ?lang ?langLabel ?langCode ?population
+WHERE
+{
+  ?city wdt:P1082 ?population . hint:Prior hint:runFirst true.
+
+  FILTER(?population>1000000)
+
+  ?city wdt:P31 wd:Q515;
+        wdt:P17 ?country;
+        rdfs:label ?cityLabel .
+  ?country wdt:P37 ?lang;
+           rdfs:label ?countryLabel .
+  ?lang wdt:P424 ?langCode;
+        rdfs:label ?langLabel .
+
+  FILTER(lang(?cityLabel)=?langCode)
+  FILTER(lang(?countryLabel)=?langCode)
+  FILTER(lang(?langLabel)=?langCode)
+} LIMIT 100

@@ -1,0 +1,9 @@
+SELECT DISTINCT ?Person ?PersonLabel ?NobelPrizeLabel ?AcademyAwardLabel WHERE {
+  ?NobelPrize wdt:P279?/wdt:P31? wd:Q7191 .    # <- subtypes of nobel prize
+  ?AcademyAward wdt:P279?/wdt:P31? wd:Q19020 . # <- subtypes of academy award
+  ?Person wdt:P166? ?NobelPrize .              # <- people awarded a nobel prize
+  ?Person wdt:P166? ?AcademyAward .            # <- people awarded an academy award
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}

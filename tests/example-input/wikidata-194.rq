@@ -1,0 +1,9 @@
+SELECT ?organism_name
+WHERE
+{
+  ?organism_item wdt:P2974 wd:Q5880 ;
+                 rdfs:label ?organism_name .
+  ?gene wdt:P703 ?organism_item ;
+        wdt:P1056 wd:Q319541 .
+  FILTER (LANG(?organism_name) = "en") .
+}

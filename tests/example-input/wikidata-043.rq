@@ -1,0 +1,14 @@
+# Words describing people from a certain place
+# e.g. swede
+# by Vesihiisi
+#defaultView:Map
+SELECT ?l ?lemma ?demoPlaceLabel ?coords WHERE {
+  ?l a ontolex:LexicalEntry ;
+       dct:language ?language ;
+       wikibase:lemma ?lemma .
+  ?language wdt:P218 'sv'. # language
+  ?l ontolex:sense ?sense.
+     ?sense wdt:P6271 ?demoPlace.
+  ?demoPlace wdt:P625 ?coords
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

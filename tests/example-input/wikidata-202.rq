@@ -1,0 +1,11 @@
+SELECT ?lang ?langLabel ?human ?humanLabel ?educatedat ?educatedatLabel ?coords
+{
+  ?lang wdt:P31/wdt:P279* wd:Q9143 .
+  ?human wdt:P31 wd:Q5 .
+  { ?lang wdt:P287 ?human } UNION { ?lang wdt:P170 ?human } UNION { ?lang wdt:P943 ?human } UNION { ?lang wdt:P178 ?human } .
+
+  ?human wdt:P69 ?educatedat .
+  ?educatedat wdt:P625 ?coords .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,fr" }
+}
+LIMIT 100

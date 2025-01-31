@@ -1,0 +1,17 @@
+SELECT
+  ?discoverer ?discovererLabel
+  (COUNT(DISTINCT ?planet) as ?count)
+  (GROUP_CONCAT(DISTINCT(?planetLabel); separator=", ") as ?planets)
+WHERE
+{
+  ?ppart wdt:P279* wd:Q634 .
+  ?planet wdt:P31 ?ppart .
+  ?planet wdt:P61 ?discoverer .
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en" .
+    ?discoverer rdfs:label ?discovererLabel .
+    ?planet rdfs:label ?planetLabel
+  }
+}
+GROUP BY ?discoverer ?discovererLabel
+ORDER BY DESC(?count)

@@ -1,0 +1,9 @@
+# Get all Wikipedia sites
+SELECT ?item ?itemLabel ?website
+WHERE
+{
+  #?item wdt:P31 wd:Q10876391.
+  ?item wdt:P856 ?website.
+  ?website wikibase:wikiGroup "wikipedia".
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

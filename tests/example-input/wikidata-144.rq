@@ -1,0 +1,8 @@
+#defaultView:LineChart
+SELECT ?year ?population {
+  wd:Q730 p:P1082 ?p .
+  ?p pq:P585 ?year ;
+     ps:P1082 ?population .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+ORDER BY ?year

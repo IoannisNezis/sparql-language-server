@@ -1,0 +1,11 @@
+SELECT ?street ?streetLabel ?cityLabel ?personLabel
+WHERE
+{
+    ?street wdt:P31 wd:Q79007 .
+    ?street wdt:P17 wd:Q142 .
+    ?street wdt:P131 ?city .
+    ?street wdt:P138 ?person .
+    ?person wdt:P31 wd:Q5
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "fr" }
+}
+ORDER BY ?city

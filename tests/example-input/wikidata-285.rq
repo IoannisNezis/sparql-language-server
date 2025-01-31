@@ -1,0 +1,17 @@
+SELECT DISTINCT ?actor ?actorLabel ?characterLabel ?movie1Label ?movie2Label WHERE {
+  ?movie1 p:P161 [
+            ps:P161 ?actor;
+            pq:P453 ?character
+          ];
+          wdt:P577 ?movie1Publication.
+  ?movie2 p:P161 [
+            ps:P161 ?actor;
+            pq:P453 ?character
+          ];
+          wdt:P577 ?movie2Publication.
+  MINUS{?movie1 wdt:P31/wdt:P279? wd:Q24856} # Not a series
+  MINUS{?movie2 wdt:P31/wdt:P279? wd:Q24856} # Not a series
+  FILTER(?character != wd:Q18086706). # Not as "themselves"
+  FILTER(?movie1Publication + "P40Y"^^xsd:duration < ?movie2Publication) # 40 years between them
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

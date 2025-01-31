@@ -1,0 +1,11 @@
+#defaultView:Map{"hide": ["?coord"]}
+SELECT ?subj ?subjLabel ?place ?placeLabel ?coord ?birthyear
+WHERE {
+   ?subj wdt:P106 wd:Q49757 .
+   ?subj wdt:P19 ?place .
+   ?place wdt:P17 wd:Q183 .
+   ?place wdt:P625 ?coord .
+   OPTIONAL { ?subj wdt:P569 ?dob }
+   BIND(YEAR(?dob) as ?birthyear)
+SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

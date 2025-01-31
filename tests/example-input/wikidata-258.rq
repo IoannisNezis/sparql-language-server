@@ -1,0 +1,14 @@
+#updated 2020-12-06
+SELECT DISTINCT ?h ?hLabel ?inception ?dissolved ?coor
+WHERE
+{
+  VALUES ?countryclass { wd:Q3024240 wd:Q6256 wd:Q3624078 }
+  ?h p:P31/ps:P31 ?countryclass .
+  ?h wdt:P571 ?inception .
+  OPTIONAL { ?h wdt:P576 ?dissolved } .
+  FILTER (?inception < "1755-01-01T00:00:00Z"^^xsd:dateTime)
+  FILTER (?dissolved >= "1755-01-01T00:00:00Z"^^xsd:dateTime || !Bound(?dissolved) )
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+  OPTIONAL { ?h wdt:P625 ?coor } .
+}
+ORDER BY ?inception

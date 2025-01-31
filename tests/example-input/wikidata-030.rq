@@ -1,0 +1,14 @@
+#title:Forms in Swedish that have no example demonstrating them
+# 2021-08-06
+SELECT ?form ?lemma
+WHERE {
+  ?lexemeId dct:language wd:Q9027;
+            wikibase:lemma ?lemma;
+            ontolex:lexicalForm ?form.
+  MINUS {
+  ?lexemeId p:P5831 ?statement.
+  ?statement ps:P5831 ?example;
+             pq:P6072 [];
+             pq:P5830 ?form_with_example.
+  }
+}

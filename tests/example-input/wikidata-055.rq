@@ -1,0 +1,23 @@
+#added November 1, 2020 (76 ids then)
+#TEMPLATE={ "template":"Identifiers present on the item for Penelope Cruz, but not on the item for Sean Connery"}
+SELECT
+  ?p ?pLabel
+  (SAMPLE(?url) as ?url_comp2)
+WHERE
+{
+    hint:Query hint:optimizer "None".
+    BIND( wd:Q4573 as ?comp1)
+    BIND( wd:Q39666 as ?comp2)
+    {
+        ?comp2 ?wdt ?v .
+        ?p wikibase:directClaim ?wdt ; wikibase:propertyType wikibase:ExternalId .
+        FILTER NOT EXISTS { ?comp1 ?wdt [] }
+        OPTIONAL { ?p wdt:P1630 ?f }
+        BIND(uri(REPLACE(?f,"\\$1",?v)) as ?url)
+    }
+    UNION { BIND(wd:Q4573 as ?p) }
+    UNION { BIND(wd:Q39666 as ?p) }
+   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+GROUP BY ?p ?pLabel
+ORDER BY ?url_comp2

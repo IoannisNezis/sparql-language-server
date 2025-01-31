@@ -1,0 +1,18 @@
+SELECT DISTINCT ?museumLabel ?museumDescription ?villeId ?villeIdLabel (?villeIdLabel AS ?ville) ?coord ?lat ?lon
+WHERE
+{
+  ?museum wdt:P539 ?museofile. # french museofile Id
+  ?museum wdt:P131* wd:Q12130. # in Brittany
+  ?museum wdt:P131 ?villeId. #city of the museum
+  # ?object wdt:P166 wd:Q2275045 # that have french label "musées de France"
+  OPTIONAL {?museum wdt:P856 ?link.} # official website
+  OPTIONAL {?museum wdt:P625 ?coord .} # geographic coord
+  OPTIONAL {
+    ?museum p:P625 ?statement.
+    ?statement psv:P625 ?node.
+    ?node wikibase:geoLatitude ?lat.
+    ?node wikibase:geoLongitude ?lon.
+   }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "fr". } #french label
+}
+ORDER BY ?villeIdLabel

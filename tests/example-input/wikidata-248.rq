@@ -1,0 +1,7 @@
+SELECT ?item ?itemLabel ?url ?licence ?licenceLabel
+WHERE {
+  ?item wdt:P31 wd:Q4117139.
+  OPTIONAL { ?item wdt:P856 ?url }
+  OPTIONAL { ?item wdt:P275 ?licence }
+SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+} ORDER BY ?itemLabel

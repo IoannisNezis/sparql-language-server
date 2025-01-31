@@ -1,0 +1,11 @@
+#defaultView:BubbleChart
+SELECT ?rgb ?colorLabel (COUNT(?compound) AS ?count)
+WHERE
+{
+  ?compound wdt:P31 wd:Q11173;
+            wdt:P462 ?color.
+  OPTIONAL { ?color wdt:P465 ?rgb. }
+  BIND(IF(BOUND(?rgb),?rgb,"CCCCCC") AS ?rgb).
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+GROUP BY ?rgb ?colorLabel

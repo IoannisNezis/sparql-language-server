@@ -1,0 +1,8 @@
+SELECT ?reactome_id ?item ?itemLabel ?referenceLabel
+WHERE
+{
+  ?item wdt:P3937 ?reactome_id ;
+        wdt:P2860 ?reference ;
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}

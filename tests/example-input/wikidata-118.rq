@@ -1,0 +1,13 @@
+SELECT ?item ?itemLabel ?adjacent ?adjacentL ?coords
+{
+  ?item wdt:P31/wdt:P279* wd:Q928830 ;
+        wdt:P81 wd:Q13224 ;
+        wdt:P625 ?coords .
+  OPTIONAL {
+    ?item p:P197 [ ps:P197 ?adjacent ; pq:P5051 wd:Q585752;
+                                       pq:P81 wd:Q13224] .
+    ?adjacent rdfs:label ?adjacentL FILTER (lang(?adjacentL) = "en")
+  }
+?item wdt:P1619 ?founded_date. #needs existence
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
+} ORDER BY ?itemLabel

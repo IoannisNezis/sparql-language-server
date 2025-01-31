@@ -1,0 +1,5 @@
+SELECT ?inventor ?inventorLabel ?gadget ?gadgetLabel WHERE {
+  ?inventor wdt:P157 ?gadget.
+  ?gadget wdt:P61 ?inventor.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

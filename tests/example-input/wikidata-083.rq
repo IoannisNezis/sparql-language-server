@@ -1,0 +1,10 @@
+SELECT DISTINCT ?item ?itemLabel_ol ?official_language ?itemLabel_en WHERE {
+  ?item wdt:P30 wd:Q15 ;
+        wdt:P37 ?officiallanguage ;
+        wdt:P31 wd:Q6256 .
+  ?officiallanguage wdt:P424 ?langcode .
+  ?item rdfs:label ?itemLabel_ol . FILTER(lang(?itemLabel_ol)=?langcode)
+  ?item rdfs:label ?itemLabel_en . FILTER(lang(?itemLabel_en)='en')
+  ?officiallanguage rdfs:label ?official_language . FILTER(lang(?official_language)='en')
+}
+ORDER BY ?item ?itemLabel_ol ?official_language

@@ -36,7 +36,7 @@ pub fn format_raw(text: String) -> String {
         Ok(()) => {
             let tree = parser
                 .parse(text.as_bytes(), None)
-                .expect("could not parse");
+                .expect("Input should be parsed successfully");
             let mut document = TextDocumentItem::new("tmp", &text);
             let edits = format_document(
                 &document,

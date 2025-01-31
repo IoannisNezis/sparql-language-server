@@ -1,0 +1,7 @@
+SELECT ?doi (COUNT (?entry) as ?entries)
+{
+  ?entry ?p ?statement .
+  ?statement prov:wasDerivedFrom/pr:P248/wdt:P356 ?doi .
+}
+GROUP BY ?doi
+ORDER BY DESC(?entries)

@@ -1,0 +1,12 @@
+#defaultView:BubbleChart
+SELECT ?propertyLabel (count(?prognostic_type) as ?counts)
+WHERE
+{
+  VALUES ?prognostic_type {wdt:P3354 wdt:P3355 wdt:P3356 wdt:P3357 wdt:P3358 wdt:P3359}
+    ?item wdt:P3329 ?civic_id ;
+          ?prognostic_type ?prognostic_value .
+    ?property wikibase:directClaim ?prognostic_type .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}
+GROUP BY ?propertyLabel ?prognostic_typeLabel
+ORDER BY ?counts

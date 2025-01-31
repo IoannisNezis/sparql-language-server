@@ -1,0 +1,12 @@
+SELECT ?link ?linkLabel ?picture ?age
+WHERE
+{
+  ?link wdt:P31 wd:Q5 ;
+          p:P39 [ ps:P39 wd:Q19546 ; pq:P580 ?startTime ] .
+  OPTIONAL { ?link wdt:P569 ?dateOfBirth }
+  OPTIONAL { ?link wdt:P18 ?picture }
+  OPTIONAL { ?link wdt:P570 ?dateOfDeath }
+  BIND(YEAR(?dateOfDeath) - YEAR(?dateOfBirth) as ?age)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],fr,en" }
+}
+ORDER BY DESC(?startTime)

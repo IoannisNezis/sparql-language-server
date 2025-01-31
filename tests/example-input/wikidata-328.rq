@@ -1,0 +1,17 @@
+# Query to find all musicians who have already died
+   # calculate their age (full years) at death
+   # count how many of them died at each age
+
+    SELECT ?age (COUNT (DISTINCT ?a) AS ?count) WHERE {
+        ?a wdt:P31 wd:Q5 . #instance of human
+        ?a wdt:P106/wdt:P279 wd:Q639669 . #occupation a subclass of musician
+        ?a p:P569/psv:P569 ?birth_date_node .
+        ?a p:P570/psv:P570 ?death_date_node .
+        ?birth_date_node wikibase:timeValue ?birth_date .
+        ?death_date_node wikibase:timeValue ?death_date .
+        FILTER(?age > 10 && ?age < 100) . #ignore outlyers, several of which are probably errors
+        BIND( year(?death_date) - year(?birth_date) - if(month(?death_date)<month(?birth_date) || (month(?death_date)=month(?birth_date) && day(?death_date)<day(?birth_date)),1,0) as ?age )
+        # calculate the age, precisely to the day (times and timezones ignored)
+    }
+  GROUP BY ?age
+    ORDER BY ?age

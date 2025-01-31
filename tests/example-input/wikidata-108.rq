@@ -1,0 +1,8 @@
+SELECT ?river ?riverLabel ?location
+WHERE
+{
+  ?river wdt:P31/wdt:P279* wd:Q355304; # watercourse; includes a few creeks – use wd:Q4022 for rivers only
+         wdt:P30 wd:Q51.
+  OPTIONAL { ?river wdt:P625 ?location. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

@@ -1,0 +1,9 @@
+# Countries that have adopted a cryptocurrency as legal tender
+SELECT ?country ?countryLabel ?currency ?currencyLabel
+WHERE
+{
+  ?country wdt:P31 wd:Q6256.                # Instances of country
+  ?country wdt:P38 ?currency.               # Country has currency
+  ?currency wdt:P31/wdt:P279* wd:Q13479982. # Currency is instance or subclass of cryptocurrency
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

@@ -1,0 +1,32 @@
+SELECT ?person ?personLabel ?dob ?dod (xsd:integer(?age_) as ?age)
+where {
+  # We do a subquery here, because otherwise we'll get a timeout because of the labels
+  {
+    SELECT DISTINCT ?person ?dob ?dod ?age_
+    where {
+      ?person wdt:P31 wd:Q5; # Get all humans
+        wdt:P106/wdt:P279* wd:Q639669; # That have a musician or a subclass thereof as their occupation
+        p:P569 ?dob_st; # death of birth
+        p:P570 ?dod_st. # death of death
+
+      ?dob_st psv:P569 [ wikibase:timeValue ?dob; wikibase:timePrecision ?dob_prec ];
+        a wikibase:BestRank.
+      ?dod_st psv:P570 [ wikibase:timeValue ?dod; wikibase:timePrecision ?dod_prec ];
+        a wikibase:BestRank.
+
+      # Only accept date precisions of a day or better, so it doesn't cause problems when we calculate age
+      FILTER(?dob_prec >= 11 && ?dod_prec >= 11)
+
+      # Time differences in Blazegraph are counted as days and is xsd:double
+      # We then calculate the age by dividing this by the orbital period of Earth
+      # This is a shortcut, but it is accurate enough for our purposes
+      bind((?dod - ?dob) / 365.2564 as ?age_)
+
+      # And filter by age
+      filter(?age_ >= 27.0 && ?age_ < 28.0)
+    }
+    #LIMIT 1000
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY desc(?dod) # Order by most recent

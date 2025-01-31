@@ -1,0 +1,6 @@
+SELECT ?entity ?entityLabel ?authorLabel WHERE {
+  VALUES ?author {wd:Q18016466} #initialize "?author with the Wikidata item "Lydia Pintscher"
+  ?entity wdt:P31 wd:Q13442814. #filter by scientific articles
+  ?entity wdt:P50 ?author.
+ SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

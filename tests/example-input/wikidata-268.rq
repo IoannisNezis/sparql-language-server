@@ -1,0 +1,11 @@
+# persons who were stateless (country of citizenship: no value) for some time (start time and end time qualifiers)
+SELECT ?person ?personLabel ?start ?end WHERE {
+  ?person wdt:P31 wd:Q5;
+          p:P27 [
+            rdf:type wdno:P27;
+            pq:P580 ?start;
+            pq:P582 ?end
+          ].
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY DESC(?end - ?start)

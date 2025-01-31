@@ -1,0 +1,15 @@
+#defaultView:ImageGrid
+SELECT ?human ?humanLabel ?yob ?yod ?picture
+WHERE
+{
+  ?human wdt:P31 wd:Q5 ;
+         wdt:P106 wd:Q33999 .
+  ?human wdt:P18 ?picture .
+  OPTIONAL { ?human wdt:P569 ?dob . ?human wdt:P570 ?dod }.
+  BIND(YEAR(?dob) as ?yob) . #if available: year
+  BIND(YEAR(?dod) as ?yod) .
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en" .
+  }
+}
+LIMIT 88

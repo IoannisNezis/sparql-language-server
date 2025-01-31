@@ -1,0 +1,9 @@
+SELECT ?show ?showLabel ?seasonNumber ?episode ?episodeLabel
+WHERE {
+  BIND(wd:Q886 as ?show) .
+  ?season wdt:P179 ?show;
+          wdt:P527 ?episode;
+          p:P179 [pq:P1545 ?seasonNumber] .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}
+ORDER BY xsd:integer(?seasonNumber)

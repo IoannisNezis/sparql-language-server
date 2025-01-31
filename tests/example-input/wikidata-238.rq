@@ -1,0 +1,11 @@
+SELECT ?English ?language ?label WHERE {
+  ?disease wdt:P699 "DOID:399";
+             rdfs:label ?English;
+             rdfs:label ?label .
+  BIND(LANG(?label) as ?languageCode)
+  ?wdLanguage wdt:P424 ?languageCode;
+              rdfs:label ?language .
+    FILTER EXISTS {?wdLanguage wdt:P31?/wdt:P279+ wd:Q17376908}
+  FILTER (LANG(?English)="en")
+  FILTER (LANG(?language)="en")
+} ORDER BY ?language

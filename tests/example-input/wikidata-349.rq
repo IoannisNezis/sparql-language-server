@@ -1,0 +1,13 @@
+#Paintings by anonymous painters, types of relationships with other painters
+#defaultView:BubbleChart
+SELECT ?qualifierpropertyLabel (COUNT(?creatorqualifier) AS ?count) WHERE {
+  ?item wdt:P31 wd:Q3305213 .
+  ?item wdt:P170 wd:Q4233718 .
+  OPTIONAL { ?item p:P170 ?creatorstatement .
+             ?creatorstatement rdf:type wikibase:BestRank .
+             ?creatorstatement ?qualifier ?creatorqualifier .
+             ?qualifierproperty wikibase:qualifier ?qualifier }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+  } GROUP BY ?qualifierpropertyLabel
+HAVING (?count > 2)
+LIMIT 2000

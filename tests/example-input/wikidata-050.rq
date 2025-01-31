@@ -1,0 +1,5 @@
+#Subproperties of location (P276)
+SELECT DISTINCT ?subProperties ?subPropertiesLabel WHERE {
+  ?subProperties wdt:P1647* wd:P276.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

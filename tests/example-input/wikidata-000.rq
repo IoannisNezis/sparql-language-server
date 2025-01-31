@@ -1,0 +1,9 @@
+SELECT ?item ?itemLabel WHERE {
+  ?item wdt:P31 wd:Q146 .
+  # Must be a cat
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],        mul,        en" .
+  }
+  # Helps get the label in your language, if not, then default for all languages, then en language
+}
+

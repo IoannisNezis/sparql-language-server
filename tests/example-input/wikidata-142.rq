@@ -1,0 +1,7 @@
+SELECT ?person (COUNT(?date) AS ?dateC) {
+  ?person wdt:P569 ?date
+}
+GROUP BY ?person
+HAVING (?dateC > 2)
+ORDER BY DESC (?dateC)
+LIMIT 100

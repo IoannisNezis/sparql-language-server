@@ -1,0 +1,14 @@
+# Returns a list of Wikidata items for a given list of Wikipedia article names
+# List of Wikipedia article names (lemma) is like "WIKIPEDIA ARTICLE NAME"@LANGUAGE CODE with de for German, en for English, etc.
+# Language version and project is defined in schema:isPartOF with de.wikipedia.org for German Wikipedia, es.wikivoyage for Spanish Wikivoyage, etc.
+SELECT ?lemma ?item WHERE {
+  VALUES ?lemma {
+    "Wikipedia"@de
+    "Wikidata"@de
+    "Berlin"@de
+    "Technische Universität Berlin"@de
+  }
+  ?sitelink schema:about ?item;
+    schema:isPartOf <https://de.wikipedia.org/>;
+    schema:name ?lemma.
+}

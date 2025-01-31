@@ -1,0 +1,16 @@
+#defaultView:Map
+SELECT DISTINCT ?institution ?institutionLabel ?academics ?academicsLabel ?degree ?degreeLabel ?geoloc ?image WHERE {
+  ?academics wdt:P31 wd:Q5 ; # instances (P31) of humans (Q5)
+             wdt:P27 wd:Q16 ; # country of citizenship
+             p:P69 ?statement . # check for an "educated at" (P69) statement
+  OPTIONAL { ?academics wdt:P18 ?image }. #image
+
+  ?statement ps:P69 ?institution . # get value of the "educated at" statement, i.e. the institution
+  ?institution wdt:P625 ?geoloc . # get the geolocation of the institution
+
+  ?statement pq:P512 ?degree . # get qualifier "academic degree" (P512)
+  ?degree wdt:P31/wdt:P279* wd:Q849697 . # filter for doctoral degrees
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+
+}

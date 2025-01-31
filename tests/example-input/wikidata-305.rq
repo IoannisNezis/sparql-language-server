@@ -1,0 +1,13 @@
+SELECT DISTINCT ?item ?authorLabel ?itemLabel ?image where {
+  ?item wdt:P31/wdt:P279* wd:Q234460.
+
+  ?author ?label 'Bram Stoker'.
+  ?item wdt:P50 ?author.
+
+  ?item rdfs:label ?itemLabel.
+  FILTER contains(lcase(?itemLabel), 'dracula').
+
+  OPTIONAL {?item wdt:P18 ?image.}
+
+  SERVICE wikibase:label {bd:serviceParam wikibase:language "[AUTO_LANGUAGE]".}
+} LIMIT 50

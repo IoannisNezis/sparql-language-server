@@ -1,0 +1,10 @@
+SELECT ?item ?itemLabel ?reference ?referenceType
+WHERE
+{
+  ?item wdt:P31 wd:Q13442814 #Scientific article
+  { ?item wdt:P921 wd:Q202864 } #Zika virus
+  UNION
+  { ?item wdt:P921 wd:Q8071861 } #Zika fever
+  ?reference ?referenceType ?item #find references to item having any property and store reference type
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}

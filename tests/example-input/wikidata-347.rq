@@ -1,0 +1,18 @@
+# This returns 10 random painting images
+# RAND() returns one random number (cached like every query).
+# The string representation of the item and the random number are hashed.
+# This will give a complete different ordering every time you have a different random number.
+# You can change the LIMIT or OFFSET if you want to trigger a new random number
+#defaultView:ImageGrid
+SELECT ?item ?itemLabel ?image (MD5(CONCAT(STR(?item), STR(RAND()))) AS ?random) 
+WHERE {
+  ?item wdt:P31 wd:Q3305213 .
+  ?item wdt:P18 ?image .
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en"
+  }
+}
+ORDER BY ?random
+LIMIT 10
+OFFSET 0
+

@@ -1,0 +1,13 @@
+SELECT ?item ?label ?coord ?place
+WHERE
+{
+  VALUES ?type {wd:Q571 wd:Q7725634} # book or literary work
+  ?item wdt:P31 ?type .
+  ?item wdt:P577 ?date FILTER (?date < "1830-01-01T00:00:00Z"^^xsd:dateTime) .
+  ?item rdfs:label ?label FILTER (lang(?label) = "en")
+
+  OPTIONAL {
+    ?item (wdt:P291|wdt:P840) ?place . # publication or narration place is ?place
+    ?place wdt:P625 ?coord
+  }
+}

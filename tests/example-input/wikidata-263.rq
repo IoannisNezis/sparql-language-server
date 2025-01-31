@@ -1,0 +1,10 @@
+#defaultView:Timeline
+SELECT ?person ?personLabel ?date
+WHERE
+{
+  ?person wdt:P31 wd:Q5;
+          wdt:P509 wd:Q468455;
+          wdt:P570 ?date.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY ?date

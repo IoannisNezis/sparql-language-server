@@ -1,0 +1,10 @@
+#title: Humans whose gender we know we don't know
+# Demonstrates filtering for "unknown value"
+SELECT ?human ?humanLabel
+WHERE
+{
+  ?human wdt:P31 wd:Q5 . # instance of human
+  ?human wdt:P21 ?gender .
+  FILTER wikibase:isSomeValue(?gender)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

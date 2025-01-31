@@ -1,0 +1,8 @@
+SELECT DISTINCT ?depicts (SAMPLE(?dL) AS ?depictsLabel) (COUNT(DISTINCT ?item) AS ?count)
+WHERE
+{
+  ?item wdt:P180 ?depicts .
+  OPTIONAL { ?depicts rdfs:label ?dL FILTER (lang(?dL) = "en") }
+}
+GROUP BY ?depicts
+ORDER BY DESC(?count) ?depictsLabel

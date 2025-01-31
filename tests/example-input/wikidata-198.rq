@@ -1,0 +1,10 @@
+SELECT ?software ?softwareLabel ?date (ROUND((NOW() - ?date)/365.2425) AS ?age)
+{
+  ?software wdt:P31/wdt:P139* wd:Q7397.
+  OPTIONAL { ?software wdt:P571 ?date. }
+  OPTIONAL { ?software p:P348/pq:P577 ?date. }
+  FILTER(BOUND(?date)).
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+ORDER BY ?date
+LIMIT 10

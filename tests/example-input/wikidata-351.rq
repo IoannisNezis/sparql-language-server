@@ -1,0 +1,8 @@
+#defaultView:Map
+SELECT ?painting ?paintingLabel ?location ?image where {
+  ?painting wdt:P276 ?collection;
+            wdt:P170 wd:Q41264;
+            wdt:P18 ?image.
+  ?collection wdt:P625 ?location.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

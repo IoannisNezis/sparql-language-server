@@ -1,0 +1,17 @@
+SELECT DISTINCT ?item ?Titre ?createur (year(?date) as ?AnneeCreation) ?image ?coord
+WHERE
+{
+   ?item wdt:P31/wdt:P279* wd:Q860861.                    # sculpture
+   ?item wdt:P136 wd:Q557141 .                            # genre : art public
+   {?item wdt:P131 wd:Q90.}                               # ... située dans Paris
+   UNION
+   {?item wdt:P131 ?arr.                                  # ... ou dans un arrondissement de Paris
+   ?arr wdt:P131 wd:Q90. }
+   ?item rdfs:label ?Titre FILTER (lang(?Titre) = "fr").  # Titre
+
+   OPTIONAL {?item wdt:P170 ?Qcreateur.                   # créateur/créatrice (option)
+   ?Qcreateur rdfs:label ?createur FILTER (lang(?createur) = "fr") .}
+   OPTIONAL {?item wdt:P571 ?date.}                       # date de création (option)
+   OPTIONAL {?item wdt:P18  ?image.}                      # image (option)
+   OPTIONAL {?item wdt:P625 ?coord.}                      # coordonnées géographiques (option)
+}

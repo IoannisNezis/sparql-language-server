@@ -1,0 +1,17 @@
+SELECT DISTINCT ?book ?bookLabel ?authorLabel (GROUP_CONCAT(?genre_label) as ?genres) (MIN(?publicationDate) as ?firstPublication)
+WHERE
+{
+  ?author rdfs:label "Ernest Hemingway"@en .
+  ?book wdt:P50 ?author .
+  OPTIONAL {
+    ?book wdt:P136 ?genre .
+    ?genre rdfs:label ?genre_label FILTER (lang(?genre_label) = "en").
+  }
+
+  OPTIONAL {
+    ?book wdt:P577 ?publicationDate .
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en" .
+  }
+} GROUP BY ?book ?bookLabel ?authorLabel

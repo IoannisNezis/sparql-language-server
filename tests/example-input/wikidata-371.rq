@@ -1,0 +1,6 @@
+SELECT DISTiNCT ?item ?itemLabel WHERE {
+   ?item ?p ?statement.
+   ?statement prov:wasDerivedFrom ?ref .
+   ?ref ?prop wd:Q28061352 .
+   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

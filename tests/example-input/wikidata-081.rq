@@ -1,0 +1,9 @@
+# defaultView:BubbleChart
+SELECT DISTINCT ?countryLabel ?population
+{
+  ?country wdt:P31 wd:Q6256 ;
+           wdt:P1082 ?population .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}
+GROUP BY ?population ?countryLabel
+ORDER BY DESC(?population)

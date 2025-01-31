@@ -1,0 +1,21 @@
+#Elevations over 8000
+#Displays units
+#Last updated 2021-04-25
+
+SELECT ?elevation ?unit ?unitLabel ?item ?itemLabel ?itemDescription ?coord
+WHERE
+{
+  ?psv_triples wikibase:quantityAmount ?elevation .
+  filter(?elevation > 8000)
+  ?psv_triples wikibase:quantityUnit ?unit .
+
+  ?p_triples psv:P2044 ?psv_triples .
+  ?p_triples a wikibase:BestRank .
+
+  ?item p:P2044 ?p_triples .
+
+  ?item wdt:P625 ?coord .
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY DESC(?elevation)

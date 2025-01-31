@@ -1,0 +1,11 @@
+# See also the SPARQL manual
+# https://en.wikibooks.org/wiki/SPARQL/WIKIDATA_Qualifiers,_References_and_Ranks
+# In this example we look for statements which assign a specific value (Q51955019)
+# to the property P1343 and then look for references of that property, specifically
+# the string associated to P958 for the reference. May actually bring up references
+# for other P1343 statements; uses the shortened expression syntax with brackets.
+SELECT ?item ?reference
+WHERE {
+  ?item wdt:P1343 wd:Q51955019 .
+  ?item p:P1343 [ prov:wasDerivedFrom [ pr:P958 ?reference ] ] .
+}

@@ -1,0 +1,12 @@
+#defaultView:Map
+SELECT DISTINCT ?settlement ?name ?coor
+WHERE
+{
+
+   ?subclass_settlement wdt:P279+ wd:Q486972 .
+   ?settlement wdt:P31 ?subclass_settlement ;
+               wdt:P625 ?coor ;
+                rdfs:label ?name .
+   FILTER regex(?name, "Antwerp", "i")
+
+}

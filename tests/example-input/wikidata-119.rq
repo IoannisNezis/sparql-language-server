@@ -1,0 +1,16 @@
+#defaultView:Map
+# Venues in Broadway
+SELECT DISTINCT ?venue ?venueLabel ?coords {
+    ?venue wdt:P1217 ?IDBDB .
+    wd:Q235065 wdt:P625 ?broadWayLoc .
+
+    SERVICE wikibase:around {
+      ?venue wdt:P625 ?coords .
+      bd:serviceParam wikibase:center ?broadWayLoc .
+      bd:serviceParam wikibase:radius "1.5" .
+    }
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en" .
+  }
+}

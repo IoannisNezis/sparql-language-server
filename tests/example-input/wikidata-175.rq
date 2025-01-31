@@ -1,0 +1,8 @@
+SELECT ?item ?itemLabel ?uniprotid ?tax_node
+WHERE
+{
+  ?item wdt:P352 ?uniprotid ;
+          wdt:P703 wd:Q15978631 .
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}

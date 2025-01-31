@@ -1,0 +1,6 @@
+#title:Lexemes by number of statements
+SELECT * {
+  ?l dct:language [];
+     wikibase:statements ?c.
+}
+ORDER BY desc(?c) LIMIT 50

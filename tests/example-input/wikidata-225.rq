@@ -1,0 +1,15 @@
+SELECT ?eponym ?eponymLabel ?count ?sample ?sampleLabel
+WHERE
+{
+  {
+  SELECT ?eponym (COUNT(?item) as ?count) (SAMPLE(?item) AS ?sample)
+  WHERE
+  {
+    ?item wdt:P138 ?eponym.
+    ?eponym wdt:P106 wd:Q170790.
+  }
+  GROUP BY ?eponym
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+ORDER BY DESC(?count)

@@ -1,0 +1,13 @@
+SELECT DISTINCT ?writer ?place ?linkcount
+WHERE
+{
+  {?s wdt:P106 wd:Q36180 .} UNION { ?s wdt:P106 wd:Q482980 . } UNION { ?s wdt:P106 wd:Q49757 . }
+  ?s wdt:P27 ?pl .
+  ?s wikibase:sitelinks ?linkcount .
+  OPTIONAL {
+     ?s rdfs:label ?writer FILTER (lang(?writer) = "en").
+   }
+    OPTIONAL {
+     ?pl rdfs:label ?place FILTER (lang(?place) = "en").
+   }
+} GROUP BY ?place ?writer ?linkcount HAVING (?linkcount > 10) ORDER BY DESC(?linkcount)

@@ -1,0 +1,13 @@
+SELECT ?yearmonth (COUNT(?person) as ?count)
+WHERE
+{
+  ?person wdt:P31 wd:Q5;
+          p:P570/psv:P570 [
+                wikibase:timePrecision ?precision ;
+                wikibase:timeValue ?date ;
+              ] .
+  BIND(CONCAT(STR(YEAR(?date)),"-",STR(MONTH(?date))) as ?yearmonth).
+  FILTER( ?date >= "2000-01-01T00:00:00"^^xsd:dateTime )
+  FILTER( ?precision >= "10"^^xsd:integer ) # precision of at least month
+}
+GROUP BY ?yearmonth

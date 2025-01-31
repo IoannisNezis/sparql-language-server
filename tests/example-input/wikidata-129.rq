@@ -1,0 +1,28 @@
+#defaultView:Map
+SELECT DISTINCT ?item ?itemLabel ?ed ?edLabel ?auteurLabel (year(?dateCreation) as ?AnneeCreation) ?lieuLabel ?coord ?lien
+WHERE
+{
+  ?item wdt:P136 wd:Q1164267 .    # genre :récit de voyage
+  ?item wdt:P31 wd:Q571 .         # nature : livre
+  OPTIONAL{
+    ?item wdt:P50 ?auteur .       # [option] auteur
+  }
+  OPTIONAL{
+    ?item wdt:P571 ?dateCreation. # [option] date de création
+  }
+
+  ?item wdt:P840 ?lieu .          # lieu de l'action
+  MINUS {?item wdt:P840 wd:Q933}  # (bug du Pôle Sud)
+  ?lieu wdt:P625 ?coord .         # coordonnées géographiques du lieu
+
+  {
+    ?item wdt:P953 ?lien .        # URL, texte intégral disponible sur
+    ?item wdt:P407 wd:Q150        # langue de l'œuvre : français
+  }UNION{
+    ?ed wdt:P629 ?item .          # édition du livre
+    ?ed wdt:P953 ?lien .          # URL, texte intégral disponible sur
+    ?ed wdt:P407 wd:Q150          # langue de l'œuvre : français
+  }
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],fr". }
+} ORDER BY ?dateCreation

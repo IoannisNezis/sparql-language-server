@@ -1,0 +1,55 @@
+# Each composer’s most used tonality, with number of works in that tonality.
+# (If this is ambiguous – multiple tonalities with the same number – there are multiple results for one composer.)
+#
+# The SPARQL for this is an evil perversion of three subqueries (one of them nested in another).
+# To understand it, you have to go inside out… follow the numbers.
+
+SELECT ?composerLabel ?tonalityLabel ?count
+WHERE
+{
+  {
+    # 4. Group again, this time just by the composer.
+    #    We also select the highest count of a tonality.
+    #    Notice that we don’t know what tonality this count is associated with – we’ll get to that.
+    #    So now we have each composer, along with how often they used whatever tonality they used most.
+    SELECT ?composer (MAX(?count) AS ?count_)
+    WHERE
+    {
+      {
+        # 2. Group by composer and tonality, so that for each composer and tonality, we get a count of how often the composer used this tonality.
+        SELECT ?composer ?tonality (COUNT(?composition) AS ?count)
+        WHERE
+        {
+          # 1. Extremely straightforward: the ?composition has the composer ?composer and the tonality ?tonality.
+          #    (I’m not bothering with any “instance of” because the presence of these two properties is a sufficient indicator of ?composition being a composition.)
+          ?composition wdt:P86 ?composer;
+                       wdt:P826 ?tonality.
+        }
+        GROUP BY ?composer ?tonality
+        HAVING(?count > 1) # 3. Limit that to counts > 1, because using a tonality once is hardly “most used”.
+      }
+    }
+    GROUP BY ?composer
+  }
+  {
+    # 6. Identical to 2.
+    SELECT ?composer ?tonality (COUNT(?composition) AS ?count)
+    WHERE
+    {
+      # 5. Identical to 1.
+      ?composition wdt:P86 ?composer;
+                   wdt:P826 ?tonality.
+    }
+    GROUP BY ?composer ?tonality
+    HAVING(?count > 1) # 7. Identical to 3.
+  }
+  # 8. That’s it. Wait, what?
+  #    From 4, we now have ?composer, any composer, and ?count, the count of how often they used whatever tonality they used most.
+  #    From 6, we also have a ?composer, as well as a ?tonality, and the count of how often they used that particular tonality.
+  #    The trick is that ?composer and ?count are the same variable in each subquery, and so now, when the two subqueries are joined,
+  #    we select only that ?tonality from 6 where the ?composer and the ?count are identical to those from 4 –
+  #    that is, where this tonality was used as often as the composer’s most-used tonality.
+  #    In other words, this must *be* the composer’s most-used tonality (except when there are multiple tonalities with the same count).
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+ORDER BY DESC(?count) # 9. Order by count (highest first), because the result isn’t very meaningful for low counts (many compositions aren’t on Wikidata or don’t have a tonality statement).

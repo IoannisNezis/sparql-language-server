@@ -1,0 +1,9 @@
+SELECT DISTINCT ?idExtension ?extension ?mediaType ?idExtensionLabel
+WHERE
+{
+  ?idExtension wdt:P31 wd:Q235557 ;
+               wdt:P1195 ?extension .
+  OPTIONAL { ?idExtension wdt:P1163 ?mediaType }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+ORDER BY ?extension ?mediaType

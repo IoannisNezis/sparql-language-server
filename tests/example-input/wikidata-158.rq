@@ -1,0 +1,8 @@
+#defaultView:Timeline
+SELECT ?mayor ?mayorLabel ?start ?end where {
+  ?mayor p:P39 ?position.
+  ?position ps:P39 wd:Q13423495;
+            pq:P580 ?start;
+            pq:P582 ?end.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],nl,en". }
+}

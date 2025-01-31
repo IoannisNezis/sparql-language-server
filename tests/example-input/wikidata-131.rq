@@ -1,0 +1,12 @@
+#defaultView:Map
+SELECT ?item ?itemLabel ?coord
+WHERE
+{
+  ?item wdt:P31/wdt:P279* wd:Q484170;
+        wdt:P17 wd:Q142;
+        rdfs:label ?itemLabel;
+        wdt:P625 ?coord;
+  FILTER (lang(?itemLabel) = "fr").
+  FILTER regex (?itemLabel, "ac$").
+  FILTER not exists { ?item wdt:P131 wd:Q33788 } # excluding Koumac, New Caledonia...
+}

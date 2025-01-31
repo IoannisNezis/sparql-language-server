@@ -1,0 +1,34 @@
+SELECT ?awardCount ?award ?awardLabel WHERE {
+  {
+    SELECT (COUNT(?award) AS ?awardCount) ?award
+    WHERE
+    {
+      {
+        SELECT (SAMPLE(?human) AS ?human) ?award ?awardWork (SAMPLE(?director) AS ?director) (SAMPLE(?awardEdition) AS ?awardEdition) (SAMPLE(?time) AS ?time) WHERE {
+          ?award wdt:P31 wd:Q19020 .      # All items that are instance of(P31) of Academy awards (Q19020)
+          {
+            ?human p:P166 ?awardStat .              # Humans with an awarded(P166) statement
+            ?awardStat ps:P166 ?award .        # ... that has any of the values of ?award
+            ?awardStat pq:P805 ?awardEdition . # Get the award edition (which is "subject of" XXth Academy Awards)
+            ?awardStat pq:P1686 ?awardWork . # The work they have been awarded for
+            ?human wdt:P31 wd:Q5 .        # Humans
+          } UNION {
+            ?awardWork wdt:P31 wd:Q11424 . # Films
+            ?awardWork p:P166 ?awardStat . # ... with an awarded(P166) statement
+            ?awardStat ps:P166 ?award .        # ... that has any of the values of ?award
+            ?awardStat pq:P805 ?awardEdition . # Get the award edition (which is "subject of" XXth Academy Awards)
+          }
+          OPTIONAL {
+            ?awardEdition wdt:P585 ?time . # the "point of time" of the Academy Award
+            ?awardWork wdt:P57 ?director .
+          }
+        }
+        GROUP BY ?awardWork ?award # We only want every movie once for a category (a 'random' person is selected)
+      }
+    } GROUP BY ?award
+    ORDER BY ASC(?awardCount)
+  }
+  SERVICE wikibase:label { # ... include the labels
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}

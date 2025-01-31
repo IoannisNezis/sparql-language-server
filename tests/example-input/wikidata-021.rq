@@ -1,0 +1,10 @@
+# Illustrates the VALUES clause.
+SELECT ?image ?speciesLabel ?mayorLabel ?placeLabel WHERE {
+  VALUES ?species {wd:Q144 wd:Q146 wd:Q780}
+  ?mayor wdt:P31 ?species .
+  ?mayor p:P39 ?node .
+  ?node ps:P39 wd:Q30185 .
+  ?node pq:P642 ?place .
+  OPTIONAL {?mayor wdt:P18 ?image}
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

@@ -1,0 +1,9 @@
+#title: Places in Antarctica over 3000km away from the South Pole
+#defaultView:Map
+SELECT ?place ?placeLabel ?location WHERE {
+  wd:Q933 wdt:P625 ?southPole.                         # coordinates of south pole
+  ?place wdt:P30 wd:Q51;                               # continent: antarctica
+         wdt:P625 ?location.
+  FILTER(geof:distance(?location, ?southPole) > 3000). # over 3000km away from south pole
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}

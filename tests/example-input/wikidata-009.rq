@@ -1,0 +1,18 @@
+#title: Items about authors with a Wikispecies page
+SELECT ?author ?authorLabel ?count WHERE {
+  {
+    SELECT ?author (COUNT(?paper) AS ?count) WHERE {
+      ?article schema:about ?author ;
+               schema:isPartOf <https://species.wikimedia.org/> .
+      ?author wdt:P31 wd:Q5 .
+      ?paper wdt:P50 ?author .
+    }
+    GROUP BY ?author
+    ORDER BY DESC(?count)
+    LIMIT 200
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}
+ORDER BY DESC(?count)

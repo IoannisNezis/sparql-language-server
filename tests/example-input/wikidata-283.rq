@@ -1,0 +1,18 @@
+SELECT ?character ?characterLabel (COUNT(?actor) AS ?count)
+WHERE
+{
+  {
+    SELECT DISTINCT ?character ?actor
+    WHERE {
+      ?film p:P161 [
+        ps:P161 ?actor;
+        pq:P453 ?character
+      ].
+      #?character wdt:P31 wd:Q5. # uncomment to filter for real people
+    }
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+GROUP BY ?character ?characterLabel
+ORDER BY DESC(?count)
+LIMIT 25

@@ -1,0 +1,10 @@
+SELECT ?genderlabel (COUNT(?genderlabel) as ?total)
+WHERE
+{
+   ?subj wdt:P39 wd:Q654291 .
+   ?subj wdt:P21 ?gender .
+
+   ?gender rdfs:label ?genderlabel FILTER (lang(?genderlabel) = "en") .
+   ?subj rdfs:label ?label FILTER (lang(?label) = "en")
+}
+GROUP BY ?genderlabel

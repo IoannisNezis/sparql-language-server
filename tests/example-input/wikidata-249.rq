@@ -1,0 +1,13 @@
+SELECT ?uLabel ?founded ?stateLabel ?stateStart
+WHERE {
+  ?u wdt:P31/wdt:P279* wd:Q3918 ;
+       wdt:P131+ ?state ;
+       wdt:P571 ?founded .
+  ?state wdt:P31 wd:Q35657 ;
+           wdt:P571 ?stateStart .
+  FILTER (?founded < ?stateStart) .
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en".
+  }
+}
+LIMIT 10

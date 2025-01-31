@@ -1,0 +1,29 @@
+#defaultView:Dimensions
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wp: <http://vocabularies.wikipathways.org/wp#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+SELECT DISTINCT ?wpid ?metaboliteLabel ?pKa ?pKa2 ?metabolite2Label ?wpid2 WHERE {
+  {
+    SELECT ?wpid ?source_pathway ?metabolite ?pKa ?pKa2 ?metabolite2 ?wpid2 WHERE {
+      # VALUES ?wpid { "WP550" }
+      ?pathway wdt:P2410 ?wpid ;
+               wdt:P527 ?metabolite ;
+               wdt:P2888 ?source_pathway .
+      ?metabolite wdt:P1117 ?pKa .
+      SERVICE <http://sparql.wikipathways.org/sparql> {
+        ?wp_mb1 wp:bdbWikidata ?metabolite .
+        ?wp_mb1 dcterms:isPartOf ?interaction .
+        ?interaction rdf:type wp:Interaction .
+        ?wp_mb2 dcterms:isPartOf ?interaction .
+        ?wp_mb2 wp:bdbWikidata ?metabolite2 .
+        FILTER (?wp_mb1 != ?wp_mb2)
+      }
+    }
+  }
+  ?metabolite2 wdt:P1117 ?pKa2 .
+  ?pathway2 wdt:P2410 ?wpid2 ;
+            wdt:P527 ?metabolite2 ;
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+  }
+}

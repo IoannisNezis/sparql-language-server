@@ -1,0 +1,12 @@
+SELECT DISTINCT ?pmid ?citation ?citationLabel
+WHERE
+{
+  VALUES ?predictor {p:P3354 p:P3355 p:P3356 p:P3357 p:P3358 p:P3359 }
+    ?item p:P3329 ?civicId ;
+          ?predictor ?predictor_value .
+    ?civicId ps:P3329 ?id .
+    ?predictor_value prov:wasDerivedFrom ?reference .
+    ?reference pr:P248 ?citation .
+    ?citation wdt:P698 ?pmid ;
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}

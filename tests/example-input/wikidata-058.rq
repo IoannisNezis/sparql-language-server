@@ -1,0 +1,29 @@
+#title: Most Used Properties for Hospitals in Wikidata
+#defaultView:BubbleChart
+# This query retrieves the most frequently used properties for items that are instances of a hospital (Q16917).
+# It counts how many times each property is used and displays the results in descending order.
+# The visualization is set to a Bubble Chart to provide a visual representation of property usage.
+
+SELECT ?property ?propertyLabel ?count
+WHERE {
+  # Subquery to calculate the count of each property used by hospital items
+  {
+    SELECT 
+      (IRI(REPLACE(STR(?prop), "http://www.wikidata.org/prop/direct/", "http://www.wikidata.org/entity/")) AS ?property)  # Convert direct property to property entity
+      (COUNT(*) AS ?count)  # Count the number of occurrences for each property
+    WHERE {
+      ?item wdt:P31 wd:Q16917 .  # Select items that are instances of a hospital
+      ?item ?prop ?value .        # Retrieve all properties and their values for these items
+      FILTER(STRSTARTS(STR(?prop), STR(wdt:))) .  # Ensure only direct properties (wdt:) are considered
+    }
+    GROUP BY ?prop  # Group results by property to aggregate counts
+    ORDER BY DESC(?count)  # Order properties by count in descending order
+  }
+  
+  # Retrieve human-readable labels for the properties
+  SERVICE wikibase:label { 
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en".  # Fetch labels in the user's language or English
+  }
+}
+ORDER BY DESC(?count)  # Final ordering of the results by count
+LIMIT 1000

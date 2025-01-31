@@ -1,0 +1,8 @@
+SELECT ?song ?songLabel ?code
+WHERE
+{
+  ?song wdt:P1236 ?code.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+ORDER BY DESC(STRLEN(REPLACE(?code, " ", "")))
+LIMIT 10

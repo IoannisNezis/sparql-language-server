@@ -1,0 +1,11 @@
+SELECT DISTINCT ?item ?itemLabel ?instanceLabel ?creatorLabel (YEAR(?date) as ?year) ?image
+WHERE
+{
+  ?item wdt:P180 wd:Q243 .
+  ?item wdt:P31 ?instance .
+  OPTIONAL { ?item wdt:P170 ?creator }
+  OPTIONAL { ?item wdt:P571 ?date }
+  OPTIONAL { ?item wdt:P18 ?image }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],fr,en" . }
+}
+ORDER BY ?itemLabel

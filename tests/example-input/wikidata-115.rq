@@ -1,0 +1,11 @@
+#Last updated 2021-04-25
+#defaultView:Map
+SELECT ?item ?itemLabel ?itemDescription ?coord ?elevation
+WHERE
+{
+  ?item wdt:P31 wd:Q8502 .
+  ?item p:P2044 [ a wikibase:BestRank; psn:P2044/wikibase:quantityAmount ?elevation ]
+  FILTER(?elevation >= 8000 )
+  ?item wdt:P625 ?coord.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

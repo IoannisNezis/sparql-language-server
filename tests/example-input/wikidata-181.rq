@@ -1,0 +1,6 @@
+SELECT ?citation ?citationLabel (count(?pathway) as ?times_cited) WHERE {
+  ?pathway wdt:P2410 ?WikiPathwaysID ;
+           wdt:P2860 ?citation .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+  }
+GROUP BY ?pathway ?citation ?citationLabel

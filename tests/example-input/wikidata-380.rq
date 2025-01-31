@@ -1,0 +1,11 @@
+#title:Swedish municipalities which changed their municipality identifier at some point
+#author:Salgo60 2021-09-11
+SELECT DISTINCT ?item ?itemLabel ?kkod1 ?kkod2 ?svwp_artikel WHERE
+{
+  ?item wdt:P525 ?kkod1 .
+  ?item wdt:P525 ?kkod2 .
+  FILTER ( ?kkod1<?kkod2 )
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "sv". }
+  OPTIONAL { ?svwp_artikel schema:about ?item; schema:isPartOf <https://sv.wikipedia.org/> }
+}
+ORDER BY ?itemLabel

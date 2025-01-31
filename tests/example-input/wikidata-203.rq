@@ -1,0 +1,9 @@
+SELECT ?database ?databaseLabel ?license ?licenseLabel ?value WHERE {
+  ?database ?p ?wds .
+  OPTIONAL { ?database wdt:P275 ?license }
+  ?wds ?v ?value.
+  ?wdP wikibase:statementProperty ?v.
+  ?wdP wikibase:claim ?p.
+  ?wds pq:P31 wd:Q27075870.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+} ORDER BY ASC(?databaseLabel)

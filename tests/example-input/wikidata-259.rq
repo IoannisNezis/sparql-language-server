@@ -1,0 +1,12 @@
+SELECT ?objectLabel (YEAR(?date) as ?year)
+       ?population (?objectLabel as ?Location)
+WHERE
+{
+        wd:Q458 wdt:P150 ?object . # European Union contains administrative territorial entity
+        ?object p:P1082 ?populationStatement .
+        ?populationStatement ps:P1082 ?population ;
+                             pq:P585 ?date .
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+  FILTER (YEAR(?date) >= 1960)
+}
+ORDER BY ?objectLabel ?year

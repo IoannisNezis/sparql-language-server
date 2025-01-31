@@ -1,0 +1,10 @@
+SELECT ?item ?itemLabel ?gtaa ?_articleEN ?_articleNL where {
+  ?item wdt:P1741 ?gtaa. # GTAA id
+  OPTIONAL {
+    ?_articleEN schema:about ?item.
+    ?_articleNL schema:about ?item.
+    ?_articleEN schema:isPartOf <https://en.wikipedia.org/>.
+    ?_articleNL schema:isPartOf <https://nl.wikipedia.org/>.
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en,nl". }
+}

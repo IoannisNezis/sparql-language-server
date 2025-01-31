@@ -1,0 +1,10 @@
+SELECT DISTINCT ?women ?women_label ?women_description
+WHERE
+{
+       ?women wdt:P31 wd:Q5 .
+       ?women wdt:P21 wd:Q6581072 .
+       ?women wdt:P106/wdt:P279* wd:Q483501 . # artists
+       OPTIONAL {?women rdfs:label ?women_label FILTER (LANG(?women_label) = "en")}.
+	   OPTIONAL {?women schema:description ?women_description FILTER (LANG(?women_description) = "en")}.
+}
+LIMIT 500

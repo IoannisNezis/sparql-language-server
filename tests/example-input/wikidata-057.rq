@@ -1,0 +1,17 @@
+# All properties whose values are items and which lack a type constraint and property scope constraint.
+# Some of these may be actually general properties, while others just don't have their relevant type constraint defined yet.
+#
+# The lack of property scope constraint just identifies high priority ones, as that constraint is always required, so
+# if it is missing, it makes it more likely that there is a reasonable type constraint that just hasn't been defined.
+SELECT ?property (GROUP_CONCAT(?propertyCategoryLabel; SEPARATOR = "; ") AS ?categories) ?propertyLabel ?propertyDescription ?propertyAltLabel WHERE {
+  {
+    SELECT ?property ?propertyCategoryLabel ?propertyLabel ?propertyDescription ?propertyAltLabel WHERE {
+      ?property wikibase:propertyType wikibase:WikibaseItem.
+      MINUS { ?property wdt:P2302 wd:Q21503250. }
+      MINUS { ?property wdt:P2302 wd:Q53869507. }
+      OPTIONAL { ?property wdt:P31 ?propertyCategory. }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+    }
+  }
+}
+GROUP BY ?property ?propertyLabel ?propertyDescription ?propertyAltLabel

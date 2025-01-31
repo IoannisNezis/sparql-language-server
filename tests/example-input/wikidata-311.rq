@@ -1,0 +1,20 @@
+SELECT ?poetLabel ?image ?yob ?yod ?start ?end ?monarchLabel
+WHERE
+{
+  ?poet p:P39 ?positionStat.
+  ?positionStat ps:P39 wd:Q877838;
+                pq:P580 ?start;
+                pq:P748 ?monarch.
+  OPTIONAL {
+    ?positionStat pq:P582 ?end.
+  }
+  OPTIONAL {
+    ?poet wdt:P18 ?image;
+          wdt:P569 ?dob;
+          wdt:P570 ?dod.
+  }
+  BIND(YEAR(?dob) AS ?yob).
+  BIND(YEAR(?dod) AS ?yod).
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+ORDER BY ?start DESC(?monarchLabel)

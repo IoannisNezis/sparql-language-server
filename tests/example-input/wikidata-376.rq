@@ -1,0 +1,8 @@
+SELECT ?wpid ?item ?itemLabel ?referenceLabel
+WHERE
+{
+  ?item wdt:P2410 ?wpid ;
+          wdt:P2860 ?reference ;
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}

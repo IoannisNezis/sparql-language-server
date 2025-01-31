@@ -1,0 +1,8 @@
+SELECT ?work ?title
+WHERE
+{
+  ?work wdt:P31/wdt:P279* wd:Q838948;
+        wdt:P1476 ?title.
+  FILTER(REGEX(STR(?title), "^(\\p{L})\\w+(?:\\W+\\1\\w+){2,}$", "i")).
+}
+ORDER BY STR(?title)

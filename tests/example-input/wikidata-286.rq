@@ -1,0 +1,28 @@
+SELECT ?film ?filmLabel ?genere ?d 
+WHERE {
+  {
+    SELECT ?film (GROUP_CONCAT(DISTINCT?gL;SEPARATOR=", ") AS ?genere) (MIN(YEAR(?date)) AS ?d) 
+    WHERE {
+      ?sitelink schema:about ?director ;
+                schema:isPartOf <https://en.wikipedia.org/> ;
+                schema:name "Steven Spielberg"@en .
+      # Edit this with different director's name to see their films.
+      Use the English Wikipedia title only.
+      ?film wdt:P31 wd:Q11424 ;
+            wdt:P136 ?g, ?g .
+      ?g rdfs:label ?gL .
+      ?film wdt:P57 ?director ;
+            wdt:P577 ?date .
+      FILTER ((LANG(?gL)) = "en")
+      SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "en" .
+      }
+    }
+    GROUP BY ?film
+  }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en" .
+  }
+}
+ORDER BY DESC(?d)
+

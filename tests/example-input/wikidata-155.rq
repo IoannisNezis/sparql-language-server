@@ -1,0 +1,10 @@
+SELECT DISTINCT ?item ?itemLabel ?placeLabel ?countryLabel
+WHERE
+{
+  ?item wdt:P39 wd:Q3044918 .
+  ?item wdt:P19 ?place .
+  ?place wdt:P17 ?country .
+  FILTER NOT EXISTS { ?place wdt:P17 wd:Q142 . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "fr" . }
+}
+ORDER BY ?countryLabel ?itemLabel

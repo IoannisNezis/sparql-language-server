@@ -1,0 +1,4 @@
+#title: URLs of Wikipedia in all languages
+SELECT ?wikipedia WHERE {
+  ?wikipedia wikibase:wikiGroup "wikipedia".
+}

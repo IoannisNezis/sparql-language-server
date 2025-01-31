@@ -1,0 +1,14 @@
+#added 2016-12
+##defaultView:BubbleChart
+SELECT ?author ?authorLabel (COUNT(?publication) AS ?count)
+WHERE
+{
+    ?item wdt:P2860 ?publication . #citations
+    ?publication wdt:P50 ?author . #authors
+    ?author wdt:P21 wd:Q6581072. #females
+    SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "en" .
+    }
+}
+GROUP BY ?author ?authorLabel
+ORDER BY DESC(?count)

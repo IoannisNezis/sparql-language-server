@@ -1,0 +1,10 @@
+#defaultView:Map
+SELECT ?item ?itemLabel ?coordinates WHERE {
+  ?item p:P3602 ?node.
+  ?item wdt:P551 ?residence .
+  ?residence wdt:P17 ?country ;
+             wdt:P625 ?coordinates .
+  ?node ps:P3602 wd:Q16061881.
+  FILTER (?country != wd:Q55)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],nl". }
+}

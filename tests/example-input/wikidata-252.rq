@@ -1,0 +1,12 @@
+#TEMPLATE={"template":"Presidents of ?country and their spouses","variables":{"?country":{"query":" SELECT ?id WHERE { ?id wdt:P31 wd:Q6256 . }"} } }
+
+SELECT ?p ?pLabel ?ppicture ?w ?wLabel ?wpicture WHERE {
+  BIND(wd:Q30 AS ?country)
+  ?country (p:P6/ps:P6) ?p.
+  ?p wdt:P26 ?w.
+  OPTIONAL {
+    ?p wdt:P18 ?ppicture.
+    ?w wdt:P18 ?wpicture.
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

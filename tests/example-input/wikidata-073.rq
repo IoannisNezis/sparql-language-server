@@ -1,0 +1,10 @@
+# Get all Featured Articles (Q17437796)
+SELECT ?lang ?name ?itemLabel ?sitelink ?linkcount ?item WHERE {
+  ?item wikibase:sitelinks ?linkcount.
+  ?sitelink schema:name ?name;
+    schema:inLanguage ?lang;
+    schema:about ?item;
+    # Sitelink is badged as a Featured Article
+    wikibase:badge wd:Q17437796.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

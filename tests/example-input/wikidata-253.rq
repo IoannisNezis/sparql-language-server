@@ -1,0 +1,12 @@
+SELECT ?politician ?cause ?politician_label ?cause_of_death_label
+WHERE
+{
+  ?politician wdt:P106 wd:Q82955 .    # find items that have "occupation (P106): politician (Q82955)"
+  ?politician wdt:P509 ?cause .       # with a P509 (cause of death) claim
+  ?cause wdt:P279* wd:Q12078 .        # ... where the cause is a subclass of (P279*) cancer (Q12078)
+  # ?politician wdt:P39 wd:Q11696 .   # Uncomment this line to include only U.S. Presidents
+
+  OPTIONAL {?politician rdfs:label ?politician_label FILTER (lang(?politician_label) = "en") .}
+  OPTIONAL {?cause rdfs:label ?cause_of_death_label FILTER (lang(?cause_of_death_label) = "en").}
+}
+ORDER BY ASC (?politician)

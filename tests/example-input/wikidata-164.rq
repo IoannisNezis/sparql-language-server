@@ -1,0 +1,23 @@
+#title: Human Development Index of specified country(s)
+#defaultView:LineChart
+SELECT ?year ?hdi ?countryLabel WHERE {
+  VALUES ?country {
+    wd:Q148
+    wd:Q39
+    
+    # to add another country
+    # 1,uncomment the last commented line, 
+    # 2,put cursor to the end of line, 
+    # 3,and press CTRL+SPACE，or CTRL+ALT+SPACE, or ALT+ENTER. 
+    # 4,and select first item, and press CTRL+ENTER.
+    #wd:US
+    
+    }
+  
+  ?country p:P1081 ?statement.
+  ?statement ps:P1081 ?hdi.
+  ?statement pq:P585 ?date.
+  
+  BIND (STR(YEAR(?date)) as ?year)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

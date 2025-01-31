@@ -1,0 +1,38 @@
+# Finds authors who have published scientific articles together,
+# but whose Erdos numbers are more than one apart.
+# These would appear to violate the definition of the Erdos number.
+
+SELECT
+  # Q#s
+  ?paper
+  ?author1
+  ?author2
+  # title (either from title statement or label)
+  (IF(BOUND(?title), ?title, ?paperLabel) AS ?title)
+  # author labels (should be names) and their Erdos numbers
+  ?author1Label
+  ?erdos1
+  ?author2Label
+  ?erdos2
+  # distance between Erdos numbers
+  ?distance
+WHERE
+{
+  # paper, instance of or subclass of scientific article; also has two authors
+  ?paper wdt:P31/wdt:P279* wd:Q13442814;
+           wdt:P50 ?author1, ?author2.
+  # if it has a title, we’ll grab that as well, but it’s also okay if there’s no title
+  OPTIONAL { ?paper wdt:P1476 ?title. }
+  # grab Erdos numbers of the two authors
+  ?author1 wdt:P2021 ?erdos1.
+  ?author2 wdt:P2021 ?erdos2.
+  # introduce a new variable for the difference of the Erdos numbers
+  BIND(?erdos2 - ?erdos1 AS ?distance).
+  # select those cases where the distance is > 1
+  # (note: by *not* taking the absolute value of the distance, we avoid getting duplicated cases because the author variables might be swapped)
+  FILTER(?distance > 1).
+  # get *Label variables automagically
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+# sort by distance first (descending), then by first author, then by second author
+ORDER BY DESC(?distance) ?author1Label ?author2Label

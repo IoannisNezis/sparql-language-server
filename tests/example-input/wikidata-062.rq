@@ -1,0 +1,18 @@
+#added before 2019-02
+
+SELECT ?item ?itemLabel ?cnt WHERE {
+{
+  SELECT ?item (COUNT(?sitelink) AS ?cnt) WHERE {
+  ?item wdt:P27|wdt:P205|wdt:P17 wd:Q16 . #Canadian subjects.
+  MINUS {?item wdt:P106 wd:Q488111 .} #Minus occupations that would be inappropriate in most situations.
+  MINUS {?item wdt:P106 wd:Q3286043 .}
+  MINUS {?item wdt:P106 wd:Q4610556 .}
+  ?sitelink schema:about ?item .
+  FILTER NOT EXISTS {
+    ?article schema:about ?item .
+    ?article schema:isPartOf <https://en.wikipedia.org/> . #Targeting Wikipedia language where subjects has no article.
+  }
+  } GROUP BY ?item ORDER BY DESC (?cnt) LIMIT 1000 #Sorted by amount of articles in other languages. Result limited to 1000 lines to not have a timeout error.
+}
+SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en,fr,es,de" } #Service to resolve labels in (fallback) languages: automatic user language, default for all languages, English, French, Spanish, German.
+} ORDER BY DESC (?cnt)

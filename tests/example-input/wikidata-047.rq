@@ -1,0 +1,8 @@
+# author: Lea Lacroix (WMDE) 2018-12-18
+#contact: Yug
+SELECT ?id ?label
+WHERE {
+  ?l a ontolex:LexicalEntry ; dct:language wd:Q150 ; wikibase:lexicalCategory wd:Q1084 ; ontolex:lexicalForm ?id .
+  ?id ontolex:representation ?label .
+  FILTER NOT EXISTS { ?id wdt:P443 ?audio. }
+}

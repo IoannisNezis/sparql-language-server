@@ -1,0 +1,26 @@
+SELECT DISTINCT
+  ?item
+  ?itemLabel
+  ?communeLabel
+  (group_concat(DISTINCT ?merimee ; separator = ", ") as ?merimee)
+  ?coords
+  ?image
+WHERE
+{
+  {
+    SELECT DISTINCT ?item ?merimee WHERE {
+      ?item wdt:P1435/wdt:P279* wd:Q916475 .
+      ?item p:P1435 ?heritage_statement .
+      FILTER NOT EXISTS { ?heritage_statement pq:P582 ?end . }
+      ?item wdt:P380 ?merimee.
+    }
+    ORDER BY ?merimee
+  }
+  ?item wdt:P131/wdt:P131* wd:Q3068 .
+  ?item wdt:P131 ?commune .
+  OPTIONAL { ?item wdt:P625 ?coords . }
+  OPTIONAL { ?item wdt:P18 ?image . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],fr" . }
+}
+GROUP BY ?item ?itemLabel ?communeLabel ?coords ?image
+ORDER BY ?communeLabel ?itemLabel

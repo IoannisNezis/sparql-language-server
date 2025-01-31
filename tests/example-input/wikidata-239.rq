@@ -1,0 +1,12 @@
+SELECT DISTINCT ?journal ?name WHERE {
+    ?journal wdt:P31 wd:Q5633421 . # is scientific journal
+    {
+            { ?journal wdt:P921 wd:Q199655 }   # with topic library science
+      UNION { ?journal wdt:P921 wd:Q16387 }    # and/or topic information science
+      UNION { ?journal wdt:P921 wd:Q13420675 } # and/or topic library and information science
+    }
+    SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "en" .
+        ?journal rdfs:label ?name .
+    }
+}

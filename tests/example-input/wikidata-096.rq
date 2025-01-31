@@ -1,0 +1,5 @@
+SELECT ?muni ?muniLabel where {
+  ?muni p:P31 [ps:P31 wd:Q2039348];
+        wdt:P47 wd:Q213246.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "nl". }
+}

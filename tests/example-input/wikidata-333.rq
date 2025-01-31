@@ -1,0 +1,15 @@
+SELECT DISTINCT ?human ?humanLabel
+WHERE
+{
+    VALUES ?professions {wd:Q177220 wd:Q639669}
+    ?human wdt:P31 wd:Q5 .
+    ?human wdt:P106 ?professions .
+    ?human wdt:P136 ?genre .
+    ?human wikibase:statements ?statementcount .
+    ?genre rdfs:label ?genreLabel .
+    FILTER CONTAINS(?genreLabel, "rock") .
+    FILTER (?statementcount > 50 ) .
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+ORDER BY ?humanLabel
+LIMIT 50

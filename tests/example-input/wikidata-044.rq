@@ -1,0 +1,10 @@
+#title: Forms of nouns in Hebrew that are both feminine and masculine
+# by Uziel302
+SELECT ?lexemeId ?lemma ?form ?word WHERE {
+  ?lexemeId dct:language wd:Q9288;
+            wikibase:lexicalCategory wd:Q1084;
+            wikibase:lemma ?lemma;
+            ontolex:lexicalForm ?form.
+  ?form wikibase:grammaticalFeature wd:Q499327, wd:Q1775415;
+        ontolex:representation ?word.
+}

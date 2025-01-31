@@ -1,0 +1,19 @@
+SELECT ?continent ?river ?continentLabel ?riverLabel ?maxlength
+WHERE
+{
+  {
+    SELECT ?continent (MAX(?length) AS ?maxlength)
+    WHERE
+    {
+      ?river wdt:P31/wdt:P279* wd:Q355304;
+             wdt:P2043 ?length;
+             wdt:P30 ?continent.
+    }
+    GROUP BY ?continent
+  }
+  ?river wdt:P31/wdt:P279* wd:Q355304;
+         wdt:P2043 ?maxlength;
+         wdt:P30 ?continent.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+ORDER BY ?continentLabel

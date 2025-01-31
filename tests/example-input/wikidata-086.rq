@@ -1,0 +1,19 @@
+#defaultView:Map
+SELECT DISTINCT ?country ?countryLabel ?capital ?capitalLabel ?coordinates ?ended
+WHERE
+{
+  ?country p:P36 ?stat.
+  ?stat ps:P36 ?capital.
+  ?capital wdt:P625 ?coordinates.
+  OPTIONAL {
+    ?country wdt:P582|wdt:P576 ?ended.
+  }
+  OPTIONAL {
+    ?capital wdt:P582|wdt:P576 ?ended.
+  }
+  OPTIONAL {
+    ?stat pq:P582 ?ended.
+  }
+  FILTER(BOUND(?ended)).
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

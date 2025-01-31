@@ -1,0 +1,13 @@
+# variants that are associated with renal cell carcinoma
+SELECT DISTINCT ?reference ?referenceLabel ?pmid
+WHERE
+{
+  ?item wdt:P3329 ?civicId ;
+          ?property ?object .
+    ?object prov:wasDerivedFrom ?provenance .
+    ?provenance pr:P248 ?reference .
+    ?reference wdt:P31 wd:Q13442814 ;
+               wdt:P698 ?pmid .
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

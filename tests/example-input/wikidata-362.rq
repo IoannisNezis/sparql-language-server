@@ -1,0 +1,16 @@
+# Top 100 podcasts by number of statements
+SELECT ?item ?itemLabel ?statements 
+WHERE {
+  ?item wdt:P31 wd:Q24634210 .
+  # Instance of: podcast
+  ?item wikibase:statements ?statements .
+  # Number of statements
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE], mul, en" .
+  }
+}
+ORDER BY DESC(?statements)
+# Sort by number of statements
+LIMIT 100
+# Only the top 100 items
+

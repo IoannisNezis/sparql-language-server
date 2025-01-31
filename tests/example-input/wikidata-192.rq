@@ -1,0 +1,15 @@
+SELECT * WHERE {
+  {
+    SELECT ?cell_line ?cell_line_name WHERE {
+      ?cell_line wdt:P31 wd:Q21014462;
+                 rdfs:label ?cell_line_name.
+          FILTER(LANG(?cell_line_name) = "en").
+          Filter REGEX(STR(?cell_line_name), "^[\\w\\-\\.]+\\.[A-z]+$")
+    }
+  }
+  ?tld wdt:P31/wdt:P279* wd:Q14296;
+       rdfs:label ?tld_name.
+  FILTER(LANG(?tld_name) = "en").
+  FILTER REGEX(STR(?cell_line_name), CONCAT(REPLACE(?tld_name, "\\.", "\\\\."), "$"), "i")
+  BIND(URI(CONCAT("http://", ?cell_line_name)) as ?url)
+}

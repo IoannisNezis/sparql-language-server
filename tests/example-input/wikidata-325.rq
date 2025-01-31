@@ -1,0 +1,7 @@
+#defaultView:Map
+SELECT ?item ?itemLabel ?_coordinates ?_image WHERE {
+  ?item wdt:P106 wd:Q36834; # occupation: composer
+        wdt:P18 ?_image; # with an image depicting them
+        wdt:P19/wdt:P625 ?_coordinates # their birthplace, specifically the coordinates of their birthplace
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" } # labels in English
+}

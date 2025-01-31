@@ -1,0 +1,14 @@
+SELECT ?nominee ?nomineeLabel (SAMPLE(?citizenshipLabel) AS ?country) (COUNT(DISTINCT ?year) as ?timesNominated)
+WHERE
+{
+    BIND( wd:Q37922 as ?prize )
+    ?nominee p:P1411 [ ps:P1411 ?prize; pq:P585 ?time ]
+    BIND( year(?time) as ?year )
+    OPTIONAL {
+      ?nominee wdt:P27 [ rdfs:label ?citizenshipLabel ] FILTER (lang(?citizenshipLabel) = "en") .
+    }
+    FILTER NOT EXISTS { ?nominee wdt:P166 ?prize . }
+    SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+GROUP BY ?nominee ?nomineeLabel
+ORDER BY DESC(?timesNominated) ?nomineeLabel

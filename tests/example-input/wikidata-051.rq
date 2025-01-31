@@ -1,0 +1,8 @@
+#Properties grouped by their type with number of properties
+SELECT (COUNT(?property) as ?pcount ) ?wbtype WHERE {
+  ?property rdf:type wikibase:Property.
+  ?property wikibase:propertyType ?wbtype.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}
+GROUP BY ?wbtype
+ORDER BY DESC(?pcount)

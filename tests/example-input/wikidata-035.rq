@@ -1,0 +1,7 @@
+# Lexemes in English that match an expression
+SELECT ?lexemeId ?lemma WHERE {
+  ?lexemeId dct:language wd:Q1860;
+            wikibase:lemma ?lemma.
+  # only those lemmas that begin with "pota", i.e. "potato"
+  FILTER (regex(?lemma, '^pota.*'))
+}

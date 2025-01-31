@@ -1,0 +1,13 @@
+#title: Distinct billionaires
+SELECT ?locationLabel ?item ?itemLabel (MAX(?billion) as ?billions)
+WHERE
+{
+  ?item wdt:P2218 ?worth.
+  ?item wdt:P19 ?location .
+
+  FILTER(?worth>1000000000).
+  BIND(?worth/1000000000 AS ?billion).
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,de". }
+}
+GROUP BY ?locationLabel ?item ?itemLabel
+ORDER BY DESC(?billions)

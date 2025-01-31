@@ -1,0 +1,8 @@
+SELECT ?sideLabel (COUNT(?jurisdiction) AS ?count)
+WHERE
+{
+  ?jurisdiction wdt:P1622 ?side.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+GROUP BY ?sideLabel
+ORDER BY ?sideLabel

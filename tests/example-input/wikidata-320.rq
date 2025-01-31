@@ -1,0 +1,26 @@
+SELECT DISTINCT ?character ?characterLabel ?birth ?death WHERE {
+  # Fictional character subclasses as a named subquery
+  SELECT ?fictiontype WHERE {
+    ?fictiontype wdt:P279* wd:Q95074 .
+    hint:Prior hint:gearing "forward" .
+  }
+}
+  INCLUDE %i
+  ?character wdt:P31 ?fictiontype.
+# Date of birth
+{
+  ?character wdt:P569 ?birth .
+}
+  # Date of death
+  
+UNION   {
+  ?character wdt:P570 ?death .
+}
+  # Get actual decade to compare with dates
+  BIND(xsd:integer(YEAR(NOW())/10) AS ?actual_decade).
+  # Only show characters born or deceased in the current decade
+  FILTER(xsd:integer(YEAR(?birth)/10) = ?actual_decade || xsd:integer(YEAR(?death)/10) = ?actual_decade)
+  SERVICE wikibase:label {
+  bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" .
+}}
+ORDER BY ?birth ?death

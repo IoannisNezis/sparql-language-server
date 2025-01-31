@@ -1,0 +1,21 @@
+SELECT * 
+{
+  OPTIONAL {
+    ?episode p:P179 [
+      ps:P179/p:P179 [
+        ps:P179 wd:Q321423 ;
+        pq:P1545 ?seasonNumber
+      ] ;
+      pq:P1545 ?episodeNumber
+    ]
+  }
+  OPTIONAL {
+    ?episode wdt:P1476 ?title .
+  }
+  OPTIONAL {
+    ?episode wdt:P577 ?pubDate .
+  }
+}
+GROUP BY ?episode
+ORDER BY IF(BOUND(?seasonNumber),xsd:integer(?seasonNumber),1000) xsd:integer(?episodeNumber) ?title
+

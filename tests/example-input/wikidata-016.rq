@@ -1,0 +1,12 @@
+#defaultView:Graph
+#TEMPLATE={ "template": { "en": "All statements of ?item containing another item" }, "variables": { "?item": {} } }
+SELECT ?item ?itemLabel ?itemImage ?value ?valueLabel ?valueImage ?edgeLabel WHERE {
+  BIND(wd:Q12345 AS ?item)
+  ?item ?wdt ?value.
+  ?edge a wikibase:Property;
+        wikibase:propertyType wikibase:WikibaseItem; # note: to show all statements, removing this is not enough, the graph view only shows entities
+        wikibase:directClaim ?wdt.
+  OPTIONAL { ?item wdt:P18 ?itemImage. }
+  OPTIONAL { ?value wdt:P18 ?valueImage. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

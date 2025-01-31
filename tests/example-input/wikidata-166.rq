@@ -1,0 +1,17 @@
+#defaultView:Graph
+SELECT DISTINCT ?item ?itemLabel ?rgb ?link
+WHERE
+{
+  VALUES ?toggle { true false }
+  ?disease wdt:P699 ?doid;
+           wdt:P279+ wd:Q18123741;
+           wdt:P2176 ?drug.
+  ?drug rdfs:label ?drugLabel.
+    FILTER(LANG(?drugLabel) = "en").
+  ?disease rdfs:label ?diseaseLabel.
+    FILTER(LANG(?diseaseLabel) = "en").
+  BIND(IF(?toggle,?disease,?drug) AS ?item).
+  BIND(IF(?toggle,?diseaseLabel,?drugLabel) AS ?itemLabel).
+  BIND(IF(?toggle,"FFA500","7FFF00") AS ?rgb).
+  BIND(IF(?toggle,"",?disease) AS ?link).
+}

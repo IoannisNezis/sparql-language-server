@@ -1,0 +1,14 @@
+# Population of cities and towns in Denmark and their OSM relation id
+# This shows a simple OR using VALUES and a variable
+SELECT ?city ?cityLabel ?population ?OSM_relation_ID WHERE {
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+  VALUES ?town_or_city {
+    wd:Q3957
+    wd:Q515
+  }
+  ?city (wdt:P31/(wdt:P279*)) ?town_or_city;
+    wdt:P17 wd:Q35.
+  OPTIONAL { ?city wdt:P1082 ?population. }
+  OPTIONAL { ?city wdt:P402 ?OSM_relation_ID. }
+}
+LIMIT 100

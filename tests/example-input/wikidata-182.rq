@@ -1,0 +1,22 @@
+#Gene and metabolite counts per path
+#defaultView:ScatterChart
+SELECT ?path ?genes ?metabolites ?pathway WHERE {
+  {SELECT DISTINCT ?path (COUNT(?pwPart) AS ?genes) WHERE {
+      ?path wdt:P2410 ?WikipathsID.
+      ?path wdt:P527 ?pwPart.
+      ?pwPart wdt:P31 wd:Q7187.
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+    }
+    GROUP BY ?path ?genes
+  }
+  {SELECT DISTINCT ?path (COUNT(?pwPart) AS ?metabolites) WHERE {
+      ?path wdt:P2410 ?WikipathsID.
+      ?path wdt:P527 ?pwPart.
+      ?pwPart wdt:P31 wd:Q11173.
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+    }
+    GROUP BY ?path ?metabolites
+  }
+  OPTIONAL { ?path rdfs:label ?pathway. }
+}
+ORDER BY DESC(?genes)

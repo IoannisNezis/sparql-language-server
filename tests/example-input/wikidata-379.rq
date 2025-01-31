@@ -1,0 +1,31 @@
+# Given the scientific name for a list of animals, it will return all the
+# English common names, their length, life expectency, height, wing span and mass
+# Note: There is more information on these specific animals. Unfortunately, a lot of animals on WikiData have missing information (e.g. no life expectancy or mass)
+SELECT DISTINCT ?item ?scientific_name ?common_name ?length ?life_expectency ?height ?wing_span ?mass WHERE {
+  ?item wdt:P225 ?scientific_name;
+    wdt:P1843 ?common_name.
+  OPTIONAL { ?item wdt:P2043 ?length. }
+  OPTIONAL { ?item wdt:P2250 ?life_expectency. }
+  OPTIONAL { ?item wdt:P2048 ?height. }
+  OPTIONAL { ?item wdt:P2050 ?wing_span. }
+
+  # Adult mass only. Excludes birth mass
+  OPTIONAL {
+    ?item p:P2067 ?mass_statement_node.
+    ?mass_statement_node pq:P642 wd:Q78101716;
+      ps:P2067 ?mass.
+  }
+
+  # Only return common names in English
+  FILTER(LANGMATCHES(LANG(?common_name), "en"))
+
+  # List of animals. All lowercase to avoid capitalisation issues
+  FILTER(lcase(str(?scientific_name)) IN (
+   "mustela erminea",
+   "aquila adalberti",
+   "vespula germanica",
+   "accipiter nisus",
+   "buteo buteo"
+  ))
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}

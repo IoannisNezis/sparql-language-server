@@ -1,0 +1,11 @@
+#The number of times a cas registry number is shared by distinct Wikidata items
+SELECT ?cas ?items
+WHERE
+{
+  {SELECT DISTINCT ?cas (count(?compound) as ?items) WHERE {
+      ?compound wdt:P231 ?cas .
+  }
+    GROUP BY ?cas }
+    FILTER (?items >1)
+}
+ORDER BY desc(?items)

@@ -1,0 +1,15 @@
+#defaultView:Map
+SELECT ?place ?location ?elev ?image
+WHERE
+{
+  ?place p:P2044/psv:P2044 ?placeElev.
+  ?placeElev wikibase:quantityAmount ?elev.
+  ?placeElev wikibase:quantityUnit ?unit.
+  bind(0.01 as ?km).
+  filter( (?elev < ?km*1000 && ?unit = wd:Q11573)
+       || (?elev < ?km*3281 && ?unit = wd:Q3710)
+       || (?elev < ?km      && ?unit = wd:Q828224) ).
+  ?place wdt:P625 ?location.
+  OPTIONAL { ?place wdt:P18 ?image }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+}

@@ -1,0 +1,10 @@
+# People born in Lisbon that don't have an article on Portuguese Wikipedia
+# but do have an article on other Wikipedias.
+SELECT DISTINCT ?person ?personLabel WHERE
+{
+  ?person wdt:P31 wd:Q5. # Instance of human
+  ?person (wdt:P19|wdt:P20)/wdt:P131* wd:Q597. # Born or died in Lisbon (or anywhere within)
+  MINUS { ?ptArticle schema:about ?person; schema:isPartOf <https://pt.wikipedia.org/>. } # No article on pt.wiki
+  ?anyArticle schema:about ?person; schema:isPartOf/wikibase:wikiGroup "wikipedia". # Do have (some) Wikipedia article
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],pt,en,mul". }
+}

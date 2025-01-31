@@ -1,0 +1,10 @@
+SELECT DISTINCT ?personLabel (CONCAT("https://twitter.com/",?twitterName) AS ?twitterlink) ?pic
+WHERE {
+  ?person wdt:P2002 ?twitterName ;
+    wdt:P106 ?occupation .
+  OPTIONAL { ?person wdt:P18 ?pic . }
+  ?occupation wdt:P279* wd:Q864503 . # all subclasses of biologists
+   SERVICE wikibase:label {
+     bd:serviceParam wikibase:language "en"
+   }
+}

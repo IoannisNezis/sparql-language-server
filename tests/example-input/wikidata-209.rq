@@ -1,0 +1,11 @@
+SELECT ?element (SAMPLE(?symbol) AS ?symbol) (SAMPLE(?protons) AS ?protons) (MIN(?neutrons) AS ?minNeutrons) (MAX(?neutrons) AS ?maxNeutrons)
+WHERE
+{
+  ?element wdt:P31 wd:Q11344;
+           wdt:P1086 ?protons;
+           wdt:P246 ?symbol.
+  ?isotope wdt:P279 ?element;
+           wdt:P1148 ?neutrons.
+}
+GROUP BY ?element
+ORDER BY ?protons

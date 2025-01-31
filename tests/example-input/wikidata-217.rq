@@ -1,0 +1,14 @@
+SELECT DISTINCT ?comp ?compLabel ?formula ?bp ?bpUnit ?bpUnitLabel 
+WHERE {
+  ?comp wdt:P31/wdt:P279* wd:Q41581 ;
+        wdt:P274 ?formula ;
+        p:P2102 [
+    ps:P2102 ?bp ;
+    psv:P2102/wikibase:quantityUnit ?bpUnit
+  ] .
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "[AUTO_LANGUAGE], mul, en" .
+  }
+}
+ORDER BY DESC(?bpUnit) ASC(?bp)
+

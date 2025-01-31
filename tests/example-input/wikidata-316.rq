@@ -1,0 +1,11 @@
+#authors with country of citizenship United States who do not have a Goodreads identifier
+SELECT ?item ?itemLabel
+WHERE
+{
+  ?item wdt:P31 wd:Q5. #instance of (P31) human (Q5)
+  ?item wdt:P27 wd:Q30. #country of citizenship (P27) is United States (Q30)
+  ?item wdt:P106 wd:Q36180. #occupation (P106) is writer (Q36180)
+  MINUS { ?item wdt:P2963 [] } .
+
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

@@ -1,0 +1,9 @@
+SELECT ?sandwich ?ingredient ?sandwichLabel ?ingredientLabel
+WHERE
+{
+  ?sandwich wdt:P31?/wdt:P279* wd:Q28803;
+            wdt:P527 ?ingredient.
+  MINUS { ?ingredient wdt:P279* wd:Q7802. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en", "fr". }
+}
+ORDER BY UCASE(STR(?sandwichLabel))

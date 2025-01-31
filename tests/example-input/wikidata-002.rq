@@ -1,0 +1,7 @@
+#title: Cats, with pictures
+#defaultView:ImageGrid
+SELECT ?item ?itemLabel ?pic WHERE {
+  ?item wdt:P31 wd:Q146;
+    wdt:P18 ?pic.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+}

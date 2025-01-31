@@ -1,0 +1,9 @@
+SELECT ?street ?streetLabel
+WHERE
+{
+    ?street wdt:P31/wdt:P279* wd:Q79007 .
+    ?street wdt:P17 wd:Q142 .
+    MINUS { ?street wdt:P131 [] } .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "fr" }
+}
+ORDER BY ?streetLabel

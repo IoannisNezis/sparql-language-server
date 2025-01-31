@@ -1,0 +1,6 @@
+SELECT DISTINCT ?pmid ?doi
+WHERE
+{
+  ?item wdt:P698 ?pmid ;
+              wdt:P356 ?doi .
+}

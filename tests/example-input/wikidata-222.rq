@@ -1,0 +1,12 @@
+# select all astronauts with name, image, birthdate, birthplace and coordinates of the birthplace
+
+SELECT ?astronaut ?astronautLabel ?image ?birthdate ?birthplace ?coord WHERE {
+  ?astronaut ?x1 wd:Q11631;
+  wdt:P18 ?image;
+  wdt:P569 ?birthdate;
+  wdt:P19 ?birthplace.
+
+  ?birthplace wdt:P625 ?coord
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+ORDER BY DESC(?birthdate)

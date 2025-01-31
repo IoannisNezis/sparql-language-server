@@ -1,0 +1,10 @@
+# This query has two different features:
+# First, it is able to search for municipalities which are part of two different states, looking to P527
+# Second, it doesn't show former municipalities, filtering the old ones from the P582 statement.
+SELECT DISTINCT ?udalerri ?udalerriLabel WHERE { 
+  ?udalerri p:P31 ?status.
+  ?udalerri wdt:P131*/^wdt:P527 wd:Q47588 .
+  {?status ps:P31 wd:Q484170.} UNION {?status ps:P31 wd:Q2074737}
+  MINUS {?status pq:P582 ?old .}
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "eu,es,fr,en". }
+}

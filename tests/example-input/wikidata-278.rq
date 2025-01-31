@@ -1,0 +1,13 @@
+#defaultView:Map
+SELECT ?pid ?name ?coord ?ort ?ortLabel
+WHERE
+{
+  ?pid wdt:P31 wd:Q16970.
+  ?pid rdfs:label ?name
+  FILTER((LANG(?name)) = "de")
+  FILTER(REGEX(STR(?name), "[Ss]pitalkirche")).
+  ?pid wdt:P131 ?ort.
+  ?pid wdt:P17 wd:Q183.
+  ?pid wdt:P625 ?coord.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en". }
+}

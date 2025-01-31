@@ -1,0 +1,11 @@
+SELECT ?country ?countryLabel ?population ?totalCityPopulation (?population / ?totalCityPopulation AS ?ratio) {
+  ?country wdt:P1082 ?population .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en" }
+  {
+    SELECT ?country (SUM(?cityPopulation) AS ?totalCityPopulation) WHERE {
+      ?city wdt:P31 wd:Q515 .
+      ?city wdt:P17 ?country .
+      ?city wdt:P1082 ?cityPopulation .
+    } GROUP BY ?country
+  }
+} ORDER BY ?ratio

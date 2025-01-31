@@ -1,0 +1,10 @@
+#defaultView:Map
+SELECT ?city ?cityLabel ?location ?populatie2 WHERE {
+  { SELECT DISTINCT * WHERE {
+    wd:Q9832 wdt:P1082 ?populatie .
+    ?city wdt:P1082 ?populatie2 ;
+      wdt:P625 ?location .
+    FILTER (abs(?populatie - ?populatie2) < 1000)
+  } }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,nl" }
+}

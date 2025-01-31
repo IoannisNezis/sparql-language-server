@@ -1,0 +1,9 @@
+#title:Swedish lexemes that are missing in the biggest official printed Swedish dictionary SAOB.
+# date: 2021-10-12
+# author:So9q
+SELECT ?lemma
+WHERE {
+  ?lexemeId dct:language wd:Q9027;
+            wikibase:lemma ?lemma;
+            wdt:P9660 wd:Q1935308.
+}

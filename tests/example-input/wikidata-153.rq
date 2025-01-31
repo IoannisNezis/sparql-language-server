@@ -1,0 +1,14 @@
+#added by Jura1, rev. 2016-11-08
+SELECT DISTINCT ?age ?country ?countryLabel ?hgovernment ?hgovernmentLabel
+{
+  ?country wdt:P31 wd:Q3624078 .
+  FILTER NOT EXISTS {?country wdt:P31 wd:Q3024240}
+  ?country p:P6 ?statement .
+  ?statement ps:P6 ?hgovernment .
+  ?country wdt:P6 ?hgovernment .
+  FILTER NOT EXISTS { ?statement pq:P582 ?x }
+  ?hgovernment wdt:P569 ?dob . BIND(YEAR(now())-YEAR(?dob) as ?age)
+  FILTER(?age>=65)
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+}
+ORDER BY DESC(?age)

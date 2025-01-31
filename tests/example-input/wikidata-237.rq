@@ -1,0 +1,10 @@
+SELECT ?entryRes ?entry ?statement
+WHERE
+{
+  ?entryRes ?p ?statement ;
+    rdfs:label ?entry .
+  ?statement prov:wasDerivedFrom/
+       <http://www.wikidata.org/prop/reference/P248>/
+       wdt:P356 "10.1021/JA01577A030" .
+   FILTER(lang(?entry) = "en")
+}

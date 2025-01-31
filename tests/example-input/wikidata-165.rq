@@ -1,0 +1,12 @@
+SELECT ?disease ?doid ?enLabel (count(?language) as ?languages)
+WHERE
+{
+  ?disease wdt:P699 ?doid ;
+             rdfs:label ?label ;
+             rdfs:label ?enLabel .
+    FILTER (lang(?enLabel) = "en")
+
+    BIND (lang(?label) AS ?language)
+}
+GROUP BY ?disease ?doid ?enLabel
+ORDER BY desc(?languages)

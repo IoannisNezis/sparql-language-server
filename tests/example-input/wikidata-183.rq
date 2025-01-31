@@ -1,0 +1,10 @@
+SELECT ?pathway ?pathwayLabel ?WikiPathways ?Reactome (COUNT(DISTINCT ?protein) as ?count) WHERE {
+  VALUES ?pathwayType { wd:Q4915012 wd:Q2996394 }
+  ?pathway wdt:P31 ?pathwayType .
+  { ?pathway wdt:P527/wdt:P688 ?protein . } UNION { ?pathway wdt:P527 ?protein . }
+  ?protein wdt:P638 ?PDBID .
+  OPTIONAL { ?pathway wdt:P2410 ?WikiPathways }
+  OPTIONAL { ?pathway wdt:P3937 ?Reactome }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en". }
+} GROUP BY ?pathway ?pathwayLabel ?WikiPathways ?Reactome
+  ORDER BY DESC(?count)
