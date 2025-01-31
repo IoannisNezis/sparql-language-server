@@ -20,8 +20,7 @@ fn check_collision(edits: &Vec<TextEdit>) {
     }
 }
 
-fn format_and_compare(ugly_query: &str, pretty_query: &str) {
-    let format_settings = FormatSettings::default();
+fn format_and_compare(ugly_query: &str, pretty_query: &str, format_settings: &FormatSettings) {
     let format_options = FormattingOptions {
         tab_size: 2,
         insert_spaces: true,
@@ -35,7 +34,7 @@ fn format_and_compare(ugly_query: &str, pretty_query: &str) {
     let tree = parser
         .parse(ugly_query.as_bytes(), None)
         .expect("could not parse");
-    let edits = format_document(&document, &tree, &format_options, &format_settings);
+    let edits = format_document(&document, &tree, &format_options, format_settings);
     check_collision(&edits);
     document.apply_text_edits(edits);
     assert_eq!(document.text, pretty_query);
@@ -57,7 +56,7 @@ fn format_basic() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 #[test]
 fn format_prologue() {
@@ -75,7 +74,7 @@ fn format_prologue() {
          SELECT * {}
          "
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -92,7 +91,7 @@ fn format_nesting_indentation() {
            }
          }\n"
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 #[test]
 fn format_alternating_group_graph_pattern() {
@@ -105,7 +104,7 @@ fn format_alternating_group_graph_pattern() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -128,7 +127,7 @@ fn format_union() {
          }
         "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -143,14 +142,14 @@ fn format_surouding_whitespace() {
                 "
     );
     let pretty_query = indoc!("SELECT * WHERE {}\n");
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
 fn format_select_clause() {
     let ugly_query = indoc!("SELECT (   <>    as   ?a  )    ?a   {  }  \n");
     let pretty_query = indoc!("SELECT (<> AS ?a) ?a {}\n");
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -172,7 +171,7 @@ fn format_optional() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -194,7 +193,7 @@ fn format_service() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -215,7 +214,7 @@ fn format_minus() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -235,7 +234,7 @@ fn format_graph() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -247,7 +246,7 @@ fn format_filter() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -269,7 +268,7 @@ fn format_binary_expression() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -282,7 +281,7 @@ fn format_bind() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -294,7 +293,7 @@ fn format_inline_data() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -304,7 +303,7 @@ fn format_values_clause() {
         "SELECT * {}
          VALUES ?a { 1 2 3 }\n"
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -343,7 +342,7 @@ fn format_solution_modifier() {
          LIMIT 3
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -364,7 +363,7 @@ fn format_dataset_clause() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -388,7 +387,7 @@ fn format_construct() {
          LIMIT 10
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -407,7 +406,7 @@ fn format_describe() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -424,7 +423,7 @@ fn format_ask() {
            }
            "#
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -447,7 +446,7 @@ fn format_graph_management() {
          CREATE GRAPH <d>
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -480,7 +479,7 @@ fn format_insert_data() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -516,7 +515,7 @@ fn format_delete_data() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -549,7 +548,7 @@ fn format_delete_where() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -581,7 +580,7 @@ fn format_modify() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -600,7 +599,7 @@ fn format_property_paths() {
          }
          "
     );
-    format_and_compare(ugly_query1, pretty_query1);
+    format_and_compare(ugly_query1, pretty_query1, &FormatSettings::default());
     let ugly_query2 = indoc!(
         "SELECT *
          WHERE  { ?P foaf:givenName ?G ; foaf:surname ?S; }
@@ -613,7 +612,7 @@ fn format_property_paths() {
          }
          "
     );
-    format_and_compare(ugly_query2, pretty_query2);
+    format_and_compare(ugly_query2, pretty_query2, &FormatSettings::default());
 }
 
 #[test]
@@ -630,7 +629,7 @@ fn format_property_list_paths() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -669,7 +668,7 @@ fn format_comments() {
          # unit comment 3
          "
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -701,7 +700,7 @@ fn format_function_like_keywords() {
            OFFSET 20
            "#
     );
-    format_and_compare(ugly_query, pretty_query)
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -731,7 +730,7 @@ fn format_full_select_querry() {
          OFFSET 20
          "
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -752,7 +751,7 @@ fn format_blank_node_property_list_path() {
          }
          "
     );
-    format_and_compare(ugly_query_1, pretty_query_1);
+    format_and_compare(ugly_query_1, pretty_query_1, &FormatSettings::default());
     let ugly_query_2 = indoc!(
         "SELECT * WHERE {
             wd:Q11571 p:P166 [
@@ -766,7 +765,7 @@ fn format_blank_node_property_list_path() {
          }
          "
     );
-    format_and_compare(ugly_query_2, pretty_query_2);
+    format_and_compare(ugly_query_2, pretty_query_2, &FormatSettings::default());
 }
 
 #[test]
@@ -783,7 +782,7 @@ fn format_anon() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -806,7 +805,7 @@ fn format_comments_with_dots() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 #[test]
 fn format_comments_property_lists() {
@@ -829,7 +828,7 @@ fn format_comments_property_lists() {
          }
          "
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -848,7 +847,7 @@ fn format_commas() {
           }
           "#
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -873,7 +872,7 @@ fn format_filter_inline() {
            }
            "#
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -891,7 +890,7 @@ fn format_leading_comments() {
            SELECT * WHERE {}
          "#
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -909,7 +908,7 @@ fn format_trailing_comments() {
            # non trailing comment
          "#
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -930,7 +929,7 @@ fn format_object_list() {
            }
          "#
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -948,7 +947,7 @@ fn format_comments_in_empty_ggp() {
           "#
     );
 
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 #[test]
 fn format_comments_in_strange_positions() {
@@ -975,7 +974,7 @@ fn format_comments_in_strange_positions() {
            # non trailing comment
          "#
     );
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
 #[test]
@@ -985,5 +984,213 @@ fn format_group_concat() {
           "#
     );
     let pretty_query = "SELECT (GROUP_CONCAT(?a; SEPARATOR=\"bar\") AS ?x) WHERE {}\n";
-    format_and_compare(ugly_query, pretty_query);
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
+}
+
+#[test]
+fn format_setting_align_prefixes() {
+    let mut format_settings = FormatSettings::default();
+    format_settings.align_prefixes = true;
+    let ugly_query = indoc!(
+        "PREFIX namespace123: <iri> PREFIX namespace12: <iri> PREFIX namespace1: <iri>
+         SELECT * WHERE {}
+         "
+    );
+    let pretty_query1 = indoc!(
+        "PREFIX namespace123: <iri>
+         PREFIX namespace12:  <iri>
+         PREFIX namespace1:   <iri>
+         SELECT * WHERE {}
+         "
+    );
+    let pretty_query2 = indoc!(
+        "PREFIX namespace123: <iri>
+         PREFIX namespace12: <iri>
+         PREFIX namespace1: <iri>
+         SELECT * WHERE {}
+         "
+    );
+    format_and_compare(ugly_query, pretty_query1, &format_settings);
+    format_settings.align_prefixes = false;
+    format_and_compare(ugly_query, pretty_query2, &format_settings);
+}
+
+#[test]
+fn format_setting_align_predicates() {
+    let mut format_settings = FormatSettings::default();
+    format_settings.align_predicates = true;
+    let ugly_query = indoc!(
+        "SELECT * WHERE {
+           ?adlasjsalkdjaldasjd <> <> ; <> <>
+         }
+         "
+    );
+    let pretty_query1 = indoc!(
+        "SELECT * WHERE {
+           ?adlasjsalkdjaldasjd <> <> ;
+                                <> <>
+         }
+         "
+    );
+    let pretty_query2 = indoc!(
+        "SELECT * WHERE {
+           ?adlasjsalkdjaldasjd <> <> ;
+             <> <>
+         }
+         "
+    );
+
+    format_and_compare(ugly_query, pretty_query1, &format_settings);
+    format_settings.align_predicates = false;
+    format_and_compare(ugly_query, pretty_query2, &format_settings);
+}
+
+#[test]
+fn format_setting_separate_prolouge() {
+    let mut format_settings = FormatSettings::default();
+    format_settings.separate_prolouge = true;
+    let ugly_query = indoc!(
+        "PREFIX namespace: <iri>
+         SELECT * WHERE {}
+         "
+    );
+    let pretty_query1 = indoc!(
+        "PREFIX namespace: <iri>
+
+         SELECT * WHERE {}
+         "
+    );
+    let pretty_query2 = indoc!(
+        "PREFIX namespace: <iri>
+         SELECT * WHERE {}
+         "
+    );
+
+    format_and_compare(ugly_query, pretty_query1, &format_settings);
+    format_settings.separate_prolouge = false;
+    format_and_compare(ugly_query, pretty_query2, &format_settings);
+}
+
+#[test]
+fn format_setting_capitalize_keywords() {
+    let mut format_settings = FormatSettings::default();
+    format_settings.capitalize_keywords = true;
+    let ugly_query = indoc!(
+        "prefix namespace: <iri>
+         select * where {}
+         "
+    );
+    let pretty_query1 = indoc!(
+        "PREFIX namespace: <iri>
+         SELECT * WHERE {}
+         "
+    );
+    let pretty_query2 = indoc!(
+        "prefix namespace: <iri>
+         select * where {}
+         "
+    );
+
+    format_and_compare(ugly_query, pretty_query1, &format_settings);
+    format_settings.capitalize_keywords = false;
+    format_and_compare(ugly_query, pretty_query2, &format_settings);
+}
+
+#[test]
+fn format_setting_insert_spaces() {
+    let mut format_settings = FormatSettings::default();
+    format_settings.insert_spaces = Some(true);
+    let ugly_query = indoc!(
+        "SELECT * WHERE { ?a ?b ?c }
+         "
+    );
+    let pretty_query1 = indoc!(
+        "SELECT * WHERE {
+           ?a ?b ?c
+         }
+         "
+    );
+    let pretty_query2 = indoc!(
+        "SELECT * WHERE {
+         \t?a ?b ?c
+         }
+         "
+    );
+
+    format_and_compare(ugly_query, pretty_query1, &format_settings);
+    format_settings.insert_spaces = Some(false);
+    format_and_compare(ugly_query, pretty_query2, &format_settings);
+}
+
+#[test]
+fn format_setting_tab_size() {
+    let mut format_settings = FormatSettings::default();
+    format_settings.tab_size = Some(4);
+    format_settings.insert_spaces = Some(true);
+    let ugly_query = indoc!(
+        "SELECT * WHERE { ?a ?b ?c }
+         "
+    );
+    let pretty_query = indoc!(
+        "SELECT * WHERE {
+             ?a ?b ?c
+         }
+         "
+    );
+
+    format_and_compare(ugly_query, pretty_query, &format_settings);
+}
+
+#[test]
+fn format_setting_where_new_line() {
+    let mut format_settings = FormatSettings::default();
+    format_settings.where_new_line = true;
+    let ugly_query = indoc!(
+        "SELECT * WHERE { ?a ?b ?c }
+         "
+    );
+    let pretty_query1 = indoc!(
+        "SELECT *
+         WHERE {
+           ?a ?b ?c
+         }
+         "
+    );
+    let pretty_query2 = indoc!(
+        "SELECT * WHERE {
+           ?a ?b ?c
+         }
+         "
+    );
+
+    format_and_compare(ugly_query, pretty_query1, &format_settings);
+    format_settings.where_new_line = false;
+    format_and_compare(ugly_query, pretty_query2, &format_settings);
+}
+
+#[test]
+fn format_setting_filter_same_line() {
+    let mut format_settings = FormatSettings::default();
+    format_settings.filter_same_line = true;
+    let ugly_query = indoc!(
+        "SELECT * WHERE { ?a ?b ?c FILTER (?a)}
+         "
+    );
+    let pretty_query1 = indoc!(
+        "SELECT * WHERE {
+           ?a ?b ?c FILTER (?a)
+         }
+         "
+    );
+    let pretty_query2 = indoc!(
+        "SELECT * WHERE {
+           ?a ?b ?c
+           FILTER (?a)
+         }
+         "
+    );
+
+    format_and_compare(ugly_query, pretty_query1, &format_settings);
+    format_settings.filter_same_line = false;
+    format_and_compare(ugly_query, pretty_query2, &format_settings);
 }

@@ -1,4 +1,4 @@
-SELECT ?discoverer ?discovererLabel ?countWITH  AS %i WHERE {
+SELECT ?discoverer ?discovererLabel ?count WHERE {
   {
     SELECT ?discoverer (COUNT(?asteroid) AS ?count) WHERE {
       ?asteroid wdt:P31 wd:Q3863 ;

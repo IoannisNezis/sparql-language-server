@@ -7,9 +7,9 @@ start-monaco-editor:
 	cd editor && npm install && npm run dev
 
 build-native:
-	notify-send -t 1000 "starting build..."
+	hyprctl notify 1 2000 0 starting build...
 	cargo build --release --bin qlue-ls
-	notify-send -t 600 "build done"
+	hyprctl notify 1 1000 0 build done
 
 build-wasm profile="release" target="bundler":
 	notify-send -t 1000 "starting wasm build..."

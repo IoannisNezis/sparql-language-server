@@ -366,7 +366,7 @@ fn node_augmentation(
     if let Some(edits) = pre_node_augmentation(node, indentation, indent_base, settings) {
         augmentations.push(edits);
     }
-    if let Some(edits) = post_node_augmentation(node, indentation, indent_base) {
+    if let Some(edits) = post_node_augmentation(node, indentation, indent_base, settings) {
         augmentations.push(edits);
     }
 
@@ -401,6 +401,32 @@ fn in_node_augmentation(
                 "",
             )],
         },
+        "Prologue" if settings.align_prefixes => {
+            let prefix_pos_and_length: Vec<(Point, usize)> = children
+                .iter()
+                .filter_map(|child| match (child.kind(), child.child(1)) {
+                    ("PrefixDecl", Some(grandchild)) if grandchild.kind() == "PNAME_NS" => Some((
+                        grandchild.end_position(),
+                        grandchild.end_position().column - grandchild.start_position().column,
+                    )),
+                    _ => None,
+                })
+                .collect();
+            let max_length = prefix_pos_and_length
+                .iter()
+                .map(|(_pos, len)| *len)
+                .max()
+                .unwrap_or(0);
+            prefix_pos_and_length
+                .iter()
+                .map(|(position, length)| {
+                    TextEdit::new(
+                        Range::from_ts_positions(*position, *position),
+                        &" ".repeat(max_length - length),
+                    )
+                })
+                .collect()
+        }
         "PropertyListPathNotEmpty" => match node.parent() {
             Some(parent) => match parent.kind() {
                 "BlankNodePropertyListPath" | "TriplesSameSubjectPath" => children
@@ -645,9 +671,17 @@ fn pre_node_augmentation(
     ))
 }
 
-fn post_node_augmentation(node: &Node, indentation: usize, indent_base: &str) -> Option<TextEdit> {
+fn post_node_augmentation(
+    node: &Node,
+    indentation: usize,
+    indent_base: &str,
+    settings: &FormatSettings,
+) -> Option<TextEdit> {
     let insert = match node.kind() {
         "CONSTRUCT" | "UNION" => Some(" ".to_string()),
+        "Prologue" if settings.separate_prolouge && node.next_sibling().is_some() => {
+            Some(get_linebreak(&indentation, indent_base))
+        }
         "PropertyListPathNotEmpty" => match node.parent().map(|parent| parent.kind()) {
             Some("BlankNodePropertyListPath") if node.child_count() > 3 => Some(get_linebreak(
                 &indentation.checked_sub(1).unwrap_or(0),
