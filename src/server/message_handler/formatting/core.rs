@@ -80,13 +80,11 @@ fn merge_comments(
     let mut merged_edits = edits
         .into_iter()
         .fold(vec![], |mut acc: Vec<TextEdit>, mut edit| {
-            log::info!("-> {}", edit);
             while comment_iter
                 .peek()
                 .map(|comment| comment.position >= edit.range.start)
                 .unwrap_or(false)
             {
-                log::info!("Stopping at: {}", edit);
                 let comment = comment_iter
                     .next()
                     .expect("comment itterator should not be empty");
@@ -98,7 +96,6 @@ fn merge_comments(
                 // In this case this edits needs to be split into two edits.
                 let next_edit = match edit.range.contains(comment.position) {
                     true => {
-                        log::info!("splitt!!!");
                         let (before, after) = edit.new_text.split_at(
                             // BUG: This is very questionable!
                             // What happens if the charakters not 1 utf8 byte long.
@@ -120,7 +117,6 @@ fn merge_comments(
                     false => &mut edit,
                 };
 
-                log::info!("next edit before: {}", next_edit);
                 // WARNING: This could cause issues.
                 // The amout of chars is neccesarily equal to the amout of
                 // utf-8 bytes. Here i assume that all whispace is 1 utf8 byte long.
@@ -163,8 +159,6 @@ fn merge_comments(
                         )
                     }
                 };
-
-                log::info!("next edit after: {}", next_edit);
             }
             acc.push(edit);
             return acc;
