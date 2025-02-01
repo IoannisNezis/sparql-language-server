@@ -18,14 +18,14 @@ struct CommentMarker {
     text: String,
     position: Position,
     indentation_level: usize,
-    inline: bool,
+    trailing: bool,
 }
 
 impl CommentMarker {
     fn to_edit(&self) -> TextEdit {
         let prefix = match (
             self.position.line == 0 && self.position.character == 0,
-            self.inline,
+            self.trailing,
         ) {
             (true, _) => "",
             (false, true) => " ",
@@ -67,7 +67,6 @@ pub(super) fn format_document(
     comments.sort_by(|a, b| a.position.cmp(&b.position));
     edits = consolidate_edits(edits);
     edits = merge_comments(edits, comments, &document.text);
-    edits = consolidate_edits(edits);
     edits = remove_redundent_edits(edits, document);
     return edits;
 }
@@ -81,108 +80,91 @@ fn merge_comments(
     let mut merged_edits = edits
         .into_iter()
         .fold(vec![], |mut acc: Vec<TextEdit>, mut edit| {
+            log::info!("-> {}", edit);
             while comment_iter
                 .peek()
-                .map(|comment| comment.position > edit.range.start)
+                .map(|comment| comment.position >= edit.range.start)
                 .unwrap_or(false)
             {
-                // NOTE: remove all **consecutive** whitespace edits after comment edit.
+                log::info!("Stopping at: {}", edit);
                 let comment = comment_iter
                     .next()
                     .expect("comment itterator should not be empty");
-                let mut comment_edit = comment.to_edit();
 
                 // NOTE: In some Edgecase the comment is in the middle of a (consolidated)
                 // edit. For Example
                 // Select #comment
                 // * {}
                 // In this case this edits needs to be split into two edits.
-                if edit.range.contains(comment.position) {
-                    let (before, after) = edit.new_text.split_at(
-                        // BUG: This is very questionable!
-                        // What happens if the charakters not 1 utf8 byte long.
-                        // What happens if the edit is longer thatn 1 line.
-                        (comment.position.character - edit.range.start.character) as usize,
-                    );
-                    acc.push(TextEdit::new(
-                        Range {
-                            start: comment.position,
-                            end: edit.range.end,
-                        },
-                        after,
-                    ));
-                    edit.new_text = before.to_string();
-                    edit.range.end = comment.position;
-                }
-
-                let mut iter = acc.iter().rev().zip(acc.iter().rev().skip(1));
-                let mut prune_end = acc.len();
-                let mut prune_end_index = 0;
-                while let Some((next, nextnext)) = iter.next() {
-                    match next.new_text.as_str() {
-                        whitespace
-                            if whitespace.chars().all(|c| c.is_whitespace() && c != '\n') =>
-                        {
-                            //NOTE: Pruning this edit.
-                            //All Whitespace after a comment has to be removed.
-                        }
-                        x => {
-                            // NOTE: found non whitespace edit.
-                            // Stop pruning edits.
-                            // Add linebreak if edit does not lead with a newline.
-                            // WARNING: This could cause issues.
-                            // The amout of chars is neccesarily equal to the amout of
-                            // utf-8 bytes. Here i assume that all whispace is 1 utf8 byte long.
-                            prune_end_index = next
-                                .new_text
-                                .chars()
-                                .take_while(|c| c.is_whitespace() && c.is_ascii() && *c != '\n')
-                                .count();
-                            comment_edit.range.end = next.range.start.clone();
-                            if x.chars().next().map(|char| char != '\n').unwrap_or(false) {
-                                comment_edit.new_text +=
-                                    &get_linebreak(&comment.indentation_level, "  ");
-                            }
-                            break;
-                        }
-                    };
-                    prune_end -= 1;
-                    if !(next.range.end == nextnext.range.start
-                        || (nextnext.range.start != nextnext.range.end
-                            && next.range.start == nextnext.range.start))
-                    {
-                        // NOTE: found non consecutive edits.
-                        // Stop pruning edits.
-                        // Add linebreak.
-                        let indent = match text.get(
+                let next_edit = match edit.range.contains(comment.position) {
+                    true => {
+                        log::info!("splitt!!!");
+                        let (before, after) = edit.new_text.split_at(
+                            // BUG: This is very questionable!
+                            // What happens if the charakters not 1 utf8 byte long.
+                            // What happens if the edit is longer thatn 1 line.
+                            (comment.position.character - edit.range.start.character) as usize,
+                        );
+                        acc.push(TextEdit::new(
                             Range {
-                                start: next.range.end,
-                                end: nextnext.range.start,
-                            }
-                            .to_byte_index_range(text)
-                            .unwrap(),
-                        ) {
-                            Some("}") => comment.indentation_level.checked_sub(1).unwrap_or(0),
-                            _ => comment.indentation_level,
+                                start: comment.position,
+                                end: edit.range.end,
+                            },
+                            after,
+                        ));
+                        edit.new_text = before.to_string();
+                        edit.range.end = comment.position;
+                        acc.last_mut()
+                            .expect("Last edit should exist, since i just pushed it")
+                    }
+                    false => &mut edit,
+                };
+
+                log::info!("next edit before: {}", next_edit);
+                // WARNING: This could cause issues.
+                // The amout of chars is neccesarily equal to the amout of
+                // utf-8 bytes. Here i assume that all whispace is 1 utf8 byte long.
+                match next_edit
+                    .new_text
+                    .chars()
+                    .enumerate()
+                    .find_map(|(idx, char)| {
+                        (!char.is_whitespace() || char == 'n').then_some((idx, char))
+                    }) {
+                    Some((idx, '\n')) => {
+                        next_edit.new_text = format!(
+                            "{}{}",
+                            comment.to_edit().new_text,
+                            &next_edit.new_text[idx..]
+                        )
+                    }
+                    Some((idx, _char)) => {
+                        next_edit.new_text = format!(
+                            "{}{}{}",
+                            comment.to_edit().new_text,
+                            get_linebreak(&comment.indentation_level, "  "),
+                            &next_edit.new_text[idx..]
+                        )
+                    }
+                    None => {
+                        let indent = match next_edit.range.end.to_byte_index(&text) {
+                            Some(start_next_token) => match text
+                                .get(start_next_token..start_next_token + 1)
+                            {
+                                Some("}") => comment.indentation_level.checked_sub(1).unwrap_or(0),
+                                _ => comment.indentation_level,
+                            },
+                            None => comment.indentation_level,
                         };
-                        comment_edit.new_text += &get_linebreak(&indent, "  ");
-                        comment_edit.range.end = next.range.end.clone();
-                        break;
+                        next_edit.new_text = format!(
+                            "{}{}",
+                            comment.to_edit().new_text,
+                            get_linebreak(&indent, "  "),
+                        )
                     }
-                }
-                acc = acc.split_at(prune_end).0.to_vec();
-                if let Some(last) = acc.last_mut() {
-                    if last.range.start == comment_edit.range.end {
-                        // NOTE: Merge comment into last edit.
-                        last.new_text = comment_edit.new_text + &last.new_text[prune_end_index..];
-                    } else {
-                        // NOTE: trim leading whitspace of last edit
-                        last.new_text = last.new_text[prune_end_index..].to_string();
-                        acc.push(comment_edit);
-                    }
-                } else {
-                    acc.push(comment_edit);
-                }
+                };
+
+                log::info!("next edit after: {}", next_edit);
             }
             acc.push(edit);
             return acc;
@@ -348,7 +330,7 @@ fn comment_marker(comment_node: &Node, text: &String, indentation: usize) -> Com
             "unit" => Position::new(0, 0),
             _ => Position::from_point(attach.end_position()),
         },
-        inline: attach.end_position().row == comment_node.start_position().row,
+        trailing: attach.end_position().row == comment_node.start_position().row,
         indentation_level: indentation,
     }
 }
