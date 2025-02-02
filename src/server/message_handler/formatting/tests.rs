@@ -1194,3 +1194,39 @@ fn format_setting_filter_same_line() {
     format_settings.filter_same_line = false;
     format_and_compare(ugly_query, pretty_query2, &format_settings);
 }
+
+#[test]
+fn format_comments_1() {
+    let ugly_query = indoc!(
+        r#"SELECT   #1
+               #2
+           * WHERE {}
+          "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT #1
+           #2
+           * WHERE {}
+          "#
+    );
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
+}
+
+#[test]
+fn format_comments_2() {
+    let ugly_query = indoc!(
+        r#"PREFIX namespace: <iri>
+           SELECT#1
+           #2
+           * WHERE {}
+          "#
+    );
+    let pretty_query = indoc!(
+        r#"PREFIX namespace: <iri>
+           SELECT #1
+           #2
+           * WHERE {}
+          "#
+    );
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
+}
