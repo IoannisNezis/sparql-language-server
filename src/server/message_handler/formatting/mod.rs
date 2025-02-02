@@ -24,12 +24,12 @@ pub(super) fn handle_format_request(
         tree,
         request.get_options(),
         &server.settings.format,
-    );
+    )?;
     Ok(FormattingResponse::new(request.get_id(), edits))
 }
 
 #[wasm_bindgen]
-pub fn format_raw(text: String) -> String {
+pub fn format_raw(text: String) -> Result<String, String> {
     let mut parser = Parser::new();
     let settings = Settings::new();
     match parser.set_language(&tree_sitter_sparql::LANGUAGE.into()) {
@@ -46,9 +46,10 @@ pub fn format_raw(text: String) -> String {
                     insert_spaces: true,
                 },
                 &settings.format,
-            );
+            )
+            .map_err(|err| err.message)?;
             document.apply_text_edits(edits);
-            return document.text;
+            return Ok(document.text);
         }
         Err(_) => panic!("Could not setup parser"),
     }

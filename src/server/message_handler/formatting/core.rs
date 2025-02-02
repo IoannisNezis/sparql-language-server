@@ -1,3 +1,4 @@
+use core::fmt;
 use lazy_static::lazy_static;
 use std::{collections::HashSet, usize, vec};
 
@@ -6,6 +7,7 @@ use tree_sitter::{Node, Point, Tree, TreeCursor};
 use crate::server::{
     configuration::FormatSettings,
     lsp::{
+        errors::ResponseError,
         textdocument::{Position, Range, TextDocumentItem, TextEdit},
         FormattingOptions,
     },
@@ -19,6 +21,61 @@ struct CommentMarker {
     position: Position,
     indentation_level: usize,
     trailing: bool,
+}
+
+#[derive(Debug)]
+struct ConsolidatedTextEdit {
+    edits: Vec<TextEdit>,
+}
+
+impl fmt::Display for ConsolidatedTextEdit {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut s = "".to_string();
+        for edit in &self.edits {
+            s += &format!("|{}", edit);
+        }
+        write!(f, "{} = {}", self.fuse(), s)
+    }
+}
+
+impl ConsolidatedTextEdit {
+    fn fuse(&self) -> TextEdit {
+        TextEdit::new(
+            self.range(),
+            &self
+                .edits
+                .iter()
+                .flat_map(|edit| edit.new_text.chars())
+                .collect::<String>(),
+        )
+    }
+
+    fn range(&self) -> Range {
+        Range {
+            start: self.edits.first().unwrap().range.start,
+            end: self.edits.last().unwrap().range.end,
+        }
+    }
+
+    fn new(edit: TextEdit) -> Self {
+        Self { edits: vec![edit] }
+    }
+
+    fn split_at(self, position: Position) -> (ConsolidatedTextEdit, ConsolidatedTextEdit) {
+        let before = ConsolidatedTextEdit { edits: Vec::new() };
+        let after = ConsolidatedTextEdit { edits: Vec::new() };
+        self.edits
+            .into_iter()
+            .fold((before, after), |(mut before, mut after), edit| {
+                match (edit.range.start, edit.range.end, position) {
+                    (start, end, position) if start < position && position >= end => {
+                        before.edits.push(edit)
+                    }
+                    _ => after.edits.push(edit),
+                };
+                (before, after)
+            })
+    }
 }
 
 impl CommentMarker {
@@ -48,7 +105,7 @@ pub(super) fn format_document(
     tree: &Tree,
     options: &FormattingOptions,
     settings: &FormatSettings,
-) -> Vec<TextEdit> {
+) -> Result<Vec<TextEdit>, ResponseError> {
     // TODO: Throw error dont panic!
     let indent_string = match settings.insert_spaces.unwrap_or(options.insert_spaces) {
         true => " ".repeat(settings.tab_size.unwrap_or(options.tab_size) as usize),
@@ -65,104 +122,98 @@ pub(super) fn format_document(
     );
     edits.sort_by(|a, b| b.range.start.cmp(&a.range.start));
     comments.sort_by(|a, b| a.position.cmp(&b.position));
-    edits = consolidate_edits(edits);
-    edits = merge_comments(edits, comments, &document.text);
+    let consolidated_edits = consolidate_edits(edits);
+    edits = merge_comments(consolidated_edits, comments, &document.text)?;
     edits = remove_redundent_edits(edits, document);
-    return edits;
+    return Ok(edits);
 }
 
 fn merge_comments(
-    edits: Vec<TextEdit>,
+    edits: Vec<ConsolidatedTextEdit>,
     comments: Vec<CommentMarker>,
     text: &String,
-) -> Vec<TextEdit> {
+) -> Result<Vec<TextEdit>, ResponseError> {
     let mut comment_iter = comments.into_iter().rev().peekable();
-    let mut merged_edits = edits
-        .into_iter()
-        .fold(vec![], |mut acc: Vec<TextEdit>, mut edit| {
-            while comment_iter
-                .peek()
-                .map(|comment| comment.position >= edit.range.start)
-                .unwrap_or(false)
-            {
-                let comment = comment_iter
-                    .next()
-                    .expect("comment itterator should not be empty");
+    let mut merged_edits =
+        edits
+            .into_iter()
+            .fold(vec![], |mut acc: Vec<TextEdit>, mut consolidated_edit| {
+                let start_position = consolidated_edit
+                    .edits
+                    .first()
+                    .expect("Every consolidated edit should consist of at least one edit")
+                    .range
+                    .start;
 
-                // NOTE: In some Edgecase the comment is in the middle of a (consolidated)
-                // edit. For Example
-                // Select #comment
-                // * {}
-                // In this case this edits needs to be split into two edits.
-                let next_edit = match edit.range.contains(comment.position) {
-                    true => {
-                        let (before, after) = edit.new_text.split_at(
-                            // BUG: This is very questionable!
-                            // What happens if the charakters not 1 utf8 byte long.
-                            // What happens if the edit is longer thatn 1 line.
-                            (comment.position.character - edit.range.start.character) as usize,
-                        );
-                        acc.push(TextEdit::new(
-                            Range {
-                                start: comment.position,
-                                end: edit.range.end,
-                            },
-                            after,
-                        ));
-                        edit.new_text = before.to_string();
-                        edit.range.end = comment.position;
-                        acc.last_mut()
-                            .expect("Last edit should exist, since i just pushed it")
-                    }
-                    false => &mut edit,
-                };
+                while comment_iter
+                    .peek()
+                    .map(|comment| comment.position >= start_position)
+                    .unwrap_or(false)
+                {
+                    let comment = comment_iter
+                        .next()
+                        .expect("comment itterator should not be empty");
 
-                // WARNING: This could cause issues.
-                // The amout of chars is neccesarily equal to the amout of
-                // utf-8 bytes. Here i assume that all whispace is 1 utf8 byte long.
-                match next_edit
-                    .new_text
-                    .chars()
-                    .enumerate()
-                    .find_map(|(idx, char)| {
-                        (!char.is_whitespace() || char == 'n').then_some((idx, char))
-                    }) {
-                    Some((idx, '\n')) => {
-                        next_edit.new_text = format!(
-                            "{}{}",
-                            comment.to_edit().new_text,
-                            &next_edit.new_text[idx..]
-                        )
-                    }
-                    Some((idx, _char)) => {
-                        next_edit.new_text = format!(
-                            "{}{}{}",
-                            comment.to_edit().new_text,
-                            get_linebreak(&comment.indentation_level, "  "),
-                            &next_edit.new_text[idx..]
-                        )
-                    }
-                    None => {
-                        let indent = match next_edit.range.end.to_byte_index(&text) {
-                            Some(start_next_token) => match text
-                                .get(start_next_token..start_next_token + 1)
-                            {
-                                Some("}") => comment.indentation_level.checked_sub(1).unwrap_or(0),
-                                _ => comment.indentation_level,
-                            },
-                            None => comment.indentation_level,
+                    // NOTE: In some Edgecase the comment is in the middle of a (consolidated)
+                    // edit. For Example
+                    // Select #comment
+                    // * {}
+                    // In this case this edits needs to be split into two edits.
+                    let (mut previous_edit, mut next_edit) =
+                        match consolidated_edit.split_at(comment.position) {
+                            (previous_edit, next_edit) => (previous_edit, next_edit.fuse()),
                         };
-                        next_edit.new_text = format!(
-                            "{}{}",
-                            comment.to_edit().new_text,
-                            get_linebreak(&indent, "  "),
-                        )
-                    }
-                };
-            }
-            acc.push(edit);
-            return acc;
-        });
+                    // WARNING: This could cause issues.
+                    // The amout of chars is neccesarily equal to the amout of
+                    // utf-8 bytes. Here i assume that all whispace is 1 utf8 byte long.
+                    match next_edit
+                        .new_text
+                        .chars()
+                        .enumerate()
+                        .find_map(|(idx, char)| {
+                            (!char.is_whitespace() || char == '\n').then_some((idx, char))
+                        }) {
+                        Some((idx, '\n')) => {
+                            next_edit.new_text = format!(
+                                "{}{}",
+                                comment.to_edit().new_text,
+                                &next_edit.new_text[idx..]
+                            )
+                        }
+                        Some((idx, _char)) => {
+                            next_edit.new_text = format!(
+                                "{}{}{}",
+                                comment.to_edit().new_text,
+                                get_linebreak(&comment.indentation_level, "  "),
+                                &next_edit.new_text[idx..]
+                            )
+                        }
+                        None => {
+                            let indent = match next_edit.range.end.to_byte_index(&text) {
+                                Some(start_next_token) => {
+                                    match text.get(start_next_token..start_next_token + 1) {
+                                        Some("}") => {
+                                            comment.indentation_level.checked_sub(1).unwrap_or(0)
+                                        }
+                                        _ => comment.indentation_level,
+                                    }
+                                }
+                                None => comment.indentation_level,
+                            };
+                            next_edit.new_text = format!(
+                                "{}{}",
+                                comment.to_edit().new_text,
+                                get_linebreak(&indent, "  "),
+                            )
+                        }
+                    };
+                    previous_edit.edits.push(next_edit);
+                    consolidated_edit = previous_edit;
+                }
+
+                acc.push(consolidated_edit.fuse());
+                return acc;
+            });
     // NOTE: all remaining comments are attached to 0:0.
     comment_iter.for_each(|comment| {
         let comment_edit = comment.to_edit();
@@ -170,7 +221,7 @@ fn merge_comments(
         merged_edits.push(comment_edit);
     });
 
-    return merged_edits;
+    return Ok(merged_edits);
 }
 
 fn remove_redundent_edits(edits: Vec<TextEdit>, document: &TextDocumentItem) -> Vec<TextEdit> {
@@ -187,25 +238,33 @@ fn remove_redundent_edits(edits: Vec<TextEdit>, document: &TextDocumentItem) -> 
         .collect()
 }
 
-fn consolidate_edits(edits: Vec<TextEdit>) -> Vec<TextEdit> {
-    let accumulator: Vec<TextEdit> = Vec::new();
+fn consolidate_edits(edits: Vec<TextEdit>) -> Vec<ConsolidatedTextEdit> {
+    let accumulator: Vec<ConsolidatedTextEdit> = Vec::new();
     edits.into_iter().fold(accumulator, |mut acc, edit| {
         if edit.is_empty() {
             return acc;
         }
         match acc.last_mut() {
-            Some(prev) if prev.range.start == edit.range.end => {
-                prev.new_text.insert_str(0, &edit.new_text);
-                prev.range.start = edit.range.start;
-            }
-            Some(prev)
-                if prev.range.start == prev.range.end && prev.range.start == edit.range.start =>
-            {
-                prev.new_text.push_str(&edit.new_text);
-                prev.range.end = edit.range.end;
-            }
-            _ => {
-                acc.push(edit);
+            Some(next_consolidated) => match next_consolidated.edits.first_mut() {
+                Some(next_edit) if next_edit.range.start == edit.range.end => {
+                    next_consolidated.edits.insert(0, edit);
+                }
+                Some(next_edit)
+                    if next_edit.range.start == next_edit.range.end
+                        && next_edit.range.start == edit.range.start =>
+                {
+                    next_edit.new_text.push_str(&edit.new_text);
+                    next_edit.range.end = edit.range.end;
+                }
+                Some(_next_edit) => {
+                    acc.push(ConsolidatedTextEdit::new(edit));
+                }
+                None => {
+                    next_consolidated.edits.push(edit);
+                }
+            },
+            None => {
+                acc.push(ConsolidatedTextEdit::new(edit));
             }
         };
         acc

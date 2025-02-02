@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use tree_sitter::{Node, Point};
 
-use super::TextDocumentContentChangeEvent;
+use super::{errors::ResponseError, TextDocumentContentChangeEvent};
 
 pub type DocumentUri = String;
 
@@ -123,6 +123,24 @@ impl Position {
         Position {
             line: position.row as u32,
             character: position.column as u32,
+        }
+    }
+
+    pub(crate) fn sub(&self, other: &Position) -> Option<Position> {
+        match (
+            self.line.cmp(&other.line),
+            self.character.cmp(&other.character),
+        ) {
+            (std::cmp::Ordering::Less, _) => None,
+            (std::cmp::Ordering::Equal, std::cmp::Ordering::Less) => None,
+            (std::cmp::Ordering::Equal, _) => Some(Position {
+                line: 0,
+                character: self.character - other.character,
+            }),
+            (std::cmp::Ordering::Greater, _) => Some(Position {
+                line: self.line - other.line,
+                character: self.character,
+            }),
         }
     }
 

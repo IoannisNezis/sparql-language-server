@@ -99,33 +99,37 @@ fn main() {
                     let mut contents = String::new();
                     file.read_to_string(&mut contents)
                         .expect(&format!("Could not read file {}", path));
-                    let formatted_contents = format_raw(contents.clone());
-                    let unchanged = formatted_contents == contents;
-                    if check {
-                        if unchanged {
-                            println!("{path} already formatted");
-                            exit(0);
-                        } else {
-                            println!("{path} would be reformatted");
-                            exit(1);
+                    match format_raw(contents.clone()) {
+                        Ok(formatted_contents) => {
+                            let unchanged = formatted_contents == contents;
+                            if check {
+                                if unchanged {
+                                    println!("{path} already formatted");
+                                    exit(0);
+                                } else {
+                                    println!("{path} would be reformatted");
+                                    exit(1);
+                                }
+                            }
+                            if writeback {
+                                if unchanged {
+                                    println!("{path} left unchanged");
+                                } else {
+                                    let mut file = OpenOptions::new()
+                                        .write(true)
+                                        .truncate(true)
+                                        .append(false)
+                                        .open(path.clone())
+                                        .expect("Could not write to file");
+                                    file.write_all(formatted_contents.as_bytes())
+                                        .expect("Unable to write");
+                                    println!("{path} reformatted");
+                                }
+                            } else {
+                                println!("{}", formatted_contents);
+                            }
                         }
-                    }
-                    if writeback {
-                        if unchanged {
-                            println!("{path} left unchanged");
-                        } else {
-                            let mut file = OpenOptions::new()
-                                .write(true)
-                                .truncate(true)
-                                .append(false)
-                                .open(path.clone())
-                                .expect("Could not write to file");
-                            file.write_all(formatted_contents.as_bytes())
-                                .expect("Unable to write");
-                            println!("{path} reformatted");
-                        }
-                    } else {
-                        println!("{}", formatted_contents);
+                        Err(e) => panic!("Error during formatting:\n{}", e),
                     }
                 }
                 Err(e) => {

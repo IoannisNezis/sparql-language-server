@@ -34,7 +34,7 @@ fn format_and_compare(ugly_query: &str, pretty_query: &str, format_settings: &Fo
     let tree = parser
         .parse(ugly_query.as_bytes(), None)
         .expect("could not parse");
-    let edits = format_document(&document, &tree, &format_options, format_settings);
+    let edits = format_document(&document, &tree, &format_options, format_settings).unwrap();
     check_collision(&edits);
     document.apply_text_edits(edits);
     assert_eq!(document.text, pretty_query);
@@ -1212,6 +1212,26 @@ fn format_comments_1() {
     format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
 
+#[test]
+fn format_comments_and_tss() {
+    let ugly_query = indoc!(
+        r#"SELECT * WHERE {
+             <> <> <> ;  #c1
+                <> <> ;
+                <> <> ;     #c2
+           }
+          "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * WHERE {
+             <> <> <> ; #c1
+                <> <> ;
+                <> <> ; #c2
+           }
+          "#
+    );
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
+}
 #[test]
 fn format_comments_2() {
     let ugly_query = indoc!(
