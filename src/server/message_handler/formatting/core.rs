@@ -121,10 +121,23 @@ pub(super) fn format_document(
         settings,
     );
     edits.sort_by(|a, b| b.range.start.cmp(&a.range.start));
+
+    // log::info!("------------edits raw------------");
+    // for edit in &edits {
+    //     log::info!("{}", edit);
+    // }
     comments.sort_by(|a, b| a.position.cmp(&b.position));
     let consolidated_edits = consolidate_edits(edits);
     edits = merge_comments(consolidated_edits, comments, &document.text)?;
+    for edit in edits.iter_mut() {
+        edit.range.translate_to_utf16_encoding(&document.text)?;
+    }
     edits = remove_redundent_edits(edits, document);
+    //
+    // log::info!("------------edits------------");
+    // for edit in &edits {
+    //     log::info!("{}", edit);
+    // }
     return Ok(edits);
 }
 

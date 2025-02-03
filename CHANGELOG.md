@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [0.3.4] - 2025-02-03
+
+### Added
+
+- formatting support for any utf-8 input
+
 ## [0.3.3] - 2025-02-02
 
 ### Fixed

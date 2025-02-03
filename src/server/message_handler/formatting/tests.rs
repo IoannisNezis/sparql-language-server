@@ -1232,6 +1232,24 @@ fn format_comments_and_tss() {
     );
     format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
 }
+
+#[test]
+fn format_utf8() {
+    let ugly_query = indoc!(
+        r#"SELECT * WHERE {
+             ?väriable <öther> "😀"
+           }
+          "#
+    );
+    let pretty_query = indoc!(
+        r#"SELECT * WHERE {
+             ?väriable <öther> "😀"
+           }
+          "#
+    );
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
+}
+
 #[test]
 fn format_comments_2() {
     let ugly_query = indoc!(
