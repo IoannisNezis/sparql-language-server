@@ -704,6 +704,17 @@ fn format_function_like_keywords() {
 }
 
 #[test]
+fn format_aggregate() {
+    let ugly_query = indoc!(
+        r#"SELECT (MAX (?a + 2)  AS ?max_a ) (SAMPLE (DISTINCT ?x) as ?dx) WHERE {
+         }
+        "#
+    );
+    let pretty_query = "SELECT (MAX(?a + 2) AS ?max_a) (SAMPLE(DISTINCT ?x) AS ?dx) WHERE {}\n";
+    format_and_compare(ugly_query, pretty_query, &FormatSettings::default());
+}
+
+#[test]
 fn format_full_select_querry() {
     let ugly_query = indoc!(
         "PREFIX namespace: <iri>

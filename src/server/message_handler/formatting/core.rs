@@ -618,7 +618,7 @@ fn in_node_augmentation(
         "Aggregate" => children
             .iter()
             .filter_map(|child| match child.kind() {
-                ";" => Some(TextEdit::new(
+                ";" | "DISTINCT" => Some(TextEdit::new(
                     Range::from_ts_positions(child.end_position(), child.end_position()),
                     " ",
                 )),
