@@ -122,10 +122,6 @@ pub(super) fn format_document(
     );
     edits.sort_by(|a, b| b.range.start.cmp(&a.range.start));
 
-    // log::info!("------------edits raw------------");
-    // for edit in &edits {
-    //     log::info!("{}", edit);
-    // }
     comments.sort_by(|a, b| a.position.cmp(&b.position));
     let consolidated_edits = consolidate_edits(edits);
     edits = merge_comments(consolidated_edits, comments, &document.text)?;
@@ -592,15 +588,18 @@ fn in_node_augmentation(
         "Modify" => children
             .iter()
             .filter_map(|child| match child.kind() {
-                "WITH" => None,
                 "IRIREF" => Some(vec![TextEdit::new(
                     Range::from_ts_positions(child.start_position(), child.start_position()),
                     " ",
                 )]),
-                "DeleteClause" | "InsertClause" | "UsingClause" => Some(vec![TextEdit::new(
-                    Range::from_ts_positions(child.start_position(), child.start_position()),
-                    &get_linebreak(&indentation, indent_base),
-                )]),
+                "DeleteClause" | "InsertClause" | "UsingClause"
+                    if child.prev_sibling().is_some() =>
+                {
+                    Some(vec![TextEdit::new(
+                        Range::from_ts_positions(child.start_position(), child.start_position()),
+                        &get_linebreak(&indentation, indent_base),
+                    )])
+                }
                 "WHERE" => Some(vec![
                     TextEdit::new(
                         Range::from_ts_positions(child.start_position(), child.start_position()),

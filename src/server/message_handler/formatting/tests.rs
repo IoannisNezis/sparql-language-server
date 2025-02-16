@@ -452,30 +452,15 @@ fn format_graph_management() {
 #[test]
 fn format_insert_data() {
     let ugly_query = indoc!(
-        "Insert   data
-         {
-            ?a ?b ?c.
-             graph <a> {
-         ?c ?b ?a }.
-         ?d ?e ?f
-         graph  ?d 
-         {
-         ?a ?d ?c
-         }
-         ?d ?e ?f
-         }\n"
+        "INSERT { ?v <a> <b> } WHERE { VALUES ?v { 1 2 } }
+         "
     );
     let pretty_query = indoc!(
-        "INSERT DATA {
-           ?a ?b ?c .
-           GRAPH <a> {
-             ?c ?b ?a
-           } .
-           ?d ?e ?f
-           GRAPH ?d {
-             ?a ?d ?c
-           }
-           ?d ?e ?f
+        "INSERT {
+           ?v <a> <b>
+         }
+         WHERE {
+           VALUES ?v { 1 2 }
          }
          "
     );

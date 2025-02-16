@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - formatting distinct keyword in aggregate
+- formatting modify
 
 ## [0.3.4] - 2025-02-03
 
