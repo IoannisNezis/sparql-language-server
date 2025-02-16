@@ -578,11 +578,11 @@ fn in_node_augmentation(
         "DescribeQuery" => children
             .iter()
             .filter_map(|child| match child.kind() {
-                "DESCRIBE" | "WhereClause" => None,
-                _ => Some(TextEdit::new(
+                "VAR" | "IRIREF" | "*" => Some(TextEdit::new(
                     Range::from_ts_positions(child.start_position(), child.start_position()),
                     " ",
                 )),
+                _ => None,
             })
             .collect(),
         "Modify" => children
