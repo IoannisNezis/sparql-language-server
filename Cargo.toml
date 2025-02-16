@@ -1,6 +1,6 @@
 [package]
 name = "qlue-ls"
-version = "0.3.4"
+version = "0.3.5"
 edition = "2021"
 authors = ["Ioannis Nezis <ioannis@nezis.de>"]
 description = "A formatter for SPARQL queries"
@@ -9,9 +9,8 @@ license-file = "LICENSE"
 keywords = ["SPARQL", "rdf", "lsp", "lsp-server", "wasm"]
 
 [lib]
-name = "qlue_ls"
 path = "src/lib.rs"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [[bin]]
 name = "qlue-ls"
@@ -50,7 +49,7 @@ curies = "0.1.3"
 wasm-bindgen = "0.2.95"
 lazy_static = "1.5.0"
 
-[target.'cfg(target_family = "wasm")'.dependencies]
+# [target.'cfg(target_family = "wasm")'.dependencies]
 wasm-logger = { version = "0.2.0" }
 wasm-bindgen-futures = "0.4.49"
 web-sys = { version = "0.3.76", features = [
@@ -63,7 +62,7 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 getrandom = { version = "0.2", features = ["js"] }
 serde-wasm-bindgen = "0.6.5"
 
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
+# [target.'cfg(not(target_family = "wasm"))'.dependencies]
 log4rs = { version = "1.3.0" }
 
 [build-dependencies]
