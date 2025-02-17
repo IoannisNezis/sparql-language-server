@@ -9,6 +9,13 @@ export default defineConfig(({ mode }) => ({
 		esbuildOptions: {
 			plugins: [importMetaUrlPlugin]
 		},
+
+		include: [
+			'@testing-library/react',
+			'vscode/localExtensionHost',
+			'vscode-textmate',
+			'vscode-oniguruma'
+		]
 	},
 	worker: {
 		format: "es",

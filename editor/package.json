@@ -13,9 +13,10 @@
 		"lint": "prettier --check ."
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^3.0.0",
-		"@sveltejs/kit": "^2.0.0",
-		"@sveltejs/vite-plugin-svelte": "^4.0.0",
+		"@sveltejs/adapter-auto": "^4.0.0",
+		"@sveltejs/adapter-node": "^5.2.11",
+		"@sveltejs/kit": "^2.16.0",
+		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@types/vscode": "^1.96.0",
 		"autoprefixer": "^10.4.20",
 		"prettier": "^3.3.2",
@@ -26,18 +27,18 @@
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^3.4.9",
 		"typescript": "^5.0.0",
-		"vite": "^5.4.11"
+		"vite": "^6.0.0",
+		"vite-node": "~3.0.5"
 	},
 	"dependencies": {
 		"@codingame/esbuild-import-meta-url-plugin": "^1.0.2",
-		"monaco-editor-wrapper": "~6.3.0",
 		"monaco-editor": "npm:@codingame/monaco-vscode-editor-api@^14.0.2",
-		"vscode": "npm:@codingame/monaco-vscode-extension-api@~14.0.2",
-		"vscode-uri": "~3.1.0",
-		"vscode-languageserver": "~9.0.1",
+		"monaco-editor-wrapper": "~6.3.0",
 		"qlue-ls": "^0.3.5",
 		"vite-plugin-top-level-await": "^1.4.4",
 		"vite-plugin-wasm": "^3.4.1",
-		"@sveltejs/adapter-node": "^5.2.11"
+		"vscode": "npm:@codingame/monaco-vscode-extension-api@~14.0.2",
+		"vscode-languageserver": "~9.0.1",
+		"vscode-uri": "~3.1.0"
 	}
 }
