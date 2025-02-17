@@ -1,16 +1,18 @@
-import getTextmateServiceOverride from "@codingame/monaco-vscode-textmate-service-override";
 import languageServerWorkerUrl from "./languageServer.worker?worker&url";
-import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import TextMateWorker from '@codingame/monaco-vscode-textmate-service-override/worker?worker';
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+// import TextMateWorker from '@codingame/monaco-vscode-textmate-service-override/worker?worker';
 import sparqlTextmateGrammar from './sparql.tmLanguage.json?raw';
 import sparqlLanguateConfig from './sparql.configuration.json?raw';
 import sparqlTheme from './sparql.theme.json?raw';
-import type { Logger } from 'monaco-languageclient/tools';
 import type { WrapperConfig } from 'monaco-editor-wrapper';
 import { LogLevel, Uri } from 'vscode';
-import { useWorkerFactory } from 'monaco-editor-wrapper/workerFactory';
 
-export async function buildWrapperConfig(htmlContainer: HTMLElement, initial_text: string): Promise<WrapperConfig> {
+
+export async function buildWrapperConfig(container: HTMLElement, initial: string): Promise<WrapperConfig> {
+        window.MonacoEnvironment = {
+                getWorker: (_moduleId, _label) => new editorWorker()
+        }
+
 
         const workerPromise: Promise<Worker> = new Promise((resolve) => {
                 const instance = new Worker(new URL(languageServerWorkerUrl, window.location.origin),
@@ -27,58 +29,15 @@ export async function buildWrapperConfig(htmlContainer: HTMLElement, initial_tex
         });
         const worker = await workerPromise;
 
-
-
         const extensionFilesOrContents = new Map<string, string | URL>();
         extensionFilesOrContents.set('/sparql-configuration.json', sparqlLanguateConfig);
         extensionFilesOrContents.set('/sparql-grammar.json', sparqlTextmateGrammar);
         extensionFilesOrContents.set('/sparql-theme.json', sparqlTheme);
 
-        return {
+        const wrapperConfig: WrapperConfig = {
                 $type: 'extended',
-                htmlContainer: htmlContainer,
+                htmlContainer: container,
                 logLevel: LogLevel.Debug,
-                vscodeApiConfig: {
-                        userConfiguration: {
-                                json: JSON.stringify({
-                                        'workbench.colorTheme': 'SPARQL Custom Theme',
-                                        'editor.guides.bracketPairsHorizontal': 'active',
-                                        'editor.lightbulb.enabled': 'On',
-                                        'editor.wordBasedSuggestions': 'off',
-                                        'editor.experimental.asyncTokenization': true
-                                })
-                        },
-                        serviceOverrides: {
-                                // ...getConfigurationServiceOverride(),
-                                ...getTextmateServiceOverride(),
-                                // ...getThemeServiceOverride()
-                        }
-                },
-                editorAppConfig: {
-                        codeResources: {
-                                modified: {
-                                        uri: 'query.rq',
-                                        text: initial_text
-                                }
-                        },
-                        monacoWorkerFactory: configureMonacoWorkers,
-                        editorOptions: {
-                                theme: 'vs-dark',
-                                fontSize: 16,
-                                fontFamily: 'Source Code Pro',
-                                links: false,
-                                minimap: {
-                                        enabled: false
-                                },
-                                overviewRulerLanes: 0,
-                                scrollBeyondLastLine: false,
-                                padding: {
-                                        top: 10,
-                                        bottom: 10
-                                }
-                        }
-                },
-
                 languageClientConfigs: {
                         sparql: {
                                 name: "Qlue-ls",
@@ -105,6 +64,41 @@ export async function buildWrapperConfig(htmlContainer: HTMLElement, initial_tex
                                 }
                         }
                 },
+                editorAppConfig: {
+                        codeResources: {
+                                modified: {
+                                        uri: 'query.rq',
+                                        text: initial
+                                }
+                        },
+                        editorOptions: {
+                                theme: 'vs-dark',
+                                fontSize: 16,
+                                fontFamily: 'Source Code Pro',
+                                links: false,
+                                minimap: {
+                                        enabled: false
+                                },
+                                overviewRulerLanes: 0,
+                                scrollBeyondLastLine: false,
+                                padding: {
+                                        top: 10,
+                                        bottom: 10
+                                }
+                        }
+                },
+                vscodeApiConfig: {
+                        userConfiguration: {
+                                json: JSON.stringify({
+                                        'workbench.colorTheme': 'SPARQL Custom Theme',
+                                        'editor.guides.bracketPairsHorizontal': 'active',
+                                        'editor.lightbulb.enabled': 'On',
+                                        'editor.wordBasedSuggestions': 'off',
+                                        'editor.experimental.asyncTokenization': true
+                                })
+                        },
+                },
+
                 extensions: [{
                         config: {
                                 name: 'langium-sparql',
@@ -127,31 +121,15 @@ export async function buildWrapperConfig(htmlContainer: HTMLElement, initial_tex
                                                         "path": "./sparql-theme.json"
                                                 }
                                         ],
-                                        grammars: [{
-                                                language: 'sparql',
-                                                scopeName: 'source.sparql',
-                                                path: '/sparql-grammar.json'
-                                        }]
+                                        // grammars: [{
+                                        //         language: 'sparql',
+                                        //         scopeName: 'source.sparql',
+                                        //         path: '/sparql-grammar.json'
+                                        // }]
                                 }
                         },
                         filesOrContents: extensionFilesOrContents
                 }]
-        }
-}
-export const configureMonacoWorkers = (logger?: Logger) => {
-        const textmateWorker = new TextMateWorker({ name: "claris" });
-        textmateWorker.onmessage = (event) => {
-                console.log(event);
-
         };
-        useWorkerFactory({
-                workerOverrides: {
-                        ignoreMapping: true,
-                        workerLoaders: {
-                                TextEditorWorker: () => new EditorWorker(),
-                                TextMateWorker: () => textmateWorker
-                        }
-                },
-                logger
-        });
-};
+        return wrapperConfig;
+}

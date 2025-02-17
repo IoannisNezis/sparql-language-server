@@ -14,16 +14,8 @@
         const monaco = await import('monaco-editor');
 
         wrapper = new MonacoEditorLanguageClientWrapper();
-        let wrapperConfig = await buildWrapperConfig(editorContainer, '');
+        let wrapperConfig = await buildWrapperConfig(editorContainer, 'SELECT * WHERE {}');
         await wrapper.initAndStart(wrapperConfig);
-        let editor = wrapper.getEditor()!;
-        // editor.getModel()?.setValue('SELECT * WHERE {\n  ?sub schema:name ?name\n}');
-        console.log(editor);
-        editor.getModel()?.setValue(
-            `SELECT * WHERE {
-  ?x <http://www.w3.org/2000/01/rdf-schema#label> ?label
-}`
-        );
         monaco.editor.onDidChangeMarkers(() => {
             markers = monaco.editor.getModelMarkers({});
         });

@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
 	optimizeDeps: {
 		esbuildOptions: {
 			plugins: [importMetaUrlPlugin]
-		}
+		},
 	},
 	worker: {
 		format: "es",
@@ -22,7 +22,6 @@ export default defineConfig(({ mode }) => ({
 		{
 			"qlue-ls": mode === "development" ? "qlue-ls-dev" : "qlue-ls",
 		},
-		dedupe: ['monaco-editor', 'vscode']
 	},
 	plugins: [sveltekit(), wasm(), topLevelAwait()]
 }));
