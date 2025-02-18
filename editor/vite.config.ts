@@ -9,7 +9,6 @@ export default defineConfig(({ mode }) => ({
 		esbuildOptions: {
 			plugins: [importMetaUrlPlugin]
 		},
-
 		include: [
 			'@testing-library/react',
 			'vscode/localExtensionHost',
