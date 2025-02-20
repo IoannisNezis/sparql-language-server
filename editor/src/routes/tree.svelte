@@ -36,7 +36,7 @@
 <div
     id="treeContainer"
     style="height: 60vh;"
-    class="overflow-auto border-l border-gray-700 p-2 text-white"
+    class="overflow-y-auto overflow-x-hidden border-l border-gray-700 p-2 text-white"
 >
     {@render renderTree(parseTree)}
 </div>

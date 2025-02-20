@@ -32,15 +32,41 @@
     onDestroy(() => {
         wrapper?.dispose(true);
     });
+
+    let showTree = $state(false);
 </script>
 
-<div class="grid grid-cols-2">
-    <div>
-        <div id="editor" class="container" bind:this={editorContainer}></div>
-        <Statusbar {markers}></Statusbar>
-    </div>
-    <Tree input={content}></Tree>
+<div class="relative grid grid-cols-3">
+    <div
+        id="editor"
+        class="container transition-all {showTree ? 'col-span-2' : 'col-span-3'}"
+        bind:this={editorContainer}
+    ></div>
+    {#if showTree}
+        <Tree input={content}></Tree>
+    {/if}
+
+    <button
+        onclick={() => (showTree = !showTree)}
+        class="absolute right-2 top-2 rounded bg-gray-700 px-2 py-2 font-bold text-white hover:bg-gray-600"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-5 transition duration-200 {showTree ? 'rotate-180' : ''}"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5"
+            />
+        </svg>
+    </button>
 </div>
+<Statusbar {markers}></Statusbar>
 
 <style>
     #editor {
